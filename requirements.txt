@@ -1,0 +1,10 @@
+paramiko>=3.4.0
+Flask>=3.0.0
+flask-socketio>=5.3.6
+flask-cors>=4.0.0
+# SocketIO async backends (optional but recommended). Install one of:
+# eventlet>=0.35.0
+# or gevent>=24.2.1 gevent-websocket>=0.10.1
+# GeoIP support (optional)
+geoip2>=4.8.0
+requests>=2.31.0

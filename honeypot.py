@@ -8,7 +8,7 @@ import datetime
 from pathlib import Path
 from binascii import hexlify
 
-# New import for HTTP push
+# GEO-IP support (uses requests; http://ip-api.com for lookups)
 try:
     import requests
 except Exception:
@@ -44,6 +44,27 @@ logging.basicConfig(
     filename=LOG_DIR / 'ssh_honeypot.log'
 )
 
+# GEO-IP utility function
+def get_geo_info(ip):
+    # Ignore local/private IP ranges
+    if requests is None or ip.startswith("127.") or ip.startswith("192.168.") or ip.startswith("10."):
+        return {}
+    try:
+        response = requests.get(
+            f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city,query",
+            timeout=2
+        )
+        data = response.json()
+        if data.get("status") == "success":
+            return {
+                "country": data.get("country"),
+                "region": data.get("regionName"),
+                "city": data.get("city"),
+                "ip": data.get("query")
+            }
+    except Exception:
+        pass
+    return {}
 
 class SSHHoneypot(paramiko.ServerInterface):
     """SSH Honeypot that logs all attacker interactions"""
@@ -85,7 +106,7 @@ class SSHHoneypot(paramiko.ServerInterface):
         return True
 
     def check_channel_pty_request(self, channel, term, width, height,
-                                  pixelwidth, pixelheight, modes):
+                                 pixelwidth, pixelheight, modes):
         return True
 
     def check_channel_exec_request(self, channel, command):
@@ -95,15 +116,16 @@ class SSHHoneypot(paramiko.ServerInterface):
         notify_new_attack(cmd_ev)
         return True
 
-
 def log_attack(ip, username, credential, auth_type):
+    geo_info = get_geo_info(ip)
     attack_data = {
         'timestamp': datetime.datetime.now().isoformat(),
         'ip': ip,
         'username': username,
         'credential': credential,
         'auth_type': auth_type,
-        'event_type': 'login_attempt'
+        'event_type': 'login_attempt',
+        'geo_info': geo_info
     }
     json_log = LOG_DIR / f"attacks_{datetime.date.today()}.json"
     with open(json_log, 'a', encoding='utf-8') as f:
@@ -111,21 +133,21 @@ def log_attack(ip, username, credential, auth_type):
         f.write('\n')
     return attack_data
 
-
 def log_command(ip, username, command):
+    geo_info = get_geo_info(ip)
     command_data = {
         'timestamp': datetime.datetime.now().isoformat(),
         'ip': ip,
         'username': username,
         'command': command,
-        'event_type': 'command_execution'
+        'event_type': 'command_execution',
+        'geo_info': geo_info
     }
     json_log = LOG_DIR / f"commands_{datetime.date.today()}.json"
     with open(json_log, 'a', encoding='utf-8') as f:
         json.dump(command_data, f)
         f.write('\n')
     return command_data
-
 
 def handle_cmd(cmd, chan, ip):
     response = ""
@@ -148,7 +170,6 @@ def handle_cmd(cmd, chan, ip):
 
     if response:
         chan.send(response + "\r\n")
-
 
 def handle_connection(client_socket, client_addr):
     client_ip = client_addr[0]
@@ -219,12 +240,10 @@ def handle_connection(client_socket, client_addr):
                 transport.close()
         except Exception:
             pass
-        # Release slot for the next connection
         try:
             _connection_semaphore.release()
         except Exception:
             pass
-
 
 def start_honeypot():
     sock = None
@@ -236,7 +255,6 @@ def start_honeypot():
         print(f'[*] SSH Honeypot listening on {HONEYPOT_HOST}:{HONEYPOT_PORT}')
         print(f'[*] Logs saved to {LOG_DIR}')
         while True:
-            # Enforce connection concurrency limit
             _connection_semaphore.acquire()
             client, addr = sock.accept()
             client_thread = threading.Thread(
@@ -254,8 +272,6 @@ def start_honeypot():
         except Exception:
             pass
 
-
-# Send real-time notification to dashboard
 def notify_new_attack(attack_data):
     if requests is None:
         return
@@ -263,7 +279,6 @@ def notify_new_attack(attack_data):
         requests.post(DASHBOARD_URL, json=attack_data, timeout=1.5)
     except Exception:
         pass
-
 
 if __name__ == '__main__':
     start_honeypot()

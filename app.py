@@ -227,7 +227,7 @@ def api_event():
         'type': etype,
         'data': payload,
         'leaderboard': leaderboard.get_leaderboard(5)
-    }, broadcast=True)
+    })
 
     return jsonify({'ok': True})
 
@@ -246,7 +246,7 @@ def handle_disconnect():
 
 
 def broadcast_new_attack(attack_data):
-    socketio.emit('new_attack', attack_data, broadcast=True)
+    socketio.emit('new_attack', attack_data)
 
 
 def monitor_logs():

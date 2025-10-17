@@ -1,0 +1,10 @@
+{"timestamp": "2025-10-17T11:49:06.320044", "ip": "192.168.40.221", "username": "whatever", "command": "cg\u007fd", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:49:08.080806", "ip": "192.168.40.221", "username": "whatever", "command": "cd", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:49:10.038562", "ip": "192.168.40.221", "username": "whatever", "command": "ls", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:49:14.409247", "ip": "192.168.40.221", "username": "whatever", "command": "uname -r", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:49:55.658744", "ip": "192.168.40.221", "username": "whatever", "command": "ls", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:50:00.320104", "ip": "192.168.40.221", "username": "whatever", "command": "uname -r", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:50:06.192798", "ip": "192.168.40.221", "username": "whatever", "command": "cd", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:50:11.851038", "ip": "192.168.40.221", "username": "whatever", "command": "cd dev", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:51:11.179045", "ip": "192.168.40.221", "username": "whatever", "command": "\u0003exir\u007ft\u007f\u007f\u007ft", "event_type": "command_execution"}
+{"timestamp": "2025-10-17T11:51:13.195377", "ip": "192.168.40.221", "username": "whatever", "command": "exit", "event_type": "command_execution"}

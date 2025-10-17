@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HoneyPot Hero</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background:#0b1220; color:#e6eefc; }
+    header { padding: 16px 24px; background: #0f172a; border-bottom: 1px solid #1f2a44; position: sticky; top:0; z-index:1; }
+    h1 { margin: 0; font-size: 20px; }
+    main { padding: 24px; display: grid; grid-template-columns: 1fr; gap: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .card { background: #101a32; border: 1px solid #1f2a44; border-radius: 12px; padding: 16px; }
+    .muted { color: #9fb3d9; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #1f2a44; font-size: 14px; }
+    th { color:#9fb3d9; font-weight: 600; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#0b5; color:#fff; font-size:12px; }
+    .stat { font-size: 28px; font-weight: 700; }
+    .small { font-size: 12px; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js" integrity="sha512-NjQzW1O5o71OUp0fTQ2i6kUe2/1R8I3aI1mp9u6vQ8QmE8nY7Gbg0dX3o9TzFQn1wHk6y7QhU8E2mZGkZ7QbqA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    let socket;
+
+    async function fetchJSON(path) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    function renderLeaderboard(rows) {
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
+      rows.forEach(item => {
+        const tr = document.createElement('tr');
+        const geo = item.geo && (item.geo.city || item.geo.country) ? `${item.geo.city ?? ''}${item.geo.city && item.geo.country ? ', ' : ''}${item.geo.country ?? ''}` : '';
+        tr.innerHTML = `
+          <td>${item.rank}</td>
+          <td>${item.ip}${geo ? ` <span class="small muted">(${geo})</span>` : ''}</td>
+          <td>${item.total_attempts}</td>
+          <td>${item.unique_usernames}</td>
+          <td>${item.unique_passwords}</td>
+          <td>${item.commands_count}</td>
+          <td><span class="pill">${item.threat_score}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderStats(stats) {
+      document.getElementById('total-attackers').textContent = stats.total_attackers;
+      document.getElementById('total-attempts').textContent = stats.total_attempts;
+      document.getElementById('total-commands').textContent = stats.total_commands;
+      document.getElementById('active-now').textContent = stats.active_now;
+
+      const list = document.getElementById('common-usernames');
+      list.innerHTML = '';
+      stats.common_usernames.forEach(x => {
+        const li = document.createElement('li');
+        li.textContent = `${x.username} (${x.count})`;
+        list.appendChild(li);
+      });
+    }
+
+    async function loadInitial() {
+      try {
+        const [board, stats] = await Promise.all([
+          fetchJSON('/api/leaderboard'),
+          fetchJSON('/api/statistics')
+        ]);
+        renderLeaderboard(board);
+        renderStats(stats);
+      } catch (e) {
+        console.error('Failed to load initial data', e);
+      }
+    }
+
+    function connectSocket() {
+      socket = io();
+      socket.on('connect', () => {
+        console.log('Socket connected');
+      });
+      socket.on('new_attack', payload => {
+        if (payload.leaderboard) renderLeaderboard(payload.leaderboard);
+        // Optionally show a toast/banner
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadInitial();
+      connectSocket();
+      setInterval(loadInitial, 10000);
+    });
+  </script>
+  </head>
+  <body>
+    <header>
+      <h1>HoneyPot Hero <span class="muted small">live dashboard</span></h1>
+    </header>
+    <main>
+      <section class="grid">
+        <div class="card">
+          <div class="muted small">Total attackers</div>
+          <div id="total-attackers" class="stat">0</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Total attempts</div>
+          <div id="total-attempts" class="stat">0</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Commands logged</div>
+          <div id="total-commands" class="stat">0</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Active viewers</div>
+          <div id="active-now" class="stat">0</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin-top:0">Top Attackers</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>IP</th>
+              <th>Attempts</th>
+              <th>Usernames</th>
+              <th>Passwords</th>
+              <th>Commands</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2 style="margin-top:0">Common Usernames</h2>
+        <ul id="common-usernames" style="margin:0; padding-left:20px"></ul>
+      </section>
+    </main>
+  </body>
+  </html>
+
+

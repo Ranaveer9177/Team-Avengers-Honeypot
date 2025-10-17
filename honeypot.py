@@ -20,6 +20,10 @@ HONEYPOT_PORT = 2222
 LOG_DIR = Path("honeypot_logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+# Concurrency limit
+MAX_CONCURRENT_CONNECTIONS = 5
+_connection_semaphore = threading.Semaphore(MAX_CONCURRENT_CONNECTIONS)
+
 # Dashboard receiver
 DASHBOARD_URL = "http://127.0.0.1:5000/api/event"
 
@@ -215,6 +219,11 @@ def handle_connection(client_socket, client_addr):
                 transport.close()
         except Exception:
             pass
+        # Release slot for the next connection
+        try:
+            _connection_semaphore.release()
+        except Exception:
+            pass
 
 
 def start_honeypot():
@@ -227,6 +236,8 @@ def start_honeypot():
         print(f'[*] SSH Honeypot listening on {HONEYPOT_HOST}:{HONEYPOT_PORT}')
         print(f'[*] Logs saved to {LOG_DIR}')
         while True:
+            # Enforce connection concurrency limit
+            _connection_semaphore.acquire()
             client, addr = sock.accept()
             client_thread = threading.Thread(
                 target=handle_connection,

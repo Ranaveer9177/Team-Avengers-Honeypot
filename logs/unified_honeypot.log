@@ -1,0 +1,1377 @@
+2025-10-22 14:22:09,101 - ERROR - Error loading SSH host key: [Errno 2] No such file or directory: 'ssh_keys/server.key'
+2025-10-22 14:25:21,247 - INFO - Started ssh honeypot on port 2222
+2025-10-22 14:25:21,247 - INFO - Started http honeypot on port 8080
+2025-10-22 14:25:21,248 - INFO - Started https honeypot on port 8443
+2025-10-22 14:25:21,248 - INFO - Started ftp honeypot on port 2121
+2025-10-22 14:25:21,250 - INFO - Started mysql honeypot on port 3306
+2025-10-22 14:28:13,351 - INFO - Started http honeypot on port 8080
+2025-10-22 14:28:13,352 - INFO - Started ssh honeypot on port 2222
+2025-10-22 14:28:13,352 - INFO - Started https honeypot on port 8443
+2025-10-22 14:28:13,352 - INFO - Started ftp honeypot on port 2121
+2025-10-22 14:28:13,353 - INFO - Started mysql honeypot on port 3306
+2025-10-22 14:29:44,169 - INFO - Started ssh honeypot on port 2222
+2025-10-22 14:29:44,171 - INFO - Started http honeypot on port 8080
+2025-10-22 14:29:44,172 - INFO - Started https honeypot on port 8443
+2025-10-22 14:29:44,172 - INFO - Started ftp honeypot on port 2121
+2025-10-22 14:29:44,174 - INFO - Started mysql honeypot on port 3306
+2025-10-22 14:42:43,913 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 14:42:43,915 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 14:42:43,913 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 14:42:43,919 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 14:42:43,919 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:00:57,355 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:00:57,356 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:00:57,356 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:00:57,357 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:00:57,357 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:01:06,254 - INFO - Connection from 127.0.0.1:34180 on ssh
+2025-10-22 15:01:06,256 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:01:06,258 - INFO - Connection from 127.0.0.1:47078 on http
+2025-10-22 15:01:06,260 - ERROR - Traceback (most recent call last):
+2025-10-22 15:01:06,260 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:01:06,260 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:01:06,260 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:01:06,261 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:01:06,261 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:01:06,261 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:01:06,261 - ERROR -     raise EOFError()
+2025-10-22 15:01:06,261 - ERROR - EOFError
+2025-10-22 15:01:06,261 - ERROR - 
+2025-10-22 15:01:06,262 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:01:06,262 - ERROR - 
+2025-10-22 15:01:06,262 - ERROR - Traceback (most recent call last):
+2025-10-22 15:01:06,262 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:01:06,262 - INFO - Connection from 127.0.0.1:44134 on https
+2025-10-22 15:01:06,262 - ERROR -     self._check_banner()
+2025-10-22 15:01:06,262 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:01:06,315 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:01:06,315 - ERROR -     raise SSHException(
+2025-10-22 15:01:06,315 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:01:06,315 - ERROR -     )
+2025-10-22 15:01:06,315 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:01:06,315 - ERROR - 
+2025-10-22 15:01:06,314 - INFO - Connection from 127.0.0.1:56512 on ftp
+2025-10-22 15:01:06,315 - INFO - Connection from 127.0.0.1:34188 on ssh
+2025-10-22 15:01:06,316 - INFO - Connection from 127.0.0.1:52098 on mysql
+2025-10-22 15:01:06,316 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:01:06,317 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:01:06,319 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:01:06,326 - INFO - Auth rejected (none).
+2025-10-22 15:01:11,285 - INFO - Connection from 127.0.0.1:37590 on http
+2025-10-22 15:01:11,292 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:10:52,990 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:10:52,991 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:10:52,993 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:10:52,995 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:10:52,996 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:11:01,883 - INFO - Connection from 127.0.0.1:48104 on ssh
+2025-10-22 15:11:01,892 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:11:01,895 - INFO - Connection from 127.0.0.1:52146 on http
+2025-10-22 15:11:01,895 - INFO - Connection from 127.0.0.1:54854 on https
+2025-10-22 15:11:01,897 - ERROR - Traceback (most recent call last):
+2025-10-22 15:11:01,898 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:11:01,898 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:11:01,898 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:11:01,898 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:11:01,898 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:11:01,898 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:11:01,898 - ERROR -     raise EOFError()
+2025-10-22 15:11:01,898 - ERROR - EOFError
+2025-10-22 15:11:01,898 - ERROR - 
+2025-10-22 15:11:01,898 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:11:01,898 - ERROR - 
+2025-10-22 15:11:01,898 - ERROR - Traceback (most recent call last):
+2025-10-22 15:11:01,898 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:11:01,898 - ERROR -     self._check_banner()
+2025-10-22 15:11:01,898 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:11:01,898 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:11:01,898 - ERROR -     raise SSHException(
+2025-10-22 15:11:01,898 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:11:01,898 - ERROR -     )
+2025-10-22 15:11:01,898 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:11:01,898 - ERROR - 
+2025-10-22 15:11:01,899 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:11:01,900 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:11:01,900 - INFO - Connection from 127.0.0.1:35842 on ftp
+2025-10-22 15:11:01,902 - INFO - Connection from 127.0.0.1:45624 on mysql
+2025-10-22 15:11:01,914 - INFO - Connection from 127.0.0.1:48112 on ssh
+2025-10-22 15:11:01,915 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:11:01,964 - INFO - Auth rejected (none).
+2025-10-22 15:11:01,974 - INFO - Connection from 127.0.0.1:52150 on http
+2025-10-22 15:11:01,975 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:11:20,772 - INFO - Connection from 10.0.2.15:39626 on ssh
+2025-10-22 15:11:20,774 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:11:23,598 - INFO - Auth rejected (none).
+2025-10-22 15:11:25,473 - INFO - Auth rejected (password).
+2025-10-22 15:11:28,980 - INFO - Auth rejected (password).
+2025-10-22 15:11:31,076 - INFO - Auth rejected (password).
+2025-10-22 15:16:03,876 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:16:03,879 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:16:03,878 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:16:03,883 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:16:03,883 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:16:12,768 - INFO - Connection from 127.0.0.1:54046 on ssh
+2025-10-22 15:16:12,769 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:16:12,771 - ERROR - Traceback (most recent call last):
+2025-10-22 15:16:12,771 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:16:12,771 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:16:12,771 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:16:12,771 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:16:12,772 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:16:12,772 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:16:12,772 - ERROR -     raise EOFError()
+2025-10-22 15:16:12,773 - ERROR - EOFError
+2025-10-22 15:16:12,773 - ERROR - 
+2025-10-22 15:16:12,773 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:16:12,773 - ERROR - 
+2025-10-22 15:16:12,772 - INFO - Connection from 127.0.0.1:41264 on http
+2025-10-22 15:16:12,773 - ERROR - Traceback (most recent call last):
+2025-10-22 15:16:12,774 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:16:12,774 - ERROR -     self._check_banner()
+2025-10-22 15:16:12,774 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:16:12,774 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:16:12,774 - ERROR -     raise SSHException(
+2025-10-22 15:16:12,774 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:16:12,774 - ERROR -     )
+2025-10-22 15:16:12,774 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:16:12,774 - ERROR - 
+2025-10-22 15:16:12,774 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:16:12,774 - INFO - Connection from 127.0.0.1:42654 on https
+2025-10-22 15:16:12,775 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:16:12,776 - INFO - Connection from 127.0.0.1:54800 on ftp
+2025-10-22 15:16:12,779 - INFO - Connection from 127.0.0.1:48772 on mysql
+2025-10-22 15:16:12,790 - INFO - Connection from 127.0.0.1:54054 on ssh
+2025-10-22 15:16:12,791 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:16:12,805 - INFO - Auth rejected (none).
+2025-10-22 15:16:12,815 - INFO - Connection from 127.0.0.1:41268 on http
+2025-10-22 15:16:12,816 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:16:27,117 - INFO - Connection from 10.0.2.15:34874 on ssh
+2025-10-22 15:16:27,119 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:16:27,122 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-22 15:16:45,535 - INFO - Connection from 10.0.2.15:47360 on ssh
+2025-10-22 15:16:45,536 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:16:45,540 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-22 15:17:11,671 - INFO - Connection from 10.0.2.15:34412 on ssh
+2025-10-22 15:17:11,672 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:17:11,676 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-22 15:18:04,317 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:18:04,318 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:18:04,319 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:18:04,320 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:18:04,322 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:18:13,202 - INFO - Connection from 127.0.0.1:49178 on ssh
+2025-10-22 15:18:13,203 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:18:13,204 - ERROR - Traceback (most recent call last):
+2025-10-22 15:18:13,205 - INFO - Connection from 127.0.0.1:52188 on http
+2025-10-22 15:18:13,205 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:18:13,205 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:18:13,205 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:18:13,205 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:18:13,205 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:18:13,205 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:18:13,205 - ERROR -     raise EOFError()
+2025-10-22 15:18:13,205 - ERROR - EOFError
+2025-10-22 15:18:13,205 - ERROR - 
+2025-10-22 15:18:13,205 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:18:13,205 - ERROR - 
+2025-10-22 15:18:13,205 - ERROR - Traceback (most recent call last):
+2025-10-22 15:18:13,205 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:18:13,205 - ERROR -     self._check_banner()
+2025-10-22 15:18:13,205 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:18:13,205 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:18:13,205 - ERROR -     raise SSHException(
+2025-10-22 15:18:13,205 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:18:13,205 - ERROR -     )
+2025-10-22 15:18:13,205 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:18:13,205 - ERROR - 
+2025-10-22 15:18:13,208 - INFO - Connection from 127.0.0.1:56410 on https
+2025-10-22 15:18:13,208 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:18:13,210 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:18:13,211 - INFO - Connection from 127.0.0.1:34764 on ftp
+2025-10-22 15:18:13,217 - INFO - Connection from 127.0.0.1:53330 on mysql
+2025-10-22 15:18:13,234 - INFO - Connection from 127.0.0.1:49180 on ssh
+2025-10-22 15:18:13,235 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:18:13,241 - INFO - Auth rejected (none).
+2025-10-22 15:18:13,253 - INFO - Connection from 127.0.0.1:52196 on http
+2025-10-22 15:18:13,255 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:18:19,702 - INFO - Connection from 10.0.2.15:55746 on ssh
+2025-10-22 15:18:19,703 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:18:22,675 - INFO - Auth rejected (none).
+2025-10-22 15:18:33,151 - INFO - Auth rejected (password).
+2025-10-22 15:26:18,856 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:26:18,857 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:26:18,858 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:26:18,860 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:26:18,861 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:26:27,746 - INFO - Connection from 127.0.0.1:59826 on ssh
+2025-10-22 15:26:27,747 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:26:27,749 - ERROR - Traceback (most recent call last):
+2025-10-22 15:26:27,750 - INFO - Connection from 127.0.0.1:38244 on http
+2025-10-22 15:26:27,754 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:26:27,754 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:26:27,755 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:26:27,755 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:26:27,755 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:26:27,755 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:26:27,755 - ERROR -     raise EOFError()
+2025-10-22 15:26:27,755 - ERROR - EOFError
+2025-10-22 15:26:27,755 - ERROR - 
+2025-10-22 15:26:27,755 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:26:27,755 - ERROR - 
+2025-10-22 15:26:27,755 - ERROR - Traceback (most recent call last):
+2025-10-22 15:26:27,755 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:26:27,755 - ERROR -     self._check_banner()
+2025-10-22 15:26:27,755 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:26:27,755 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:26:27,755 - ERROR -     raise SSHException(
+2025-10-22 15:26:27,755 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:26:27,755 - ERROR -     )
+2025-10-22 15:26:27,755 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:26:27,755 - ERROR - 
+2025-10-22 15:26:27,755 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:26:27,756 - INFO - Connection from 127.0.0.1:33636 on https
+2025-10-22 15:26:27,756 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:26:27,760 - INFO - Connection from 127.0.0.1:56600 on ftp
+2025-10-22 15:26:27,763 - INFO - Connection from 127.0.0.1:41112 on mysql
+2025-10-22 15:26:27,773 - INFO - Connection from 127.0.0.1:59842 on ssh
+2025-10-22 15:26:27,775 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:26:27,783 - INFO - Auth rejected (none).
+2025-10-22 15:26:27,793 - INFO - Connection from 127.0.0.1:38258 on http
+2025-10-22 15:26:27,794 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:26:38,193 - INFO - Connection from 10.0.2.15:41618 on ssh
+2025-10-22 15:26:38,195 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:26:38,199 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-22 15:28:04,715 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:28:04,715 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:28:04,716 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:28:04,716 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:28:04,717 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:28:13,596 - INFO - Connection from 127.0.0.1:42830 on ssh
+2025-10-22 15:28:13,598 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:28:13,599 - INFO - Connection from 127.0.0.1:60860 on http
+2025-10-22 15:28:13,602 - ERROR - Traceback (most recent call last):
+2025-10-22 15:28:13,602 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:28:13,603 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:28:13,603 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:28:13,603 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:28:13,603 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:28:13,603 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:28:13,603 - ERROR -     raise EOFError()
+2025-10-22 15:28:13,603 - ERROR - EOFError
+2025-10-22 15:28:13,603 - ERROR - 
+2025-10-22 15:28:13,603 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:28:13,603 - ERROR - 
+2025-10-22 15:28:13,603 - ERROR - Traceback (most recent call last):
+2025-10-22 15:28:13,603 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:28:13,603 - ERROR -     self._check_banner()
+2025-10-22 15:28:13,603 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:28:13,603 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:28:13,603 - ERROR -     raise SSHException(
+2025-10-22 15:28:13,603 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:28:13,603 - ERROR -     )
+2025-10-22 15:28:13,603 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:28:13,603 - ERROR - 
+2025-10-22 15:28:13,603 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:28:13,603 - INFO - Connection from 127.0.0.1:40844 on https
+2025-10-22 15:28:13,606 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:28:13,610 - INFO - Connection from 127.0.0.1:46490 on mysql
+2025-10-22 15:28:13,612 - INFO - Connection from 127.0.0.1:51496 on ftp
+2025-10-22 15:28:13,628 - INFO - Connection from 127.0.0.1:42834 on ssh
+2025-10-22 15:28:13,630 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:28:13,640 - INFO - Auth rejected (none).
+2025-10-22 15:28:13,651 - INFO - Connection from 127.0.0.1:60870 on http
+2025-10-22 15:28:13,653 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:28:21,973 - INFO - Connection from 10.0.2.15:44730 on ssh
+2025-10-22 15:28:21,974 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:28:41,890 - INFO - Auth rejected (none).
+2025-10-22 15:28:50,208 - INFO - Auth rejected (password).
+2025-10-22 15:28:50,573 - INFO - Auth rejected (password).
+2025-10-22 15:28:50,946 - INFO - Auth rejected (password).
+2025-10-22 15:28:52,417 - INFO - Connection from 10.0.2.15:60020 on ssh
+2025-10-22 15:28:52,418 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:28:52,423 - INFO - Auth rejected (none).
+2025-10-22 15:28:56,006 - INFO - Auth rejected (password).
+2025-10-22 15:28:57,755 - INFO - Auth rejected (password).
+2025-10-22 15:28:58,548 - INFO - Auth rejected (password).
+2025-10-22 15:34:03,292 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:34:03,294 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:34:03,295 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:34:03,295 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:34:03,296 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:34:12,119 - INFO - Connection from 127.0.0.1:49238 on ssh
+2025-10-22 15:34:12,120 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:34:12,122 - ERROR - Traceback (most recent call last):
+2025-10-22 15:34:12,123 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:34:12,123 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:34:12,123 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:34:12,123 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:34:12,123 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:34:12,123 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:34:12,123 - ERROR -     raise EOFError()
+2025-10-22 15:34:12,123 - ERROR - EOFError
+2025-10-22 15:34:12,123 - ERROR - 
+2025-10-22 15:34:12,123 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:34:12,123 - ERROR - 
+2025-10-22 15:34:12,123 - ERROR - Traceback (most recent call last):
+2025-10-22 15:34:12,123 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:34:12,123 - ERROR -     self._check_banner()
+2025-10-22 15:34:12,123 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:34:12,122 - INFO - Connection from 127.0.0.1:39540 on http
+2025-10-22 15:34:12,123 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:34:12,123 - ERROR -     raise SSHException(
+2025-10-22 15:34:12,123 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:34:12,123 - ERROR -     )
+2025-10-22 15:34:12,123 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:34:12,123 - ERROR - 
+2025-10-22 15:34:12,124 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:34:12,125 - INFO - Connection from 127.0.0.1:60468 on https
+2025-10-22 15:34:12,125 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:34:12,128 - INFO - Connection from 127.0.0.1:60266 on ftp
+2025-10-22 15:34:12,131 - INFO - Connection from 127.0.0.1:33618 on mysql
+2025-10-22 15:34:12,143 - INFO - Connection from 127.0.0.1:49242 on ssh
+2025-10-22 15:34:12,145 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:34:12,152 - INFO - Auth rejected (none).
+2025-10-22 15:34:12,169 - INFO - Connection from 127.0.0.1:39556 on http
+2025-10-22 15:34:12,170 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:34:48,822 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:34:48,823 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:34:48,823 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:34:48,823 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:34:48,824 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:34:57,705 - INFO - Connection from 127.0.0.1:42278 on ssh
+2025-10-22 15:34:57,707 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:34:57,710 - ERROR - Traceback (most recent call last):
+2025-10-22 15:34:57,710 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:34:57,710 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:34:57,710 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:34:57,710 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:34:57,710 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:34:57,710 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:34:57,710 - ERROR -     raise EOFError()
+2025-10-22 15:34:57,710 - ERROR - EOFError
+2025-10-22 15:34:57,710 - ERROR - 
+2025-10-22 15:34:57,710 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:34:57,710 - ERROR - 
+2025-10-22 15:34:57,710 - ERROR - Traceback (most recent call last):
+2025-10-22 15:34:57,711 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:34:57,711 - ERROR -     self._check_banner()
+2025-10-22 15:34:57,711 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:34:57,711 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:34:57,711 - ERROR -     raise SSHException(
+2025-10-22 15:34:57,711 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:34:57,711 - ERROR -     )
+2025-10-22 15:34:57,711 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:34:57,711 - ERROR - 
+2025-10-22 15:34:57,711 - INFO - Connection from 127.0.0.1:50136 on http
+2025-10-22 15:34:57,712 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:34:57,712 - INFO - Connection from 127.0.0.1:38546 on https
+2025-10-22 15:34:57,713 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:34:57,714 - INFO - Connection from 127.0.0.1:48636 on ftp
+2025-10-22 15:34:57,717 - INFO - Connection from 127.0.0.1:34628 on mysql
+2025-10-22 15:34:57,728 - INFO - Connection from 127.0.0.1:42286 on ssh
+2025-10-22 15:34:57,730 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:34:57,742 - INFO - Auth rejected (none).
+2025-10-22 15:34:57,751 - INFO - Connection from 127.0.0.1:50142 on http
+2025-10-22 15:34:57,753 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-22 15:41:24,162 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-22 15:41:24,162 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-22 15:41:24,163 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-22 15:41:24,163 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-22 15:41:24,164 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-22 15:41:33,052 - INFO - Connection from 127.0.0.1:42324 on ssh
+2025-10-22 15:41:33,054 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-22 15:41:33,056 - INFO - Connection from 127.0.0.1:41472 on http
+2025-10-22 15:41:33,056 - ERROR - Traceback (most recent call last):
+2025-10-22 15:41:33,064 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-22 15:41:33,065 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-22 15:41:33,065 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-22 15:41:33,065 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-22 15:41:33,065 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-22 15:41:33,065 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-22 15:41:33,065 - ERROR -     raise EOFError()
+2025-10-22 15:41:33,065 - ERROR - EOFError
+2025-10-22 15:41:33,065 - ERROR - 
+2025-10-22 15:41:33,065 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-22 15:41:33,065 - ERROR - 
+2025-10-22 15:41:33,065 - ERROR - Traceback (most recent call last):
+2025-10-22 15:41:33,065 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-22 15:41:33,065 - ERROR -     self._check_banner()
+2025-10-22 15:41:33,065 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-22 15:41:33,065 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-22 15:41:33,065 - ERROR -     raise SSHException(
+2025-10-22 15:41:33,065 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-22 15:41:33,065 - ERROR -     )
+2025-10-22 15:41:33,065 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-22 15:41:33,065 - ERROR - 
+2025-10-22 15:41:33,067 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-22 15:41:33,067 - INFO - Connection from 127.0.0.1:40892 on https
+2025-10-22 15:41:33,068 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-22 15:41:33,069 - INFO - Connection from 127.0.0.1:48814 on ftp
+2025-10-22 15:41:33,071 - INFO - Connection from 127.0.0.1:41636 on mysql
+2025-10-22 15:41:33,088 - INFO - Connection from 127.0.0.1:42328 on ssh
+2025-10-22 15:41:33,090 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-22 15:41:33,098 - INFO - Auth rejected (none).
+2025-10-22 15:41:33,110 - INFO - Connection from 127.0.0.1:41474 on http
+2025-10-22 15:41:33,111 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 08:59:48,679 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 08:59:48,680 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 08:59:48,680 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 08:59:48,680 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 08:59:48,680 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 08:59:57,560 - INFO - Connection from 127.0.0.1:38126 on ssh
+2025-10-23 08:59:57,562 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 08:59:57,566 - INFO - Connection from 127.0.0.1:52982 on http
+2025-10-23 08:59:57,567 - ERROR - Traceback (most recent call last):
+2025-10-23 08:59:57,567 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 08:59:57,567 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 08:59:57,567 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 08:59:57,567 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 08:59:57,567 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 08:59:57,567 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 08:59:57,567 - ERROR -     raise EOFError()
+2025-10-23 08:59:57,567 - ERROR - EOFError
+2025-10-23 08:59:57,567 - ERROR - 
+2025-10-23 08:59:57,568 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 08:59:57,568 - ERROR - 
+2025-10-23 08:59:57,568 - ERROR - Traceback (most recent call last):
+2025-10-23 08:59:57,568 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 08:59:57,568 - ERROR -     self._check_banner()
+2025-10-23 08:59:57,568 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 08:59:57,568 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 08:59:57,568 - ERROR -     raise SSHException(
+2025-10-23 08:59:57,568 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 08:59:57,568 - ERROR -     )
+2025-10-23 08:59:57,568 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 08:59:57,568 - ERROR - 
+2025-10-23 08:59:57,568 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 08:59:57,568 - INFO - Connection from 127.0.0.1:38954 on https
+2025-10-23 08:59:57,618 - INFO - Connection from 127.0.0.1:38132 on ssh
+2025-10-23 08:59:57,619 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 08:59:57,619 - INFO - Connection from 127.0.0.1:48332 on mysql
+2025-10-23 08:59:57,619 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 08:59:57,620 - INFO - Connection from 127.0.0.1:52218 on ftp
+2025-10-23 08:59:57,669 - INFO - Auth rejected (none).
+2025-10-23 08:59:57,690 - INFO - Connection from 127.0.0.1:52994 on http
+2025-10-23 08:59:57,692 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:00:19,568 - INFO - Connection from 10.0.2.15:51192 on ssh
+2025-10-23 09:00:19,572 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:00:19,617 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:00:38,983 - INFO - Connection from 10.0.2.15:45348 on ssh
+2025-10-23 09:00:38,985 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:00:41,079 - INFO - Auth rejected (none).
+2025-10-23 09:01:12,638 - INFO - Connection from 10.0.2.15:54642 on ssh
+2025-10-23 09:01:12,639 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:01:12,644 - INFO - Auth rejected (none).
+2025-10-23 09:01:14,413 - INFO - Auth rejected (password).
+2025-10-23 09:03:45,719 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:03:45,720 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:03:45,720 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:03:45,721 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:03:45,721 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:03:54,585 - INFO - Connection from 127.0.0.1:50562 on ssh
+2025-10-23 09:03:54,587 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:03:54,588 - INFO - Connection from 127.0.0.1:58072 on http
+2025-10-23 09:03:54,592 - INFO - Connection from 127.0.0.1:58084 on https
+2025-10-23 09:03:54,595 - ERROR - Traceback (most recent call last):
+2025-10-23 09:03:54,595 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:03:54,595 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:03:54,595 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:03:54,595 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:03:54,595 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:03:54,595 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:03:54,595 - ERROR -     raise EOFError()
+2025-10-23 09:03:54,595 - ERROR - EOFError
+2025-10-23 09:03:54,595 - ERROR - 
+2025-10-23 09:03:54,595 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:03:54,595 - ERROR - 
+2025-10-23 09:03:54,595 - ERROR - Traceback (most recent call last):
+2025-10-23 09:03:54,595 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:03:54,595 - ERROR -     self._check_banner()
+2025-10-23 09:03:54,595 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:03:54,595 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:03:54,595 - ERROR -     raise SSHException(
+2025-10-23 09:03:54,595 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:03:54,595 - ERROR -     )
+2025-10-23 09:03:54,595 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:03:54,595 - ERROR - 
+2025-10-23 09:03:54,596 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:03:54,596 - INFO - Connection from 127.0.0.1:52948 on ftp
+2025-10-23 09:03:54,597 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:03:54,598 - INFO - Connection from 127.0.0.1:38654 on mysql
+2025-10-23 09:03:54,612 - INFO - Connection from 127.0.0.1:50568 on ssh
+2025-10-23 09:03:54,613 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:03:54,669 - INFO - Auth rejected (none).
+2025-10-23 09:03:54,678 - INFO - Connection from 127.0.0.1:58078 on http
+2025-10-23 09:03:54,679 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:04:08,712 - INFO - Connection from 10.0.2.15:55486 on ssh
+2025-10-23 09:04:08,714 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:04:08,717 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:04:19,090 - INFO - Connection from 10.0.2.15:40352 on ssh
+2025-10-23 09:04:19,091 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:04:24,936 - INFO - Auth rejected (none).
+2025-10-23 09:04:41,352 - INFO - Auth rejected (password).
+2025-10-23 09:04:44,360 - INFO - Auth rejected (password).
+2025-10-23 09:05:53,489 - INFO - Connection from 10.0.2.15:39832 on ssh
+2025-10-23 09:05:53,491 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:05:53,496 - INFO - Auth rejected (none).
+2025-10-23 09:06:14,395 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:06:14,396 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:06:14,396 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:06:14,397 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:06:14,398 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:06:23,304 - INFO - Connection from 127.0.0.1:55116 on ssh
+2025-10-23 09:06:23,305 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:06:23,307 - INFO - Connection from 127.0.0.1:38834 on http
+2025-10-23 09:06:23,307 - ERROR - Traceback (most recent call last):
+2025-10-23 09:06:23,308 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:06:23,308 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:06:23,308 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:06:23,308 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:06:23,308 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:06:23,308 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:06:23,308 - ERROR -     raise EOFError()
+2025-10-23 09:06:23,308 - ERROR - EOFError
+2025-10-23 09:06:23,308 - ERROR - 
+2025-10-23 09:06:23,308 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:06:23,308 - ERROR - 
+2025-10-23 09:06:23,308 - ERROR - Traceback (most recent call last):
+2025-10-23 09:06:23,308 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:06:23,308 - ERROR -     self._check_banner()
+2025-10-23 09:06:23,308 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:06:23,308 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:06:23,308 - ERROR -     raise SSHException(
+2025-10-23 09:06:23,308 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:06:23,308 - ERROR -     )
+2025-10-23 09:06:23,308 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:06:23,308 - ERROR - 
+2025-10-23 09:06:23,308 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:06:23,310 - INFO - Connection from 127.0.0.1:37046 on https
+2025-10-23 09:06:23,311 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:06:23,313 - INFO - Connection from 127.0.0.1:48198 on ftp
+2025-10-23 09:06:23,315 - INFO - Connection from 127.0.0.1:57224 on mysql
+2025-10-23 09:06:23,327 - INFO - Connection from 127.0.0.1:55132 on ssh
+2025-10-23 09:06:23,328 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:06:23,335 - INFO - Auth rejected (none).
+2025-10-23 09:06:23,344 - INFO - Connection from 127.0.0.1:38842 on http
+2025-10-23 09:06:23,345 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:06:44,581 - INFO - Connection from 10.0.2.15:44404 on ssh
+2025-10-23 09:06:44,584 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:06:44,588 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:06:55,550 - INFO - Connection from 10.0.2.15:53104 on ssh
+2025-10-23 09:06:55,552 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:06:58,780 - INFO - Auth rejected (none).
+2025-10-23 09:07:11,216 - INFO - Auth granted (password).
+2025-10-23 09:07:11,218 - INFO - Disconnect (code 11): disconnected by user
+2025-10-23 09:08:01,049 - INFO - Connection from 10.0.2.15:44128 on ssh
+2025-10-23 09:08:01,051 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:08:01,056 - INFO - Auth rejected (none).
+2025-10-23 09:11:46,449 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:11:46,449 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:11:46,450 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:11:46,450 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:11:46,451 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:11:55,372 - INFO - Connection from 127.0.0.1:33554 on ssh
+2025-10-23 09:11:55,373 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:11:55,375 - INFO - Connection from 127.0.0.1:33006 on http
+2025-10-23 09:11:55,379 - ERROR - Traceback (most recent call last):
+2025-10-23 09:11:55,380 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:11:55,380 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:11:55,379 - INFO - Connection from 127.0.0.1:39854 on https
+2025-10-23 09:11:55,380 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:11:55,380 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:11:55,380 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:11:55,380 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:11:55,380 - ERROR -     raise EOFError()
+2025-10-23 09:11:55,380 - ERROR - EOFError
+2025-10-23 09:11:55,380 - ERROR - 
+2025-10-23 09:11:55,381 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:11:55,381 - ERROR - 
+2025-10-23 09:11:55,381 - ERROR - Traceback (most recent call last):
+2025-10-23 09:11:55,381 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:11:55,381 - ERROR -     self._check_banner()
+2025-10-23 09:11:55,381 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:11:55,381 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:11:55,381 - ERROR -     raise SSHException(
+2025-10-23 09:11:55,381 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:11:55,381 - ERROR -     )
+2025-10-23 09:11:55,381 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:11:55,381 - ERROR - 
+2025-10-23 09:11:55,381 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:11:55,412 - INFO - Connection from 127.0.0.1:44800 on mysql
+2025-10-23 09:11:55,412 - INFO - Connection from 127.0.0.1:42804 on ftp
+2025-10-23 09:11:55,413 - INFO - Connection from 127.0.0.1:33556 on ssh
+2025-10-23 09:11:55,414 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:11:55,415 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:11:55,470 - INFO - Auth rejected (none).
+2025-10-23 09:11:55,487 - INFO - Connection from 127.0.0.1:33012 on http
+2025-10-23 09:11:55,488 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:12:55,851 - INFO - Connection from 10.0.2.15:59164 on http
+2025-10-23 09:12:55,852 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: web_request
+2025-10-23 09:12:55,913 - INFO - Connection from 10.0.2.15:59166 on http
+2025-10-23 09:12:55,913 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: web_request
+2025-10-23 09:13:03,110 - INFO - Connection from 10.0.2.15:50592 on https
+2025-10-23 09:13:03,119 - ERROR - Web Error from 10.0.2.15: [SSL: SSLV3_ALERT_BAD_CERTIFICATE] ssl/tls alert bad certificate (_ssl.c:1033)
+2025-10-23 09:13:08,906 - INFO - Connection from 10.0.2.15:50600 on https
+2025-10-23 09:13:08,911 - WARNING - Attack detected - IP: 10.0.2.15, Service: https, Type: web_request
+2025-10-23 09:13:08,945 - INFO - Connection from 10.0.2.15:50606 on https
+2025-10-23 09:13:08,949 - WARNING - Attack detected - IP: 10.0.2.15, Service: https, Type: web_request
+2025-10-23 09:17:13,285 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:17:13,285 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:17:13,286 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:17:13,287 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:17:13,287 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:17:21,600 - INFO - Connection from 10.0.2.15:43660 on http
+2025-10-23 09:17:21,601 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: web_request
+2025-10-23 09:17:22,210 - INFO - Connection from 127.0.0.1:36882 on ssh
+2025-10-23 09:17:22,211 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:17:22,213 - ERROR - Traceback (most recent call last):
+2025-10-23 09:17:22,214 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:17:22,214 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:17:22,214 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:17:22,214 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:17:22,214 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:17:22,214 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:17:22,214 - ERROR -     raise EOFError()
+2025-10-23 09:17:22,214 - ERROR - EOFError
+2025-10-23 09:17:22,214 - ERROR - 
+2025-10-23 09:17:22,214 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:17:22,214 - ERROR - 
+2025-10-23 09:17:22,214 - ERROR - Traceback (most recent call last):
+2025-10-23 09:17:22,214 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:17:22,214 - ERROR -     self._check_banner()
+2025-10-23 09:17:22,214 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:17:22,214 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:17:22,214 - ERROR -     raise SSHException(
+2025-10-23 09:17:22,214 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:17:22,214 - ERROR -     )
+2025-10-23 09:17:22,214 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:17:22,214 - ERROR - 
+2025-10-23 09:17:22,214 - INFO - Connection from 127.0.0.1:55438 on http
+2025-10-23 09:17:22,215 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:17:22,215 - INFO - Connection from 127.0.0.1:43560 on https
+2025-10-23 09:17:22,215 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:17:22,217 - INFO - Connection from 127.0.0.1:34918 on ftp
+2025-10-23 09:17:22,219 - INFO - Connection from 127.0.0.1:60036 on mysql
+2025-10-23 09:17:22,228 - INFO - Connection from 127.0.0.1:36888 on ssh
+2025-10-23 09:17:22,230 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:17:22,235 - INFO - Auth rejected (none).
+2025-10-23 09:17:22,244 - INFO - Connection from 127.0.0.1:55442 on http
+2025-10-23 09:17:22,244 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:18:06,349 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:18:06,349 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:18:06,349 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:18:06,350 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:18:06,350 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:18:14,537 - INFO - Connection from 10.0.2.15:39214 on http
+2025-10-23 09:18:14,538 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: web_request
+2025-10-23 09:18:15,230 - INFO - Connection from 127.0.0.1:38280 on ssh
+2025-10-23 09:18:15,231 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:18:15,233 - ERROR - Traceback (most recent call last):
+2025-10-23 09:18:15,233 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:18:15,233 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:18:15,233 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:18:15,233 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:18:15,233 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:18:15,233 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:18:15,233 - ERROR -     raise EOFError()
+2025-10-23 09:18:15,233 - ERROR - EOFError
+2025-10-23 09:18:15,233 - ERROR - 
+2025-10-23 09:18:15,233 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:18:15,233 - ERROR - 
+2025-10-23 09:18:15,233 - ERROR - Traceback (most recent call last):
+2025-10-23 09:18:15,233 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:18:15,233 - ERROR -     self._check_banner()
+2025-10-23 09:18:15,234 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:18:15,234 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:18:15,234 - ERROR -     raise SSHException(
+2025-10-23 09:18:15,234 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:18:15,234 - ERROR -     )
+2025-10-23 09:18:15,234 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:18:15,234 - ERROR - 
+2025-10-23 09:18:15,233 - INFO - Connection from 127.0.0.1:50496 on http
+2025-10-23 09:18:15,235 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:18:15,236 - INFO - Connection from 127.0.0.1:38678 on https
+2025-10-23 09:18:15,237 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:18:15,238 - INFO - Connection from 127.0.0.1:59252 on ftp
+2025-10-23 09:18:15,242 - INFO - Connection from 127.0.0.1:45288 on mysql
+2025-10-23 09:18:15,251 - INFO - Connection from 127.0.0.1:38286 on ssh
+2025-10-23 09:18:15,253 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:18:15,259 - INFO - Auth rejected (none).
+2025-10-23 09:18:15,270 - INFO - Connection from 127.0.0.1:50502 on http
+2025-10-23 09:18:15,270 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:18:57,511 - INFO - Connection from 10.0.2.15:58788 on http
+2025-10-23 09:18:57,512 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: brute_force_web
+2025-10-23 09:22:48,806 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:22:48,807 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:22:48,807 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:22:48,807 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:22:48,808 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:22:57,697 - INFO - Connection from 127.0.0.1:60268 on ssh
+2025-10-23 09:22:57,698 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:22:57,700 - ERROR - Traceback (most recent call last):
+2025-10-23 09:22:57,700 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:22:57,700 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:22:57,700 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:22:57,700 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:22:57,700 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:22:57,701 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:22:57,701 - ERROR -     raise EOFError()
+2025-10-23 09:22:57,701 - ERROR - EOFError
+2025-10-23 09:22:57,701 - ERROR - 
+2025-10-23 09:22:57,701 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:22:57,701 - ERROR - 
+2025-10-23 09:22:57,701 - ERROR - Traceback (most recent call last):
+2025-10-23 09:22:57,701 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:22:57,701 - ERROR -     self._check_banner()
+2025-10-23 09:22:57,701 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:22:57,701 - INFO - Connection from 127.0.0.1:48780 on http
+2025-10-23 09:22:57,701 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:22:57,702 - ERROR -     raise SSHException(
+2025-10-23 09:22:57,702 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:22:57,702 - ERROR -     )
+2025-10-23 09:22:57,702 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:22:57,702 - ERROR - 
+2025-10-23 09:22:57,703 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:22:57,704 - INFO - Connection from 127.0.0.1:52128 on https
+2025-10-23 09:22:57,705 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:22:57,706 - INFO - Connection from 127.0.0.1:34264 on ftp
+2025-10-23 09:22:57,708 - INFO - Connection from 127.0.0.1:47690 on mysql
+2025-10-23 09:22:57,719 - INFO - Connection from 127.0.0.1:60276 on ssh
+2025-10-23 09:22:57,720 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:22:57,726 - INFO - Auth rejected (none).
+2025-10-23 09:22:57,735 - INFO - Connection from 127.0.0.1:48790 on http
+2025-10-23 09:22:57,736 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:24:20,907 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:24:20,908 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:24:20,909 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:24:20,910 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:24:20,910 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:24:29,896 - INFO - Connection from 127.0.0.1:59156 on ssh
+2025-10-23 09:24:29,898 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:24:29,904 - ERROR - Traceback (most recent call last):
+2025-10-23 09:24:29,904 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:24:29,906 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:24:29,909 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:24:29,909 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:24:29,909 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:24:29,909 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:24:29,908 - INFO - Connection from 127.0.0.1:46048 on https
+2025-10-23 09:24:29,908 - INFO - Connection from 127.0.0.1:45566 on http
+2025-10-23 09:24:29,909 - ERROR -     raise EOFError()
+2025-10-23 09:24:29,911 - ERROR - EOFError
+2025-10-23 09:24:29,911 - ERROR - 
+2025-10-23 09:24:29,911 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:24:29,911 - ERROR - 
+2025-10-23 09:24:29,911 - ERROR - Traceback (most recent call last):
+2025-10-23 09:24:29,911 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:24:29,911 - ERROR -     self._check_banner()
+2025-10-23 09:24:29,911 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:24:29,911 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:24:29,911 - ERROR -     raise SSHException(
+2025-10-23 09:24:29,911 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:24:29,911 - ERROR -     )
+2025-10-23 09:24:29,911 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:24:29,911 - ERROR - 
+2025-10-23 09:24:29,911 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:24:29,911 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:24:29,912 - INFO - Connection from 127.0.0.1:38982 on ftp
+2025-10-23 09:24:29,913 - INFO - Connection from 127.0.0.1:39294 on mysql
+2025-10-23 09:24:29,922 - INFO - Connection from 127.0.0.1:59158 on ssh
+2025-10-23 09:24:29,923 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:24:29,930 - INFO - Auth rejected (none).
+2025-10-23 09:24:29,938 - INFO - Connection from 127.0.0.1:45574 on http
+2025-10-23 09:24:29,939 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:25:10,135 - INFO - Connection from 10.0.2.15:43692 on https
+2025-10-23 09:25:10,146 - ERROR - Web Error from 10.0.2.15: [SSL: SSLV3_ALERT_BAD_CERTIFICATE] ssl/tls alert bad certificate (_ssl.c:1033)
+2025-10-23 09:25:13,492 - INFO - Connection from 10.0.2.15:58620 on https
+2025-10-23 09:25:13,497 - WARNING - Attack detected - IP: 10.0.2.15, Service: https, Type: web_request
+2025-10-23 09:25:16,889 - INFO - Connection from 10.0.2.15:58634 on https
+2025-10-23 09:25:16,891 - WARNING - Attack detected - IP: 10.0.2.15, Service: https, Type: brute_force_web
+2025-10-23 09:25:50,983 - INFO - Connection from 10.0.2.15:59936 on https
+2025-10-23 09:25:50,987 - ERROR - Web Error from 10.0.2.15: [SSL: SSLV3_ALERT_BAD_CERTIFICATE] ssl/tls alert bad certificate (_ssl.c:1033)
+2025-10-23 09:25:59,431 - INFO - Connection from 10.0.2.15:59946 on https
+2025-10-23 09:25:59,435 - WARNING - Attack detected - IP: 10.0.2.15, Service: https, Type: brute_force_web
+2025-10-23 09:27:06,378 - INFO - Connection from 10.0.2.15:46468 on ftp
+2025-10-23 09:28:19,801 - INFO - Connection from 10.0.2.15:57748 on ssh
+2025-10-23 09:28:19,803 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:28:19,854 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:28:28,105 - INFO - Connection from 10.0.2.15:40090 on ssh
+2025-10-23 09:28:28,106 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:28:30,250 - INFO - Auth rejected (none).
+2025-10-23 09:30:07,596 - INFO - Connection from 10.0.2.15:58676 on ssh
+2025-10-23 09:30:07,598 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:30:07,603 - INFO - Auth rejected (none).
+2025-10-23 09:30:21,082 - INFO - Auth granted (password).
+2025-10-23 09:30:21,083 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 09:34:26,963 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:34:26,965 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:34:26,966 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:34:26,966 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:34:26,967 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:34:35,966 - INFO - Connection from 127.0.0.1:49128 on ssh
+2025-10-23 09:34:35,967 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:34:35,969 - ERROR - Traceback (most recent call last):
+2025-10-23 09:34:35,969 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:34:35,969 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:34:35,969 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:34:35,969 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:34:35,969 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:34:35,969 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:34:35,969 - ERROR -     raise EOFError()
+2025-10-23 09:34:35,970 - ERROR - EOFError
+2025-10-23 09:34:35,970 - ERROR - 
+2025-10-23 09:34:35,970 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:34:35,970 - ERROR - 
+2025-10-23 09:34:35,970 - ERROR - Traceback (most recent call last):
+2025-10-23 09:34:35,970 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:34:35,970 - ERROR -     self._check_banner()
+2025-10-23 09:34:35,970 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:34:35,970 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:34:35,970 - ERROR -     raise SSHException(
+2025-10-23 09:34:35,970 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:34:35,970 - ERROR -     )
+2025-10-23 09:34:35,970 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:34:35,970 - ERROR - 
+2025-10-23 09:34:35,970 - INFO - Connection from 127.0.0.1:59284 on http
+2025-10-23 09:34:35,971 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:34:35,971 - INFO - Connection from 127.0.0.1:57382 on https
+2025-10-23 09:34:35,971 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:34:35,974 - INFO - Connection from 127.0.0.1:56990 on ftp
+2025-10-23 09:34:35,975 - INFO - Connection from 127.0.0.1:37876 on mysql
+2025-10-23 09:34:35,985 - INFO - Connection from 127.0.0.1:49140 on ssh
+2025-10-23 09:34:35,986 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:34:35,993 - INFO - Auth rejected (none).
+2025-10-23 09:34:36,001 - INFO - Connection from 127.0.0.1:59298 on http
+2025-10-23 09:34:36,002 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:35:18,627 - INFO - Connection from 10.0.2.15:39356 on ssh
+2025-10-23 09:35:18,629 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:35:18,633 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:35:26,209 - INFO - Connection from 10.0.2.15:46430 on ssh
+2025-10-23 09:35:26,210 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:35:28,763 - INFO - Auth rejected (none).
+2025-10-23 09:35:43,177 - INFO - Auth granted (password).
+2025-10-23 09:35:43,178 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 09:49:12,736 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:49:12,736 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:49:12,737 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:49:12,738 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:49:12,739 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:49:21,600 - INFO - Connection from 127.0.0.1:51506 on ssh
+2025-10-23 09:49:21,601 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:49:21,603 - INFO - Connection from 127.0.0.1:44314 on http
+2025-10-23 09:49:21,606 - INFO - Connection from 127.0.0.1:42990 on https
+2025-10-23 09:49:21,607 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:49:21,609 - INFO - Connection from 127.0.0.1:52400 on ftp
+2025-10-23 09:49:21,611 - INFO - Connection from 127.0.0.1:45604 on mysql
+2025-10-23 09:49:21,624 - INFO - Connection from 127.0.0.1:51516 on ssh
+2025-10-23 09:49:21,629 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:49:21,638 - INFO - Auth rejected (none).
+2025-10-23 09:49:21,639 - ERROR - Traceback (most recent call last):
+2025-10-23 09:49:21,640 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:49:21,640 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:49:21,640 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:49:21,640 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:49:21,640 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:49:21,640 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:49:21,640 - ERROR -     raise EOFError()
+2025-10-23 09:49:21,640 - ERROR - EOFError
+2025-10-23 09:49:21,640 - ERROR - 
+2025-10-23 09:49:21,640 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:49:21,640 - ERROR - 
+2025-10-23 09:49:21,640 - ERROR - Traceback (most recent call last):
+2025-10-23 09:49:21,640 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:49:21,640 - ERROR -     self._check_banner()
+2025-10-23 09:49:21,640 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:49:21,640 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:49:21,640 - ERROR -     raise SSHException(
+2025-10-23 09:49:21,640 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:49:21,640 - ERROR -     )
+2025-10-23 09:49:21,640 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:49:21,640 - ERROR - 
+2025-10-23 09:49:21,640 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:49:21,650 - INFO - Connection from 127.0.0.1:44320 on http
+2025-10-23 09:49:21,651 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:49:43,213 - INFO - Connection from 10.0.2.15:54912 on ssh
+2025-10-23 09:49:43,226 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:49:43,232 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:49:49,084 - INFO - Connection from 10.0.2.15:54924 on ssh
+2025-10-23 09:49:49,086 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:49:54,769 - INFO - Auth rejected (none).
+2025-10-23 09:50:09,175 - INFO - Auth granted (password).
+2025-10-23 09:50:09,176 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 09:52:26,042 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:52:26,043 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:52:26,043 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:52:26,044 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:52:26,044 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:52:34,896 - INFO - Connection from 127.0.0.1:48382 on ssh
+2025-10-23 09:52:34,900 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:52:34,902 - INFO - Connection from 127.0.0.1:51812 on http
+2025-10-23 09:52:34,904 - ERROR - Traceback (most recent call last):
+2025-10-23 09:52:34,904 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:52:34,904 - INFO - Connection from 127.0.0.1:49648 on https
+2025-10-23 09:52:34,905 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:52:34,906 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:52:34,906 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:52:34,906 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:52:34,906 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:52:34,906 - ERROR -     raise EOFError()
+2025-10-23 09:52:34,906 - ERROR - EOFError
+2025-10-23 09:52:34,906 - ERROR - 
+2025-10-23 09:52:34,906 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:52:34,906 - ERROR - 
+2025-10-23 09:52:34,906 - ERROR - Traceback (most recent call last):
+2025-10-23 09:52:34,906 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:52:34,906 - ERROR -     self._check_banner()
+2025-10-23 09:52:34,906 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:52:34,906 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:52:34,906 - ERROR -     raise SSHException(
+2025-10-23 09:52:34,906 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:52:34,906 - ERROR -     )
+2025-10-23 09:52:34,906 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:52:34,906 - ERROR - 
+2025-10-23 09:52:34,907 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:52:34,907 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:52:34,908 - INFO - Connection from 127.0.0.1:48846 on ftp
+2025-10-23 09:52:34,910 - INFO - Connection from 127.0.0.1:56880 on mysql
+2025-10-23 09:52:34,921 - INFO - Connection from 127.0.0.1:48386 on ssh
+2025-10-23 09:52:34,923 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:52:34,931 - INFO - Auth rejected (none).
+2025-10-23 09:52:34,940 - INFO - Connection from 127.0.0.1:51826 on http
+2025-10-23 09:52:34,941 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:52:53,819 - INFO - Connection from 10.0.2.15:56916 on ssh
+2025-10-23 09:52:53,821 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:52:53,845 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 09:52:58,816 - INFO - Connection from 10.0.2.15:56924 on ssh
+2025-10-23 09:52:58,817 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:53:01,016 - INFO - Auth rejected (none).
+2025-10-23 09:53:13,078 - INFO - Auth rejected (password).
+2025-10-23 09:54:28,166 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:54:28,167 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:54:28,166 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:54:28,170 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:54:28,170 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:54:37,019 - INFO - Connection from 127.0.0.1:35232 on ssh
+2025-10-23 09:54:37,021 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:54:37,025 - ERROR - Traceback (most recent call last):
+2025-10-23 09:54:37,025 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:54:37,025 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:54:37,025 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:54:37,025 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:54:37,025 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:54:37,025 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:54:37,025 - ERROR -     raise EOFError()
+2025-10-23 09:54:37,025 - ERROR - EOFError
+2025-10-23 09:54:37,025 - ERROR - 
+2025-10-23 09:54:37,025 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:54:37,025 - ERROR - 
+2025-10-23 09:54:37,025 - ERROR - Traceback (most recent call last):
+2025-10-23 09:54:37,025 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:54:37,025 - ERROR -     self._check_banner()
+2025-10-23 09:54:37,025 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:54:37,025 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:54:37,025 - ERROR -     raise SSHException(
+2025-10-23 09:54:37,025 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:54:37,025 - ERROR -     )
+2025-10-23 09:54:37,025 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:54:37,025 - ERROR - 
+2025-10-23 09:54:37,026 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:54:37,027 - INFO - Connection from 127.0.0.1:57152 on http
+2025-10-23 09:54:37,029 - INFO - Connection from 127.0.0.1:51540 on https
+2025-10-23 09:54:37,030 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:54:37,032 - INFO - Connection from 127.0.0.1:59044 on ftp
+2025-10-23 09:54:37,035 - INFO - Connection from 127.0.0.1:38648 on mysql
+2025-10-23 09:54:37,046 - INFO - Connection from 127.0.0.1:35248 on ssh
+2025-10-23 09:54:37,049 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:54:37,060 - INFO - Auth rejected (none).
+2025-10-23 09:54:37,069 - INFO - Connection from 127.0.0.1:57166 on http
+2025-10-23 09:54:37,071 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:54:46,463 - INFO - Connection from 10.0.2.15:39710 on ssh
+2025-10-23 09:54:46,465 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:54:48,684 - INFO - Auth rejected (none).
+2025-10-23 09:55:03,474 - INFO - Auth rejected (password).
+2025-10-23 09:55:45,357 - INFO - Connection from 10.0.2.15:40456 on ssh
+2025-10-23 09:55:45,358 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:55:45,364 - INFO - Auth rejected (none).
+2025-10-23 09:56:01,851 - INFO - Auth granted (password).
+2025-10-23 09:56:01,853 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 09:57:45,682 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 09:57:45,683 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 09:57:45,684 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 09:57:45,684 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 09:57:45,685 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 09:57:54,599 - INFO - Connection from 127.0.0.1:56284 on ssh
+2025-10-23 09:57:54,601 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 09:57:54,605 - INFO - Connection from 127.0.0.1:46208 on http
+2025-10-23 09:57:54,606 - INFO - Connection from 127.0.0.1:39972 on https
+2025-10-23 09:57:54,607 - ERROR - Traceback (most recent call last):
+2025-10-23 09:57:54,607 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 09:57:54,607 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 09:57:54,608 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 09:57:54,608 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 09:57:54,608 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 09:57:54,608 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 09:57:54,608 - ERROR -     raise EOFError()
+2025-10-23 09:57:54,608 - ERROR - EOFError
+2025-10-23 09:57:54,608 - ERROR - 
+2025-10-23 09:57:54,608 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 09:57:54,608 - ERROR - 
+2025-10-23 09:57:54,608 - ERROR - Traceback (most recent call last):
+2025-10-23 09:57:54,608 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 09:57:54,608 - ERROR -     self._check_banner()
+2025-10-23 09:57:54,608 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 09:57:54,608 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 09:57:54,608 - ERROR -     raise SSHException(
+2025-10-23 09:57:54,608 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 09:57:54,608 - ERROR -     )
+2025-10-23 09:57:54,608 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 09:57:54,608 - ERROR - 
+2025-10-23 09:57:54,608 - INFO - Connection from 127.0.0.1:41534 on ftp
+2025-10-23 09:57:54,608 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 09:57:54,609 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 09:57:54,611 - INFO - Connection from 127.0.0.1:57294 on mysql
+2025-10-23 09:57:54,625 - INFO - Connection from 127.0.0.1:56298 on ssh
+2025-10-23 09:57:54,630 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:57:54,655 - INFO - Auth rejected (none).
+2025-10-23 09:57:54,664 - INFO - Connection from 127.0.0.1:46222 on http
+2025-10-23 09:57:54,665 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 09:58:24,458 - INFO - Connection from 10.0.2.15:43004 on ssh
+2025-10-23 09:58:24,459 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 09:58:26,599 - INFO - Auth rejected (none).
+2025-10-23 09:58:38,321 - INFO - Auth rejected (password).
+2025-10-23 10:00:29,870 - INFO - Connection from 10.0.2.15:34624 on ssh
+2025-10-23 10:00:29,871 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:00:29,879 - INFO - Auth rejected (none).
+2025-10-23 10:00:39,350 - INFO - Auth rejected (password).
+2025-10-23 10:01:41,454 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:01:41,455 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:01:41,456 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:01:41,457 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:01:41,457 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:01:50,319 - INFO - Connection from 127.0.0.1:51370 on ssh
+2025-10-23 10:01:50,322 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 10:01:50,325 - ERROR - Traceback (most recent call last):
+2025-10-23 10:01:50,325 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 10:01:50,325 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 10:01:50,325 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 10:01:50,325 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 10:01:50,325 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 10:01:50,325 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 10:01:50,325 - ERROR -     raise EOFError()
+2025-10-23 10:01:50,325 - ERROR - EOFError
+2025-10-23 10:01:50,325 - ERROR - 
+2025-10-23 10:01:50,325 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 10:01:50,325 - ERROR - 
+2025-10-23 10:01:50,325 - ERROR - Traceback (most recent call last):
+2025-10-23 10:01:50,325 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 10:01:50,325 - ERROR -     self._check_banner()
+2025-10-23 10:01:50,325 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 10:01:50,325 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 10:01:50,325 - ERROR -     raise SSHException(
+2025-10-23 10:01:50,325 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 10:01:50,325 - ERROR -     )
+2025-10-23 10:01:50,325 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 10:01:50,325 - ERROR - 
+2025-10-23 10:01:50,326 - INFO - Connection from 127.0.0.1:51616 on http
+2025-10-23 10:01:50,326 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 10:01:50,327 - INFO - Connection from 127.0.0.1:56924 on https
+2025-10-23 10:01:50,328 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:01:50,330 - INFO - Connection from 127.0.0.1:50640 on ftp
+2025-10-23 10:01:50,332 - INFO - Connection from 127.0.0.1:33252 on mysql
+2025-10-23 10:01:50,344 - INFO - Connection from 127.0.0.1:51376 on ssh
+2025-10-23 10:01:50,345 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:01:50,397 - INFO - Auth rejected (none).
+2025-10-23 10:01:50,408 - INFO - Connection from 127.0.0.1:51620 on http
+2025-10-23 10:01:50,409 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:02:13,451 - INFO - Connection from 10.0.2.15:55440 on ssh
+2025-10-23 10:02:13,467 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:02:15,694 - INFO - Auth rejected (none).
+2025-10-23 10:02:33,143 - INFO - Auth granted (password).
+2025-10-23 10:28:30,284 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:28:30,285 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:28:30,285 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:28:30,286 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:28:30,286 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:28:39,159 - INFO - Connection from 127.0.0.1:34030 on ssh
+2025-10-23 10:28:39,159 - ERROR - SSH Error from 127.0.0.1: 'str' object has no attribute 'decode'
+2025-10-23 10:28:39,161 - INFO - Connection from 127.0.0.1:56818 on http
+2025-10-23 10:28:39,165 - INFO - Connection from 127.0.0.1:59110 on https
+2025-10-23 10:28:39,166 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:28:39,167 - INFO - Connection from 127.0.0.1:40008 on ftp
+2025-10-23 10:28:39,170 - INFO - Connection from 127.0.0.1:43262 on mysql
+2025-10-23 10:28:39,182 - INFO - Connection from 127.0.0.1:34040 on ssh
+2025-10-23 10:28:39,184 - ERROR - SSH Error from 127.0.0.1: 'str' object has no attribute 'decode'
+2025-10-23 10:28:44,185 - INFO - Connection from 127.0.0.1:45498 on http
+2025-10-23 10:28:44,185 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:29:03,311 - INFO - Connection from 10.0.2.15:44498 on ssh
+2025-10-23 10:29:03,312 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 10:29:11,914 - INFO - Connection from 10.0.2.15:55194 on ssh
+2025-10-23 10:29:11,914 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 10:32:28,971 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:32:28,972 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:32:28,973 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:32:28,973 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:32:28,974 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:32:37,838 - INFO - Connection from 127.0.0.1:48762 on ssh
+2025-10-23 10:32:37,839 - ERROR - SSH Error from 127.0.0.1: 'str' object has no attribute 'decode'
+2025-10-23 10:32:37,840 - INFO - Connection from 127.0.0.1:35592 on http
+2025-10-23 10:32:37,843 - INFO - Connection from 127.0.0.1:41264 on https
+2025-10-23 10:32:37,843 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:32:37,846 - INFO - Connection from 127.0.0.1:42872 on ftp
+2025-10-23 10:32:37,849 - INFO - Connection from 127.0.0.1:44818 on mysql
+2025-10-23 10:32:37,861 - INFO - Connection from 127.0.0.1:48776 on ssh
+2025-10-23 10:32:37,862 - ERROR - SSH Error from 127.0.0.1: 'str' object has no attribute 'decode'
+2025-10-23 10:32:42,863 - INFO - Connection from 127.0.0.1:37908 on http
+2025-10-23 10:32:42,865 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:32:56,789 - INFO - Connection from 10.0.2.15:50246 on ssh
+2025-10-23 10:32:56,790 - ERROR - SSH Error from 10.0.2.15: 'str' object has no attribute 'decode'
+2025-10-23 10:43:12,449 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:43:12,451 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:43:12,451 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:43:12,451 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:43:12,451 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:43:21,373 - INFO - Connection from 127.0.0.1:58876 on ssh
+2025-10-23 10:43:21,374 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 10:43:21,376 - ERROR - Traceback (most recent call last):
+2025-10-23 10:43:21,376 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 10:43:21,376 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 10:43:21,376 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 10:43:21,376 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 10:43:21,377 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 10:43:21,377 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 10:43:21,377 - ERROR -     raise EOFError()
+2025-10-23 10:43:21,377 - ERROR - EOFError
+2025-10-23 10:43:21,377 - ERROR - 
+2025-10-23 10:43:21,377 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 10:43:21,377 - ERROR - 
+2025-10-23 10:43:21,377 - ERROR - Traceback (most recent call last):
+2025-10-23 10:43:21,377 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 10:43:21,377 - ERROR -     self._check_banner()
+2025-10-23 10:43:21,377 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 10:43:21,377 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 10:43:21,377 - ERROR -     raise SSHException(
+2025-10-23 10:43:21,377 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 10:43:21,377 - ERROR -     )
+2025-10-23 10:43:21,377 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 10:43:21,377 - ERROR - 
+2025-10-23 10:43:21,377 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 10:43:21,379 - INFO - Connection from 127.0.0.1:47110 on http
+2025-10-23 10:43:21,380 - INFO - Connection from 127.0.0.1:58708 on https
+2025-10-23 10:43:21,380 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:43:21,382 - INFO - Connection from 127.0.0.1:45910 on ftp
+2025-10-23 10:43:21,388 - INFO - Connection from 127.0.0.1:34156 on mysql
+2025-10-23 10:43:21,403 - INFO - Connection from 127.0.0.1:58880 on ssh
+2025-10-23 10:43:21,405 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:43:21,411 - INFO - Auth rejected (none).
+2025-10-23 10:43:21,421 - INFO - Connection from 127.0.0.1:47116 on http
+2025-10-23 10:43:21,422 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:43:44,568 - INFO - Connection from 10.0.2.15:38360 on ssh
+2025-10-23 10:43:44,569 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:43:47,217 - INFO - Auth rejected (none).
+2025-10-23 10:44:40,614 - INFO - Connection from 10.0.2.15:50972 on ssh
+2025-10-23 10:44:40,615 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:44:40,620 - INFO - Auth rejected (none).
+2025-10-23 10:45:56,230 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:45:56,232 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:45:56,232 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:45:56,234 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:45:56,234 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:46:05,650 - INFO - Connection from 127.0.0.1:49790 on ssh
+2025-10-23 10:46:05,652 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 10:46:05,653 - INFO - Connection from 127.0.0.1:47644 on http
+2025-10-23 10:46:05,655 - ERROR - Traceback (most recent call last):
+2025-10-23 10:46:05,655 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 10:46:05,656 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 10:46:05,656 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 10:46:05,656 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 10:46:05,656 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 10:46:05,656 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 10:46:05,656 - ERROR -     raise EOFError()
+2025-10-23 10:46:05,656 - ERROR - EOFError
+2025-10-23 10:46:05,656 - ERROR - 
+2025-10-23 10:46:05,656 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 10:46:05,656 - ERROR - 
+2025-10-23 10:46:05,656 - ERROR - Traceback (most recent call last):
+2025-10-23 10:46:05,656 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 10:46:05,656 - ERROR -     self._check_banner()
+2025-10-23 10:46:05,656 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 10:46:05,656 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 10:46:05,656 - ERROR -     raise SSHException(
+2025-10-23 10:46:05,656 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 10:46:05,656 - ERROR -     )
+2025-10-23 10:46:05,656 - INFO - Connection from 127.0.0.1:53432 on https
+2025-10-23 10:46:05,656 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 10:46:05,657 - ERROR - 
+2025-10-23 10:46:05,657 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 10:46:05,658 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:46:05,659 - INFO - Connection from 127.0.0.1:33946 on ftp
+2025-10-23 10:46:05,661 - INFO - Connection from 127.0.0.1:60164 on mysql
+2025-10-23 10:46:05,671 - INFO - Connection from 127.0.0.1:49806 on ssh
+2025-10-23 10:46:05,673 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:46:05,679 - INFO - Auth rejected (none).
+2025-10-23 10:46:05,687 - INFO - Connection from 127.0.0.1:47654 on http
+2025-10-23 10:46:05,687 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:46:16,548 - INFO - Connection from 10.0.2.15:38798 on ssh
+2025-10-23 10:46:16,552 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:46:18,345 - INFO - Auth rejected (none).
+2025-10-23 10:55:00,038 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:55:00,039 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:55:00,040 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:55:00,041 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:55:00,044 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:55:14,059 - INFO - Connection from 10.0.2.15:53336 on ssh
+2025-10-23 10:55:14,063 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:55:19,941 - INFO - Connection from 10.0.2.15:53346 on ssh
+2025-10-23 10:55:19,942 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:55:22,281 - ERROR - SSH Error from 10.0.2.15: threads can only be started once
+2025-10-23 10:55:29,363 - INFO - Shutting down unified honeypot...
+2025-10-23 10:56:06,468 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:56:06,469 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:56:06,470 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:56:06,471 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:56:06,472 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:56:20,505 - INFO - Connection from 10.0.2.15:37998 on ssh
+2025-10-23 10:56:20,507 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:56:22,744 - ERROR - SSH Error from 10.0.2.15: threads can only be started once
+2025-10-23 10:56:34,730 - INFO - Shutting down unified honeypot...
+2025-10-23 10:58:28,368 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 10:58:28,369 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 10:58:28,369 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 10:58:28,370 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 10:58:28,371 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 10:58:37,421 - INFO - Connection from 127.0.0.1:43734 on ssh
+2025-10-23 10:58:37,422 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 10:58:37,426 - ERROR - Traceback (most recent call last):
+2025-10-23 10:58:37,426 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 10:58:37,426 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 10:58:37,426 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 10:58:37,426 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 10:58:37,426 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 10:58:37,426 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 10:58:37,426 - ERROR -     raise EOFError()
+2025-10-23 10:58:37,426 - ERROR - EOFError
+2025-10-23 10:58:37,426 - ERROR - 
+2025-10-23 10:58:37,426 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 10:58:37,426 - ERROR - 
+2025-10-23 10:58:37,426 - ERROR - Traceback (most recent call last):
+2025-10-23 10:58:37,426 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 10:58:37,426 - ERROR -     self._check_banner()
+2025-10-23 10:58:37,426 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 10:58:37,426 - ERROR -   File "/home/kali/Downloads/honeypot/honeypot-vscode/.venv/lib/python3.13/site-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 10:58:37,426 - ERROR -     raise SSHException(
+2025-10-23 10:58:37,426 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 10:58:37,426 - ERROR -     )
+2025-10-23 10:58:37,426 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 10:58:37,426 - ERROR - 
+2025-10-23 10:58:37,429 - INFO - Connection from 127.0.0.1:44050 on http
+2025-10-23 10:58:37,430 - INFO - Connection from 127.0.0.1:41722 on https
+2025-10-23 10:58:37,430 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 10:58:37,432 - INFO - Connection from 127.0.0.1:39032 on ftp
+2025-10-23 10:58:37,434 - INFO - Connection from 127.0.0.1:34018 on mysql
+2025-10-23 10:58:37,443 - INFO - Connection from 127.0.0.1:43738 on ssh
+2025-10-23 10:58:37,444 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:58:37,450 - ERROR - SSH Error from 127.0.0.1: threads can only be started once
+2025-10-23 10:58:37,459 - INFO - Connection from 127.0.0.1:44056 on http
+2025-10-23 10:58:37,460 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 10:59:20,797 - INFO - Connection from 10.0.2.15:49068 on ssh
+2025-10-23 10:59:20,801 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 10:59:23,339 - ERROR - SSH Error from 10.0.2.15: threads can only be started once
+2025-10-23 11:05:12,106 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 11:05:12,106 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 11:05:12,107 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 11:05:12,107 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 11:05:12,108 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 11:05:20,971 - INFO - Connection from 127.0.0.1:50798 on ssh
+2025-10-23 11:05:20,974 - INFO - Connection from 127.0.0.1:48704 on http
+2025-10-23 11:05:20,975 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 11:05:20,978 - ERROR - Traceback (most recent call last):
+2025-10-23 11:05:20,978 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 11:05:20,978 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 11:05:20,978 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 11:05:20,978 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 11:05:20,978 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 11:05:20,978 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 11:05:20,978 - ERROR -     raise EOFError()
+2025-10-23 11:05:20,978 - ERROR - EOFError
+2025-10-23 11:05:20,978 - ERROR - 
+2025-10-23 11:05:20,978 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 11:05:20,978 - ERROR - 
+2025-10-23 11:05:20,978 - ERROR - Traceback (most recent call last):
+2025-10-23 11:05:20,978 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 11:05:20,978 - ERROR -     self._check_banner()
+2025-10-23 11:05:20,978 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 11:05:20,978 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 11:05:20,978 - ERROR -     raise SSHException(
+2025-10-23 11:05:20,978 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 11:05:20,978 - ERROR -     )
+2025-10-23 11:05:20,978 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 11:05:20,978 - ERROR - 
+2025-10-23 11:05:20,979 - INFO - Connection from 127.0.0.1:43280 on https
+2025-10-23 11:05:20,979 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 11:05:20,979 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 11:05:20,980 - INFO - Connection from 127.0.0.1:59442 on ftp
+2025-10-23 11:05:20,982 - INFO - Connection from 127.0.0.1:46710 on mysql
+2025-10-23 11:05:20,996 - INFO - Connection from 127.0.0.1:50812 on ssh
+2025-10-23 11:05:20,997 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:05:21,004 - INFO - Auth rejected (none).
+2025-10-23 11:05:21,016 - INFO - Connection from 127.0.0.1:48714 on http
+2025-10-23 11:05:21,018 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 11:05:37,475 - INFO - Connection from 10.0.2.15:51606 on ssh
+2025-10-23 11:05:37,598 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:05:37,603 - ERROR - SSH Error from 10.0.2.15: 
+2025-10-23 11:07:10,095 - INFO - Started ssh honeypot listening on 0.0.0.0:2222
+2025-10-23 11:07:10,096 - INFO - Started http honeypot listening on 0.0.0.0:8080
+2025-10-23 11:07:10,098 - INFO - Started https honeypot listening on 0.0.0.0:8443
+2025-10-23 11:07:10,100 - INFO - Started ftp honeypot listening on 0.0.0.0:2121
+2025-10-23 11:07:10,100 - INFO - Started mysql honeypot listening on 0.0.0.0:3306
+2025-10-23 11:07:18,988 - INFO - Connection from 127.0.0.1:43230 on ssh
+2025-10-23 11:07:18,990 - INFO - Connection from 127.0.0.1:59114 on http
+2025-10-23 11:07:18,991 - ERROR - Exception (server): Error reading SSH protocol banner
+2025-10-23 11:07:18,992 - ERROR - Traceback (most recent call last):
+2025-10-23 11:07:18,993 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2363, in _check_banner
+2025-10-23 11:07:18,993 - ERROR -     buf = self.packetizer.readline(timeout)
+2025-10-23 11:07:18,993 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 395, in readline
+2025-10-23 11:07:18,993 - ERROR -     buf += self._read_timeout(timeout)
+2025-10-23 11:07:18,993 - ERROR -            ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-10-23 11:07:18,993 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/packet.py", line 665, in _read_timeout
+2025-10-23 11:07:18,993 - ERROR -     raise EOFError()
+2025-10-23 11:07:18,993 - ERROR - EOFError
+2025-10-23 11:07:18,993 - ERROR - 
+2025-10-23 11:07:18,993 - ERROR - During handling of the above exception, another exception occurred:
+2025-10-23 11:07:18,993 - ERROR - 
+2025-10-23 11:07:18,993 - ERROR - Traceback (most recent call last):
+2025-10-23 11:07:18,993 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2179, in run
+2025-10-23 11:07:18,993 - ERROR -     self._check_banner()
+2025-10-23 11:07:18,993 - ERROR -     ~~~~~~~~~~~~~~~~~~^^
+2025-10-23 11:07:18,993 - ERROR -   File "/usr/lib/python3/dist-packages/paramiko/transport.py", line 2367, in _check_banner
+2025-10-23 11:07:18,993 - ERROR -     raise SSHException(
+2025-10-23 11:07:18,993 - ERROR -         "Error reading SSH protocol banner" + str(e)
+2025-10-23 11:07:18,993 - ERROR -     )
+2025-10-23 11:07:18,994 - ERROR - paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+2025-10-23 11:07:18,994 - ERROR - 
+2025-10-23 11:07:18,994 - INFO - Connection from 127.0.0.1:36338 on https
+2025-10-23 11:07:18,994 - ERROR - SSH Error from 127.0.0.1: Error reading SSH protocol banner
+2025-10-23 11:07:18,995 - ERROR - Web Error from 127.0.0.1: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1033)
+2025-10-23 11:07:18,995 - INFO - Connection from 127.0.0.1:46022 on ftp
+2025-10-23 11:07:18,997 - INFO - Connection from 127.0.0.1:38510 on mysql
+2025-10-23 11:07:19,007 - INFO - Connection from 127.0.0.1:43232 on ssh
+2025-10-23 11:07:19,008 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:07:19,014 - INFO - Auth rejected (none).
+2025-10-23 11:07:19,021 - INFO - Connection from 127.0.0.1:59118 on http
+2025-10-23 11:07:19,022 - WARNING - Attack detected - IP: 127.0.0.1, Service: http, Type: web_request
+2025-10-23 11:07:20,334 - INFO - Connection from 10.0.2.15:34446 on ssh
+2025-10-23 11:07:20,402 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:07:22,933 - INFO - Auth rejected (none).
+2025-10-23 11:08:06,460 - INFO - Connection from 10.0.2.15:46404 on ssh
+2025-10-23 11:08:06,483 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:08:06,490 - INFO - Auth rejected (none).
+2025-10-23 11:08:16,732 - INFO - Auth rejected (password).
+2025-10-23 11:08:18,625 - INFO - Auth rejected (password).
+2025-10-23 11:09:09,337 - INFO - Connection from 10.0.2.15:42076 on ssh
+2025-10-23 11:09:09,442 - INFO - Connected (version 2.0, client OpenSSH_10.0p2)
+2025-10-23 11:09:09,449 - INFO - Auth rejected (none).
+2025-10-23 11:09:21,646 - INFO - Auth granted (password).
+2025-10-23 11:10:09,038 - INFO - Connection from 10.0.2.15:39648 on http
+2025-10-23 11:10:09,111 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: web_request
+2025-10-23 11:10:12,120 - INFO - Connection from 10.0.2.15:42882 on http
+2025-10-23 11:10:12,190 - WARNING - Attack detected - IP: 10.0.2.15, Service: http, Type: brute_force_web

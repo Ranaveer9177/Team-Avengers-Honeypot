@@ -51,3 +51,10 @@ htmlcov/
 *.bak
 $null
 
+# Duplicate/old directories (files moved to root)
+src/
+
+# Duplicate files
+.gitkeep
+dashboard.html
+

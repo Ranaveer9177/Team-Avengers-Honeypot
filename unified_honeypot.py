@@ -9,11 +9,166 @@ import os
 import secrets
 import string
 from socket import gethostbyaddr, herror
+import shlex
+
+class FakeFileSystem:
+    """Simulates a realistic Ubuntu filesystem for the honeypot"""
+    
+    def __init__(self):
+        self.current_dir = '/home/admin'
+        self.filesystem = {
+            '/home/admin': {
+                'type': 'directory',
+                'contents': {
+                    'Documents': {'type': 'directory', 'contents': {
+                        'project1': {'type': 'file', 'content': 'Project documentation and notes.\n'},
+                        'meeting_notes.txt': {'type': 'file', 'content': 'Meeting notes from last week.\n'},
+                        'backup': {'type': 'directory', 'contents': {}}
+                    }},
+                    'Downloads': {'type': 'directory', 'contents': {
+                        'file1.pdf': {'type': 'file', 'content': 'PDF document content.\n'},
+                        'image.jpg': {'type': 'file', 'content': 'Image file (binary data)\n'},
+                        'archive.tar.gz': {'type': 'file', 'content': 'Compressed archive\n'}
+                    }},
+                    'Desktop': {'type': 'directory', 'contents': {
+                        'notes.txt': {'type': 'file', 'content': 'Quick notes\n'},
+                        'screenshot.png': {'type': 'file', 'content': 'Screenshot image\n'}
+                    }},
+                    '.bashrc': {'type': 'file', 'content': '# ~/.bashrc: executed by bash(1) for non-login shells.\n# See /usr/share/doc/bash/examples/startup-files (in the package bash-doc)\n'},
+                    '.bash_history': {'type': 'file', 'content': 'cd Documents\nls -la\ncat notes.txt\n'},
+                    '.ssh': {'type': 'directory', 'contents': {
+                        'id_rsa.pub': {'type': 'file', 'content': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... admin@ubuntu\n'}
+                    }}
+                }
+            },
+            '/etc': {
+                'type': 'directory',
+                'contents': {
+                    'passwd': {'type': 'file', 'content': 'root:x:0:0:root:/root:/bin/bash\nadmin:x:1000:1000:admin:/home/admin:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n'},
+                    'hosts': {'type': 'file', 'content': '127.0.0.1\tlocalhost\n127.0.1.1\tubuntu-server\n'},
+                    'hostname': {'type': 'file', 'content': 'ubuntu-server\n'},
+                    'os-release': {'type': 'file', 'content': 'NAME="Ubuntu"\nVERSION="20.04.3 LTS (Focal Fossa)"\nID=ubuntu\n'}
+                }
+            },
+            '/var': {
+                'type': 'directory',
+                'contents': {
+                    'log': {'type': 'directory', 'contents': {
+                        'syslog': {'type': 'file', 'content': 'System log entries...\n'},
+                        'auth.log': {'type': 'file', 'content': 'Authentication log entries...\n'}
+                    }}
+                }
+            },
+            '/tmp': {
+                'type': 'directory',
+                'contents': {
+                    'temp_file.txt': {'type': 'file', 'content': 'Temporary file content\n'}
+                }
+            }
+        }
+    
+    def normalize_path(self, path):
+        """Normalize a path relative to current directory"""
+        if path.startswith('/'):
+            return path
+        if self.current_dir == '/':
+            return '/' + path
+        return self.current_dir.rstrip('/') + '/' + path
+    
+    def get_path_parts(self, path):
+        """Split path into parts"""
+        normalized = self.normalize_path(path)
+        parts = [p for p in normalized.split('/') if p]
+        return ['/'] + parts if normalized.startswith('/') else parts
+    
+    def get_item(self, path):
+        """Get filesystem item at path (directory contents)"""
+        parts = self.get_path_parts(path)
+        if not parts or parts == ['/']:
+            return self.filesystem.get('/', {}).get('contents', {})
+        
+        current = self.filesystem
+        
+        # Handle root level
+        if parts[0] == '/':
+            if len(parts) == 1:
+                return current
+            parts = parts[1:]
+        
+        # Navigate through directories
+        for i, part in enumerate(parts):
+            if part in current:
+                if current[part]['type'] == 'directory':
+                    if i == len(parts) - 1:
+                        # This is the target directory
+                        return current[part].get('contents', {})
+                    current = current[part].get('contents', {})
+                else:
+                    # Hit a file before reaching target
+                    return None
+            else:
+                return None
+        return current
+    
+    def list_directory(self, path='.'):
+        """List directory contents"""
+        if path == '.':
+            path = self.current_dir
+        
+        target = self.get_item(path)
+        if target is None:
+            return None
+        
+        items = []
+        for name, item in target.items():
+            if item['type'] == 'directory':
+                items.append(name + '/')
+            else:
+                items.append(name)
+        return sorted(items)
+    
+    def read_file(self, path):
+        """Read file content"""
+        parts = self.get_path_parts(path)
+        if not parts or parts == ['/']:
+            return None
+        
+        # Handle absolute paths
+        if parts[0] == '/':
+            parts = parts[1:]
+        
+        current = self.filesystem
+        
+        # Navigate to parent directory
+        for i, part in enumerate(parts[:-1]):
+            if part in current and current[part]['type'] == 'directory':
+                current = current[part].get('contents', {})
+            else:
+                return None
+        
+        # Get the file
+        filename = parts[-1]
+        if filename in current and current[filename]['type'] == 'file':
+            return current[filename].get('content', '')
+        return None
+    
+    def change_directory(self, path):
+        """Change current directory"""
+        if path == '~' or path == '':
+            self.current_dir = '/home/admin'
+            return True
+        
+        normalized = self.normalize_path(path)
+        if self.get_item(normalized):
+            self.current_dir = normalized
+            return True
+        return False
 
 class UnifiedHoneypot(paramiko.ServerInterface):
     def __init__(self, allowed_key=None):
         self.event = threading.Event()
         self.allowed_key = allowed_key
+        self.filesystem = FakeFileSystem()
         
         self.attack_details = {
             'ip': None,
@@ -309,6 +464,9 @@ class UnifiedHoneypotServer:
             # Setup terminal
             channel.send('Welcome to Ubuntu 20.04.3 LTS\n\n')
             
+            # Initialize filesystem for this session
+            fs = FakeFileSystem()
+            
             # Interactive shell loop
             while True:
                 channel.send('$ ')
@@ -318,49 +476,128 @@ class UnifiedHoneypotServer:
                         char = channel.recv(1)
                         if not char:
                             break
-                        if char == b'\r':
+                        if char == b'\r' or char == b'\n':
                             channel.send(b'\n')
                             break
                         elif char == b'\x03':  # Ctrl+C
                             channel.send(b'^C\n')
+                            command = ''
                             break
+                        elif char == b'\x7f' or char == b'\x08':  # Backspace
+                            if len(command) > 0:
+                                command = command[:-1]
+                                channel.send(b'\b \b')
                         else:
                             command += char.decode('utf-8', errors='ignore')
                             channel.send(char)
                 except Exception as e:
                     print(f"Error reading command: {str(e)}")
                     break
-                    
-                    if not char:  # Connection closed
-                        break
-                        
-                    command = command.strip()
-                    if command == 'exit':
-                        break
-
-                    # Log commands for analysis
-                    print(f"[*] Command executed: {command}")
-                    
-                    # Simulate command output
-                    if command == 'whoami':
-                        channel.send('admin\n')
-                    elif command == 'pwd':
-                        channel.send('/home/admin\n')
-                    elif command == 'ls':
-                        channel.send('Documents\nDownloads\nDesktop\n')
-                    else:
-                        channel.send(f"bash: {command}: command not found\n")
-
-                if command.strip() == 'exit':
+                
+                if not char:  # Connection closed
                     break
+                
+                command = command.strip()
+                if not command:
+                    continue
+                
+                if command == 'exit':
+                    channel.send('logout\n')
+                    break
+
+                # Log commands for analysis
+                print(f"[*] Command executed: {command}")
+                
+                # Parse command
+                try:
+                    parts = shlex.split(command)
+                    cmd = parts[0] if parts else ''
+                    args = parts[1:] if len(parts) > 1 else []
+                except:
+                    cmd = command.split()[0] if command.split() else ''
+                    args = command.split()[1:] if len(command.split()) > 1 else []
+                
+                # Handle commands
+                handled = False
+                
+                if cmd == 'whoami':
+                    channel.send('admin\n')
+                    handled = True
+                elif cmd == 'id':
+                    channel.send('uid=1000(admin) gid=1000(admin) groups=1000(admin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),116(lpadmin),126(sambashare)\n')
+                    handled = True
+                elif cmd == 'pwd':
+                    channel.send(f"{fs.current_dir}\n")
+                    handled = True
+                elif cmd == 'ls':
+                    path = args[0] if args else '.'
+                    if '-la' in args or '-l' in args or '-a' in args:
+                        # Detailed listing
+                        items = fs.list_directory(path)
+                        if items:
+                            output = 'total 24\n'
+                            for item in items:
+                                if item.endswith('/'):
+                                    output += f'drwxr-xr-x 2 admin admin 4096 Jan 15 10:30 {item}\n'
+                                else:
+                                    output += f'-rw-r--r-- 1 admin admin  1024 Jan 15 10:30 {item}\n'
+                            channel.send(output)
+                        else:
+                            channel.send(f"ls: cannot access '{path}': No such file or directory\n")
+                    else:
+                        items = fs.list_directory(path)
+                        if items:
+                            channel.send(' '.join(items) + '\n')
+                        else:
+                            channel.send(f"ls: cannot access '{path}': No such file or directory\n")
+                    handled = True
+                elif cmd == 'cd':
+                    target = args[0] if args else '~'
+                    if fs.change_directory(target):
+                        # Success, no output
+                        pass
+                    else:
+                        channel.send(f"bash: cd: {target}: No such file or directory\n")
+                    handled = True
+                elif cmd == 'cat':
+                    if args:
+                        for filepath in args:
+                            content = fs.read_file(filepath)
+                            if content:
+                                channel.send(content)
+                            else:
+                                channel.send(f"cat: {filepath}: No such file or directory\n")
+                    else:
+                        channel.send("cat: missing file argument\n")
+                    handled = True
+                elif cmd == 'uname':
+                    if '-a' in args:
+                        channel.send('Linux ubuntu-server 5.4.0-91-generic #102-Ubuntu SMP Fri Nov 5 16:31:28 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux\n')
+                    else:
+                        channel.send('Linux\n')
+                    handled = True
+                elif cmd == 'hostname':
+                    channel.send('ubuntu-server\n')
+                    handled = True
+                elif cmd == 'echo':
+                    channel.send(' '.join(args) + '\n')
+                    handled = True
+                elif cmd == 'clear' or cmd == 'reset':
+                    channel.send('\033[2J\033[H')  # ANSI clear screen
+                    handled = True
+                elif cmd.startswith('./') or cmd.startswith('/'):
+                    # Try to execute script
+                    channel.send(f"bash: {cmd}: Permission denied\n")
+                    handled = True
+                
+                if not handled:
+                    channel.send(f"bash: {cmd}: command not found\n")
 
                 # Detect tools from command
                 tools = self.detect_tools(command)
                 if tools:
                     honeypot.attack_details['tools_detected'].extend(tools)
                     self.log_attack(honeypot.attack_details)
-
-                channel.send(f"bash: {command.strip()}: command not found\n")
 
         except Exception as e:
             self.logger.error(f"SSH Error from {addr[0]}: {str(e)}")

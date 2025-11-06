@@ -76,15 +76,26 @@ pip install paramiko flask
 
 ### 3. Start the Honeypot System
 ```bash
-# Make script executable (if needed)
+# Make script executable
 chmod +x start.sh
 
-# Fix line endings if you get "bad interpreter" error (Linux/Mac only)
-# dos2unix start.sh  # or: sed -i 's/\r$//' start.sh
+# Fix line endings if you get "bad interpreter" or "No such file or directory" error
+# This is common when cloning on Linux after editing on Windows
+sed -i 's/\r$//' start.sh
+# OR if dos2unix is installed:
+# dos2unix start.sh
+
+# Verify the script is executable and has correct line endings
+file start.sh  # Should show "Bourne-Again shell script, ASCII text executable"
 
 # Start the honeypot
 sudo ./start.sh
 ```
+
+**Troubleshooting:**
+- If you get "No such file or directory" even after chmod +x, it's a line ending issue - run `sed -i 's/\r$//' start.sh`
+- If you get "bad interpreter: /bin/bash^M", same fix applies
+- Make sure you're in the correct directory: `cd honeypot-vscode` or `cd Team-Avengers-Honeypot`
 
 The script will automatically:
 - ✅ Create required directories (`logs/`, `certs/`, `ssh_keys/`, `pcaps/`, `config/`)

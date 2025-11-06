@@ -202,16 +202,22 @@
                 </tr>
             </thead>
             <tbody>
-                {% for attack in attacks %}
-                <tr>
-                    <td>{{ attack.timestamp }}</td>
-                    <td>{{ attack.ip }}</td>
-                    <td>{{ attack.service }}</td>
-                    <td>{{ attack.attack_type }}</td>
-                    <td>{{ attack.username }}</td>
-                    <td>{{ attack.auth_method }}</td>
-                </tr>
-                {% endfor %}
+                {% if attacks %}
+                    {% for attack in attacks %}
+                    <tr>
+                        <td>{{ attack.timestamp }}</td>
+                        <td>{{ attack.ip }}</td>
+                        <td>{{ attack.service }}</td>
+                        <td>{{ attack.attack_type }}</td>
+                        <td>{{ attack.username }}</td>
+                        <td>{{ attack.auth_method }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">No attacks recorded yet</td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
@@ -284,18 +290,20 @@
         }
 
         // Loop through attacks and add markers
-        attacks.forEach(a => {
-            const coords = ipToCoords(a.ip);
-            const popupContent = `
-                <b>IP:</b> ${a.ip}<br>
-                <b>Service:</b> ${a.service}<br>
-                <b>Type:</b> ${a.attack_type}<br>
-                <b>Time:</b> ${a.timestamp}
-            `;
-            L.marker(coords, { icon: redIcon })
-             .addTo(map)
-             .bindPopup(popupContent);
-        });
+        if (attacks && attacks.length > 0) {
+            attacks.forEach(a => {
+                const coords = ipToCoords(a.ip);
+                const popupContent = `
+                    <b>IP:</b> ${a.ip}<br>
+                    <b>Service:</b> ${a.service}<br>
+                    <b>Type:</b> ${a.attack_type}<br>
+                    <b>Time:</b> ${a.timestamp}
+                `;
+                L.marker(coords, { icon: redIcon })
+                 .addTo(map)
+                 .bindPopup(popupContent);
+            });
+        }
     </script>
 </body>
 </html>

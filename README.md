@@ -72,6 +72,10 @@ pip install paramiko flask
 
 ### 3. Start the Honeypot System
 ```bash
+# Make script executable (if needed)
+chmod +x start.sh
+
+# Start the honeypot
 sudo ./start.sh
 ```
 

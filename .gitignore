@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Logs and databases
+*.log
+*.db
+logs/
+*.out
+
+# Keys and certificates
+*.key
+*.pem
+*.crt
+ssh_keys/
+certs/
+
+# PCAP files
+*.pcap
+pcaps/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.bak
+$null
+

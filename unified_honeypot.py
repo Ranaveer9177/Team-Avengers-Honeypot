@@ -94,15 +94,18 @@ class FakeFileSystem:
     def get_item(self, path):
         """Get filesystem item at path (directory contents)"""
         parts = self.get_path_parts(path)
-        if not parts or parts == ['/']:
-            return self.filesystem.get('/', {}).get('contents', {})
+        if not parts:
+            return None
         
-        current = self.filesystem
+        # Start from root
+        current = self.filesystem.get('/', {}).get('contents', {})
         
-        # Handle root level
+        # Handle root directory
+        if parts == ['/'] or (len(parts) == 1 and parts[0] == '/'):
+            return current
+        
+        # Remove leading '/' if present
         if parts[0] == '/':
-            if len(parts) == 1:
-                return current
             parts = parts[1:]
         
         # Navigate through directories

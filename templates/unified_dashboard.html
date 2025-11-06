@@ -1,281 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Unified Honeypot Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Honeypot Attack Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap & Chart.js -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    /* ======== Global Theme ======== */
-    body {
-      background-color: #0d1117;
-      color: #e6edf3;
-      font-family: "Poppins", sans-serif;
-      padding: 20px;
-    }
+    <!-- Leaflet.js (for world map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    h1 {
-      text-align: center;
-      margin-bottom: 40px;
-      font-weight: 700;
-      color: #00c6ff;
-      letter-spacing: 1px;
-    }
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-    /* ======== Card Styles ======== */
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-    }
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --accent: #00ff88;
+            --text-color: #c9d1d9;
+            --danger: #ff4b4b;
+        }
 
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 20px rgba(0, 198, 255, 0.2);
-    }
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
 
-    .card-title {
-      font-size: 1rem;
-      color: #8b949e;
-      margin-bottom: 10px;
-    }
+        header {
+            background: linear-gradient(90deg, #00ff88, #00aaff);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.8em;
+            color: #000;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px #00ff88;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
 
-    .card-text {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #58a6ff;
-    }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 25px auto;
+        }
 
-    /* ======== Table ======== */
-    table {
-      color: #e6edf3;
-    }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
 
-    .table thead {
-      background-color: #21262d;
-      color: #58a6ff;
-    }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,255,136,0.2);
+            transition: transform 0.2s ease;
+        }
 
-    .table-hover tbody tr:hover {
-      background-color: rgba(88, 166, 255, 0.1);
-      cursor: pointer;
-    }
+        .card:hover {
+            transform: scale(1.05);
+        }
 
-    /* ======== Status Bar ======== */
-    .status-bar {
-      text-align: right;
-      font-size: 0.9rem;
-      color: #8b949e;
-      margin-bottom: 15px;
-    }
+        .stat-title {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
 
-    /* ======== Chart Cards ======== */
-    canvas {
-      background: transparent;
-    }
+        .stat-value {
+            font-size: 2em;
+            color: var(--accent);
+        }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      .card-text {
-        font-size: 1.4rem;
-      }
-    }
-  </style>
+        canvas {
+            background: #0e131a;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        h2 {
+            margin-top: 40px;
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            text-align: center;
+            padding: 12px;
+            border-bottom: 1px solid #222;
+        }
+
+        th {
+            background-color: #00ff8855;
+            color: #fff;
+        }
+
+        tr:hover {
+            background-color: #1f252e;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #555;
+            margin-top: 40px;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px var(--accent), 0 0 15px var(--accent); }
+            to { text-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent); }
+        }
+
+        /* Map styling */
+        #attackMap {
+            height: 500px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,255,136,0.2);
+            margin-top: 20px;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background-color: #111;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .leaflet-popup-tip {
+            background-color: #00ff88;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="container-fluid">
-    <h1>Unified Honeypot Dashboard</h1>
+    <header>🕵️ Honeypot Intrusion Monitoring Dashboard</header>
 
-    <div class="status-bar">
-      🟢 System Online | Last Updated: {{ last_update or "Just now" }}
-    </div>
+    <div class="container">
 
-    <!-- ======== Statistics Cards ======== -->
-    <div class="row g-4 mb-4">
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center p-3">
-          <h5 class="card-title">Total Attacks</h5>
-          <h2 class="card-text">{{ statistics.total_attacks }}</h2>
+        <!-- Statistics Cards -->
+        <div class="grid">
+            <div class="card">
+                <div class="stat-title">Total Attacks</div>
+                <div class="stat-value">{{ statistics.total_attacks }}</div>
+            </div>
+            <div class="card">
+                <div class="stat-title">Unique IPs</div>
+                <div class="stat-value">{{ statistics.unique_ips }}</div>
+            </div>
+            <div class="card">
+                <div class="stat-title">Top Service</div>
+                <div class="stat-value">
+                    {% if statistics.service_distribution %}
+                        {% set sorted_services = statistics.service_distribution.items()|sort(attribute=1, reverse=true) %}
+                        {{ sorted_services[0][0] if sorted_services else 'N/A' }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center p-3">
-          <h5 class="card-title">Unique IPs</h5>
-          <h2 class="card-text">{{ statistics.unique_ips }}</h2>
+        <!-- Charts -->
+        <h2>Attack Analytics</h2>
+        <div class="grid">
+            <div class="card"><canvas id="serviceChart"></canvas></div>
+            <div class="card"><canvas id="attackTypeChart"></canvas></div>
+            <div class="card"><canvas id="toolsChart"></canvas></div>
         </div>
-      </div>
 
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center p-3">
-          <h5 class="card-title">Most Attacked Service</h5>
-          <h2 class="card-text">
-            {% if statistics.service_distribution %}
-              {% set max_service = statistics.service_distribution|dictsort(by='value')|last %}
-              {{ max_service[0] }}
-            {% else %}
-              None
-            {% endif %}
-          </h2>
-        </div>
-      </div>
+        <!-- World Map Section -->
+        <h2>Attack Source Map</h2>
+        <div id="attackMap"></div>
 
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center p-3">
-          <h5 class="card-title">Most Used Tool</h5>
-          <h2 class="card-text">
-            {% if statistics.tools_detected %}
-              {% set max_tool = statistics.tools_detected|dictsort(by='value')|last %}
-              {{ max_tool[0] }}
-            {% else %}
-              None
-            {% endif %}
-          </h2>
-        </div>
-      </div>
-    </div>
-
-    <!-- ======== Charts ======== -->
-    <div class="row g-4 mb-4">
-      <div class="col-md-6">
-        <div class="card p-3">
-          <h5 class="card-title">Service Distribution</h5>
-          <canvas id="serviceChart"></canvas>
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <div class="card p-3">
-          <h5 class="card-title">Attack Types</h5>
-          <canvas id="attackChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ======== Recent Attacks ======== -->
-    <div class="card p-3">
-      <h5 class="card-title mb-3">Recent Attacks</h5>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>IP Address</th>
-              <th>Device Name</th>
-              <th>Service</th>
-              <th>Attack Type</th>
-              <th>Tools Detected</th>
-              <th>Username</th>
-              <th>Auth Method</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for attack in attacks %}
-            <tr>
-              <td>{{ attack.timestamp }}</td>
-              <td>{{ attack.ip }}</td>
-              <td>{{ attack.device_name }}</td>
-              <td>{{ attack.service }}</td>
-              <td>{{ attack.attack_type }}</td>
-              <td>{{ attack.tools_detected }}</td>
-              <td>{{ attack.username }}</td>
-              <td>{{ attack.auth_method }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
+        <!-- Recent Attacks -->
+        <h2>Recent Attacks</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>IP Address</th>
+                    <th>Service</th>
+                    <th>Attack Type</th>
+                    <th>Username</th>
+                    <th>Auth Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attack in attacks %}
+                <tr>
+                    <td>{{ attack.timestamp }}</td>
+                    <td>{{ attack.ip }}</td>
+                    <td>{{ attack.service }}</td>
+                    <td>{{ attack.attack_type }}</td>
+                    <td>{{ attack.username }}</td>
+                    <td>{{ attack.auth_method }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-      </div>
     </div>
-  </div>
 
-  <!-- ======== Scripts ======== -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // ======== Service Chart ========
-    const serviceCtx = document.getElementById("serviceChart").getContext("2d");
-    const serviceData = {
-      labels: [],
-      datasets: [
-        {
-          label: "Service Distribution",
-          data: [],
-          backgroundColor: [
-            "#00c6ff",
-            "#36A2EB",
-            "#FFCE56",
-            "#4BC0C0",
-            "#9966FF",
-          ],
-          borderWidth: 1,
-        },
-      ],
-    };
+    <footer>© 2025 Honeypot Security Dashboard — AI Enhanced Visualization</footer>
 
-    {% if statistics.service_distribution %}
-      serviceData.labels = {{ statistics.service_distribution.keys()|list|tojson|safe }};
-      serviceData.datasets[0].data = {{ statistics.service_distribution.values()|list|tojson|safe }};
-    {% endif %}
+    <!-- Chart.js Initialization -->
+    <script>
+        const serviceData = {{ statistics.service_distribution | tojson | safe }};
+        const attackTypeData = {{ statistics.attack_types | tojson | safe }};
+        const toolsData = {{ statistics.tools_detected | tojson | safe }};
 
-    new Chart(serviceCtx, {
-      type: "doughnut",
-      data: serviceData,
-      options: {
-        plugins: {
-          legend: {
-            labels: { color: "#e6edf3" },
-          },
-        },
-      },
-    });
+        function createChart(ctxId, label, dataObj) {
+            if (!dataObj || Object.keys(dataObj).length === 0) {
+                document.getElementById(ctxId).getContext('2d').fillText('No data available', 10, 50);
+                return;
+            }
+            
+            new Chart(document.getElementById(ctxId), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(dataObj),
+                    datasets: [{
+                        data: Object.values(dataObj),
+                        backgroundColor: ['#00ff88', '#00aaff', '#ffaa00', '#ff4b4b', '#8a2be2']
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: label, color: '#fff' },
+                        legend: { labels: { color: '#ddd' } }
+                    }
+                }
+            });
+        }
 
-    // ======== Attack Chart ========
-    const attackCtx = document.getElementById("attackChart").getContext("2d");
-    const attackData = {
-      labels: [],
-      datasets: [
-        {
-          label: "Number of Attacks",
-          data: [],
-          backgroundColor: "#00c6ff",
-          borderRadius: 5,
-        },
-      ],
-    };
+        createChart('serviceChart', 'Service Distribution', serviceData);
+        createChart('attackTypeChart', 'Attack Types', attackTypeData);
+        createChart('toolsChart', 'Tools Detected', toolsData);
+    </script>
 
-    {% if statistics.attack_types %}
-      attackData.labels = {{ statistics.attack_types.keys()|list|tojson|safe }};
-      attackData.datasets[0].data = {{ statistics.attack_types.values()|list|tojson|safe }};
-    {% endif %}
+    <!-- 🌍 Leaflet Map Script -->
+    <script>
+        const attacks = {{ attacks | tojson | safe }};
+        const map = L.map('attackMap').setView([20, 0], 2);
 
-    new Chart(attackCtx, {
-      type: "bar",
-      data: attackData,
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: "#e6edf3" },
-            grid: { color: "#30363d" },
-          },
-          x: {
-            ticks: { color: "#e6edf3" },
-            grid: { color: "#30363d" },
-          },
-        },
-        plugins: {
-          legend: { labels: { color: "#8b949e" } },
-        },
-      },
-    });
-  </script>
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 5,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Marker icon (using default marker since external icon may not load)
+        const redIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #ff4b4b; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>',
+            iconSize: [12, 12]
+        });
+
+        // Simple IP to approximate coordinates (for demo - in production use GeoIP)
+        function ipToCoords(ip) {
+            // Simple hash-based approximation for demo
+            const parts = ip.split('.');
+            if (parts.length === 4) {
+                const lat = (parseInt(parts[0]) % 90) - 45;
+                const lon = (parseInt(parts[1]) % 180) - 90;
+                return [lat, lon];
+            }
+            return [20 + Math.random() * 40 - 20, Math.random() * 360 - 180];
+        }
+
+        // Loop through attacks and add markers
+        attacks.forEach(a => {
+            const coords = ipToCoords(a.ip);
+            const popupContent = `
+                <b>IP:</b> ${a.ip}<br>
+                <b>Service:</b> ${a.service}<br>
+                <b>Type:</b> ${a.attack_type}<br>
+                <b>Time:</b> ${a.timestamp}
+            `;
+            L.marker(coords, { icon: redIcon })
+             .addTo(map)
+             .bindPopup(popupContent);
+        });
+    </script>
 </body>
 </html>

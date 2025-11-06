@@ -17,9 +17,15 @@ class FakeFileSystem:
     def __init__(self):
         self.current_dir = '/home/admin'
         self.filesystem = {
-            '/home/admin': {
+            '/': {
                 'type': 'directory',
                 'contents': {
+                    'home': {
+                        'type': 'directory',
+                        'contents': {
+                            'admin': {
+                                'type': 'directory',
+                                'contents': {
                     'Documents': {'type': 'directory', 'contents': {
                         'project1': {'type': 'file', 'content': 'Project documentation and notes.\n'},
                         'meeting_notes.txt': {'type': 'file', 'content': 'Meeting notes from last week.\n'},
@@ -39,30 +45,34 @@ class FakeFileSystem:
                     '.ssh': {'type': 'directory', 'contents': {
                         'id_rsa.pub': {'type': 'file', 'content': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... admin@ubuntu\n'}
                     }}
-                }
-            },
-            '/etc': {
-                'type': 'directory',
-                'contents': {
-                    'passwd': {'type': 'file', 'content': 'root:x:0:0:root:/root:/bin/bash\nadmin:x:1000:1000:admin:/home/admin:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n'},
-                    'hosts': {'type': 'file', 'content': '127.0.0.1\tlocalhost\n127.0.1.1\tubuntu-server\n'},
-                    'hostname': {'type': 'file', 'content': 'ubuntu-server\n'},
-                    'os-release': {'type': 'file', 'content': 'NAME="Ubuntu"\nVERSION="20.04.3 LTS (Focal Fossa)"\nID=ubuntu\n'}
-                }
-            },
-            '/var': {
-                'type': 'directory',
-                'contents': {
-                    'log': {'type': 'directory', 'contents': {
-                        'syslog': {'type': 'file', 'content': 'System log entries...\n'},
-                        'auth.log': {'type': 'file', 'content': 'Authentication log entries...\n'}
-                    }}
-                }
-            },
-            '/tmp': {
-                'type': 'directory',
-                'contents': {
-                    'temp_file.txt': {'type': 'file', 'content': 'Temporary file content\n'}
+                                }
+                            }
+                        }
+                    },
+                    'etc': {
+                        'type': 'directory',
+                        'contents': {
+                            'passwd': {'type': 'file', 'content': 'root:x:0:0:root:/root:/bin/bash\nadmin:x:1000:1000:admin:/home/admin:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n'},
+                            'hosts': {'type': 'file', 'content': '127.0.0.1\tlocalhost\n127.0.1.1\tubuntu-server\n'},
+                            'hostname': {'type': 'file', 'content': 'ubuntu-server\n'},
+                            'os-release': {'type': 'file', 'content': 'NAME="Ubuntu"\nVERSION="20.04.3 LTS (Focal Fossa)"\nID=ubuntu\n'}
+                        }
+                    },
+                    'var': {
+                        'type': 'directory',
+                        'contents': {
+                            'log': {'type': 'directory', 'contents': {
+                                'syslog': {'type': 'file', 'content': 'System log entries...\n'},
+                                'auth.log': {'type': 'file', 'content': 'Authentication log entries...\n'}
+                            }}
+                        }
+                    },
+                    'tmp': {
+                        'type': 'directory',
+                        'contents': {
+                            'temp_file.txt': {'type': 'file', 'content': 'Temporary file content\n'}
+                        }
+                    }
                 }
             }
         }

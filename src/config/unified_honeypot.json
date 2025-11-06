@@ -1,0 +1,10 @@
+{
+    "ssh_port": 2222,
+    "http_port": 8080,
+    "https_port": 8443,
+    "ftp_port": 2121,
+    "mysql_port": 3306,
+    "log_dir": "logs",
+    "ssh_key_dir": "ssh_keys",
+    "cert_dir": "certs"
+}

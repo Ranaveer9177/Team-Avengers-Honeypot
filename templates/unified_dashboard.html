@@ -202,8 +202,8 @@
                 </tr>
             </thead>
             <tbody>
-                {% if attacks %}
-                    {% for attack in attacks %}
+                {% if statistics.recent_attacks %}
+                    {% for attack in statistics.recent_attacks %}
                     <tr>
                         <td>{{ attack.timestamp }}</td>
                         <td>{{ attack.ip }}</td>
@@ -277,32 +277,39 @@
             iconSize: [12, 12]
         });
 
-        // Simple IP to approximate coordinates (for demo - in production use GeoIP)
-        function ipToCoords(ip) {
-            // Simple hash-based approximation for demo
-            const parts = ip.split('.');
-            if (parts.length === 4) {
-                const lat = (parseInt(parts[0]) % 90) - 45;
-                const lon = (parseInt(parts[1]) % 180) - 90;
-                return [lat, lon];
-            }
-            return [20 + Math.random() * 40 - 20, Math.random() * 360 - 180];
-        }
-
-        // Loop through attacks and add markers
+        // Loop through attacks and add markers using real geolocation data
         if (attacks && attacks.length > 0) {
+            let markersAdded = 0;
             attacks.forEach(a => {
-                const coords = ipToCoords(a.ip);
-                const popupContent = `
-                    <b>IP:</b> ${a.ip}<br>
-                    <b>Service:</b> ${a.service}<br>
-                    <b>Type:</b> ${a.attack_type}<br>
-                    <b>Time:</b> ${a.timestamp}
-                `;
-                L.marker(coords, { icon: redIcon })
-                 .addTo(map)
-                 .bindPopup(popupContent);
+                // Use real lat/lon from geolocation API if available
+                if (a.lat != null && a.lon != null && !isNaN(a.lat) && !isNaN(a.lon)) {
+                    const coords = [a.lat, a.lon];
+                    const popupContent = `
+                        <b>IP:</b> ${a.ip}<br>
+                        <b>Service:</b> ${a.service}<br>
+                        <b>Type:</b> ${a.attack_type}<br>
+                        <b>Time:</b> ${a.timestamp}<br>
+                        <b>Username:</b> ${a.username || 'N/A'}
+                    `;
+                    L.marker(coords, { icon: redIcon })
+                     .addTo(map)
+                     .bindPopup(popupContent);
+                    markersAdded++;
+                }
             });
+            
+            // If we have markers, fit map bounds to show them all
+            if (markersAdded > 0) {
+                const group = new L.featureGroup();
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        group.addLayer(layer);
+                    }
+                });
+                if (group.getLayers().length > 0) {
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
         }
     </script>
 </body>

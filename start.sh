@@ -266,7 +266,7 @@ test_honeypot() {
 cleanup() {
     print_status "Shutting down honeypot services..."
     pkill -f "$PYTHON_CMD unified_honeypot.py" 2>/dev/null || true
-    pkill -f "$PYTHON_CMD unified_dashboard.py" 2>/dev/null || true
+    pkill -f "$PYTHON_CMD app.py" 2>/dev/null || true
     exit 0
 }
 
@@ -316,7 +316,7 @@ else
 fi
 
 # Install required packages
-REQUIRED_PACKAGES=("paramiko" "flask")
+REQUIRED_PACKAGES=("paramiko" "flask" "requests")
 print_status "Checking and installing required packages..."
 for package in "${REQUIRED_PACKAGES[@]}"; do
     if ! check_package "$package"; then
@@ -334,7 +334,11 @@ sleep 2
 
 print_status "Starting Dashboard..."
 export FLASK_RUN_PORT=5001
-$PYTHON_CMD unified_dashboard.py &
+export DASHBOARD_USERNAME=${DASHBOARD_USERNAME:-admin}
+export DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-honeypot@91771}
+export ATTACKS_LOG=${ATTACKS_LOG:-logs/attacks.json}
+export GEOCACHE_FILE=${GEOCACHE_FILE:-logs/geocache.json}
+$PYTHON_CMD app.py &
 sleep 2
 
 print_success "All services started successfully!"

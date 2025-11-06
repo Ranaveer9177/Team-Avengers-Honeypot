@@ -1,4 +1,4 @@
-from unified_dashboard import sanitize_string, process_attack_data
+from app import sanitize_string, process_attack_data
 from datetime import datetime, timezone
 
 

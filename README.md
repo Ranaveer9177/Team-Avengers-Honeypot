@@ -7,7 +7,9 @@ A sophisticated honeypot system with advanced attack detection, real-time monito
 ### Core Capabilities
 - **Multi-Service Simulation**: SSH, HTTP, HTTPS, FTP, MySQL
 - **Advanced Attack Detection**: Pattern recognition, tool detection, device fingerprinting
-- **Real-Time Dashboard**: Secure web interface with authentication
+- **Real-Time Dashboard**: Secure web interface with authentication & geolocation
+- **IP Geolocation**: Automatic geolocation of attack sources with caching
+- **World Map Visualization**: Interactive map showing attack origins
 - **Comprehensive Logging**: UTC timestamps, structured JSON logs, PCAP capture
 - **Security Hardening**: XSS protection, authentication, security headers
 - **Persistent SSH Keys**: No more host key verification errors
@@ -30,7 +32,7 @@ A sophisticated honeypot system with advanced attack detection, real-time monito
 
 ### Python Packages
 ```bash
-pip install paramiko flask
+pip install paramiko flask requests markupsafe
 ```
 
 ### Optional Dependencies
@@ -43,17 +45,31 @@ pip install paramiko flask
 
 ```
 honeypot-vscode/
-├── unified_honeypot.py      # Main honeypot server
-├── unified_dashboard.py     # Web dashboard with authentication
-├── start.sh                 # Startup script
+├── unified_honeypot.py      # Main honeypot server (SSH, HTTP, HTTPS, FTP, MySQL)
+├── app.py                   # Web dashboard with authentication & IP geolocation
+├── start.sh                 # Cross-platform startup script
+├── device_detector.py       # Device/client fingerprinting utility
+├── ssh_honeypot.py          # Standalone SSH honeypot (legacy)
+├── ssh_dashboard.py         # Standalone SSH dashboard (legacy)
+├── advanced_honeypot.py     # Advanced honeypot implementation (legacy)
+├── advanced_honeypot_server.py  # Advanced server wrapper (legacy)
 ├── config/
-│   └── unified_honeypot.json
+│   └── unified_honeypot.json    # Configuration file
 ├── templates/               # HTML templates
-│   ├── unified_dashboard.html
-│   └── login.html
+│   ├── unified_dashboard.html   # Main dashboard template with map
+│   ├── ssh_dashboard.html       # SSH-specific dashboard
+│   ├── dashboard.html           # Legacy dashboard
+│   └── login.html               # Login template
 ├── tests/                   # Unit tests
 │   ├── test_config.py
 │   └── test_dashboard.py
+├── logs/                    # Log files
+│   ├── attacks.json            # Attack log (JSON lines)
+│   ├── geocache.json           # IP geolocation cache
+│   └── unified_honeypot.log    # Service logs
+├── certs/                   # SSL certificates
+├── ssh_keys/                # SSH host keys
+├── pcaps/                   # Network capture files
 ├── .github/workflows/       # CI/CD
 │   └── ci.yml
 └── README.md
@@ -71,7 +87,7 @@ cd Team-Avengers-Honeypot
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install paramiko flask
+pip install paramiko flask requests markupsafe
 ```
 
 ### 3. Start the Honeypot System
@@ -163,8 +179,17 @@ ssh -p 2222 admin@<your-ip>
 
 ### Log Files
 - `logs/attacks.json` - Structured attack data (JSON lines)
+- `logs/geocache.json` - IP geolocation cache (persists across restarts)
 - `logs/unified_honeypot.log` - Service logs
-- All attack data includes: IP, timestamp, service, attack type, tools detected
+- All attack data includes: IP, timestamp, service, attack type, tools detected, geolocation (lat/lon)
+
+### IP Geolocation
+- **Automatic geolocation** of all attack source IPs
+- Uses ip-api.com free tier API
+- **Local caching** to minimize API calls and improve performance
+- Cache persists across restarts in `logs/geocache.json`
+- Graceful fallback if geolocation fails
+- Rate limiting protection built-in
 
 ### PCAP Capture
 - **Initial Payload Capture**: First 512 bytes of each connection saved to `pcaps/`
@@ -212,10 +237,14 @@ ssh -p 2222 admin@<your-ip>
 
 ### Dashboard (Port 5001)
 - Real-time attack visualization
-- Interactive statistics and charts
+- Interactive statistics and charts (Chart.js)
+- **World Map Visualization**: Leaflet.js map showing attack source locations
+- **IP Geolocation**: Automatic geolocation using ip-api.com with local caching
 - Service-specific metrics
 - Attack pattern analysis
-- **Protected with authentication**
+- **Protected with HTTP Basic Authentication**
+- **XSS Hardening**: Input sanitization and security headers
+- **API Endpoint**: `/api/attacks` for JSON data access
 
 ## 🧪 Testing
 
@@ -235,6 +264,8 @@ GitHub Actions automatically runs:
 - Pytest unit tests
 
 ## ⚙️ Configuration
+
+### Honeypot Configuration
 
 Edit `config/unified_honeypot.json` to customize:
 
@@ -258,6 +289,29 @@ Edit `config/unified_honeypot.json` to customize:
 }
 ```
 
+### Dashboard Configuration
+
+Dashboard settings can be configured via environment variables:
+
+```bash
+# Dashboard credentials
+export DASHBOARD_USERNAME="admin"
+export DASHBOARD_PASSWORD="honeypot@91771"
+
+# Dashboard port
+export FLASK_RUN_PORT=5001
+
+# Log file paths
+export ATTACKS_LOG="logs/attacks.json"
+export GEOCACHE_FILE="logs/geocache.json"
+
+# Geolocation API (optional)
+export IP_API_URL="http://ip-api.com/json"
+export IP_API_TIMEOUT=3.0
+```
+
+These can also be set in `start.sh` or passed when running `app.py` directly.
+
 ## 🔧 Troubleshooting
 
 ### SSH Host Key Verification Failed
@@ -280,7 +334,7 @@ sudo kill -9 <PID>  # Kill the process
 
 ### Dashboard Not Accessible
 - Verify port 5001 is not blocked by firewall
-- Check if service started: `ps aux | grep unified_dashboard`
+- Check if service started: `ps aux | grep app.py`
 - Review logs: `tail -f logs/unified_honeypot.log`
 
 ## 📝 Logging Examples
@@ -295,9 +349,23 @@ sudo kill -9 <PID>  # Kill the process
   "username": "admin",
   "password": "test123",
   "tools_detected": ["hydra"],
-  "device_name": "Unknown Device"
+  "device_name": "OpenSSH 8.2",
+  "initial_payload": "SSH-2.0-OpenSSH_8.2"
 }
 ```
+
+### Geolocation Cache Entry (logs/geocache.json)
+```json
+{
+  "192.168.1.100": {
+    "lat": 37.7749,
+    "lon": -122.4194,
+    "ts": 1705312245
+  }
+}
+```
+
+The geolocation cache automatically stores IP addresses with their coordinates and timestamp to avoid repeated API calls.
 
 ## 🛡️ Security Considerations
 
@@ -315,6 +383,53 @@ sudo kill -9 <PID>  # Kill the process
 - Keep system and packages updated
 - Use firewall rules to restrict dashboard access
 - Review attack logs for patterns
+
+## 📡 API Endpoints
+
+### Dashboard API
+
+The dashboard provides a JSON API endpoint for programmatic access:
+
+**GET `/api/attacks`**
+- Returns: JSON object with attack data
+- Authentication: HTTP Basic Auth required (same as dashboard)
+- Response format:
+```json
+{
+  "count": 150,
+  "attacks": [
+    {
+      "timestamp": "2024-01-15 10:30:45",
+      "timestamp_obj": "2024-01-15T10:30:45.123456+00:00",
+      "ip": "192.168.1.100",
+      "device_name": "OpenSSH 8.2",
+      "service": "ssh",
+      "attack_type": "password_auth",
+      "tools_detected": "hydra",
+      "username": "admin",
+      "auth_method": "Password",
+      "lat": 37.7749,
+      "lon": -122.4194
+    }
+  ]
+}
+```
+
+Useful for:
+- Integration with SIEM systems
+- Automated reporting
+- Custom dashboards
+- Data analysis scripts
+
+## 📚 Legacy Files
+
+The following files are legacy implementations and are not used by the main `start.sh` script:
+- `ssh_honeypot.py` - Standalone SSH honeypot (functionality merged into `unified_honeypot.py`)
+- `ssh_dashboard.py` - Standalone SSH dashboard (functionality merged into `app.py`)
+- `advanced_honeypot.py` - Advanced honeypot implementation (experimental)
+- `advanced_honeypot_server.py` - Advanced server wrapper (experimental)
+
+These files are kept for reference but are not actively maintained. Use `unified_honeypot.py` and `app.py` for production deployments.
 
 ## 🤝 Contributing
 

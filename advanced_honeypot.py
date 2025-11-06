@@ -5,7 +5,17 @@ import json
 from datetime import datetime
 import os
 import ssl
-from fake_library import create_fake_service_response
+# Legacy import - fake_library removed, using stub function
+def create_fake_service_response(service_type):
+    """Stub function for legacy compatibility"""
+    responses = {
+        'http': 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Welcome</body></html>',
+        'https': 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Welcome</body></html>',
+        'ftp': '220 Welcome to FTP Server\r\n',
+        'mysql': b'\x0a\x35\x2e\x37\x2e\x30\x00',  # MySQL version handshake
+        'rdp': b'\x03\x00\x00\x13\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x03\x00\x00\x00'
+    }
+    return responses.get(service_type, '')
 
 class AdvancedHoneypot:
     def __init__(self, config=None):
@@ -133,7 +143,10 @@ class AdvancedHoneypot:
 
                 # Generate fake response based on the service
                 response = create_fake_service_response(service)
-                client_socket.send(response.encode())
+                if isinstance(response, bytes):
+                    client_socket.send(response)
+                else:
+                    client_socket.send(response.encode())
 
         except Exception as e:
             self.logger.error(f"Error handling {service} connection from {client_address}: {str(e)}")

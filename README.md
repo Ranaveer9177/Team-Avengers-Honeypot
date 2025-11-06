@@ -17,8 +17,9 @@ A sophisticated honeypot system with advanced attack detection, real-time monito
 
 ### System Requirements
 - Python 3.8+
-- Linux/Unix operating system (Windows with WSL supported)
+- **Linux distributions supported**: Ubuntu, Debian, CentOS, RHEL, Fedora, Arch Linux, SUSE, Kali Linux, and others
 - Root/sudo privileges (for binding to privileged ports and PCAP capture)
+- Bash shell (standard on all Linux distributions)
 - Available ports:
   - 2222 (SSH Honeypot)
   - 5001 (Dashboard)
@@ -34,6 +35,9 @@ pip install paramiko flask
 
 ### Optional Dependencies
 - `tcpdump` - For full PCAP network capture (automatically attempted, logs warning if unavailable)
+- `lsof`, `ss`, or `netstat` - For port checking (script will use whichever is available)
+- `curl` or `wget` - For HTTP testing (optional, script works without it)
+- `netcat` - For port connectivity testing (optional)
 
 ## 🏗️ Project Structure
 

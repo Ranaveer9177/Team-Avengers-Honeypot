@@ -1,11 +1,13 @@
 import json
 from flask import Flask, render_template, request, Response
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from functools import wraps
 from markupsafe import escape
+import traceback
 
-app = Flask(__name__)
+# Configure Flask to find templates in the templates directory
+app = Flask(__name__, template_folder='templates')
 
 # Security: Load dashboard credentials from environment or use defaults
 DASHBOARD_USERNAME = os.environ.get('DASHBOARD_USERNAME', 'admin')
@@ -88,29 +90,48 @@ def sanitize_string(value, max_length=100):
     # Escape HTML special characters (Jinja2 auto-escapes, but this adds extra safety)
     return escape(value)
 
+def safe_parse_datetime(timestamp_str):
+    """Safely parse datetime string with fallback"""
+    try:
+        # Try parsing ISO format
+        if 'T' in timestamp_str:
+            dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        else:
+            # Fallback for other formats
+            dt = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    except (ValueError, AttributeError, TypeError):
+        # Return original string if parsing fails
+        return str(timestamp_str)[:19] if timestamp_str else 'Unknown'
+
 def process_attack_data(attacks):
     """Process and sanitize attack data for safe display"""
     processed = []
     
     for attack in attacks:
-        # Sanitize all string fields to prevent XSS
-        processed_attack = {
-            'timestamp': datetime.fromisoformat(attack['timestamp']).strftime('%Y-%m-%d %H:%M:%S'),
-            'ip': sanitize_string(attack.get('ip', 'Unknown'), max_length=45),  # IPv6 max length
-            'device_name': sanitize_string(attack.get('device_name', 'Unknown Device'), max_length=50),
-            'service': sanitize_string(attack.get('service', 'unknown'), max_length=20),
-            'attack_type': sanitize_string(attack.get('attack_type', 'unknown'), max_length=30),
-            'tools_detected': sanitize_string(
-                ', '.join(attack.get('tools_detected', [])) or 'None detected',
-                max_length=100
-            ),
-            'username': sanitize_string(attack.get('username', 'N/A'), max_length=50),
-            'auth_method': sanitize_string(
-                'Key' if attack.get('key_attempted') else 'Password' if attack.get('password') else 'N/A',
-                max_length=20
-            )
-        }
-        processed.append(processed_attack)
+        try:
+            # Sanitize all string fields to prevent XSS
+            processed_attack = {
+                'timestamp': safe_parse_datetime(attack.get('timestamp', '')),
+                'ip': sanitize_string(attack.get('ip', 'Unknown'), max_length=45),  # IPv6 max length
+                'device_name': sanitize_string(attack.get('device_name', 'Unknown Device'), max_length=50),
+                'service': sanitize_string(attack.get('service', 'unknown'), max_length=20),
+                'attack_type': sanitize_string(attack.get('attack_type', 'unknown'), max_length=30),
+                'tools_detected': sanitize_string(
+                    ', '.join(attack.get('tools_detected', [])) if isinstance(attack.get('tools_detected'), list) else 'None detected',
+                    max_length=100
+                ),
+                'username': sanitize_string(attack.get('username', 'N/A'), max_length=50),
+                'auth_method': sanitize_string(
+                    'Key' if attack.get('key_attempted') else 'Password' if attack.get('password') else 'N/A',
+                    max_length=20
+                )
+            }
+            processed.append(processed_attack)
+        except Exception as e:
+            # Skip malformed attack entries
+            print(f"Error processing attack data: {e}")
+            continue
     
     return processed
 
@@ -138,11 +159,14 @@ def get_statistics(attacks):
             stats['tools_detected'][tool] = stats['tools_detected'].get(tool, 0) + 1
     
     # Get most recent attacks
-    stats['recent_attacks'] = sorted(
-        attacks,
-        key=lambda x: datetime.fromisoformat(x['timestamp']),
-        reverse=True
-    )[:10]
+    try:
+        stats['recent_attacks'] = sorted(
+            attacks,
+            key=lambda x: safe_parse_datetime(x.get('timestamp', '')),
+            reverse=True
+        )[:10]
+    except Exception:
+        stats['recent_attacks'] = attacks[:10]  # Fallback: just take first 10
     
     return stats
 
@@ -150,36 +174,54 @@ def get_statistics(attacks):
 @requires_auth
 def dashboard():
     """Main dashboard route - requires authentication"""
-    attacks = load_attack_data()
-    processed_attacks = process_attack_data(attacks)
-    statistics = get_statistics(attacks)
-    
-    # Sanitize statistics data before passing to template
-    sanitized_stats = {
-        'total_attacks': statistics['total_attacks'],
-        'unique_ips': statistics['unique_ips'],
-        'service_distribution': {
-            sanitize_string(k): v 
-            for k, v in statistics['service_distribution'].items()
-        },
-        'attack_types': {
-            sanitize_string(k): v 
-            for k, v in statistics['attack_types'].items()
-        },
-        'tools_detected': {
-            sanitize_string(k): v 
-            for k, v in statistics['tools_detected'].items()
-        },
-        'recent_attacks': statistics['recent_attacks']
-    }
-    
-    return render_template(
-        'unified_dashboard.html',
-        attacks=processed_attacks,
-        statistics=sanitized_stats
-    )
+    try:
+        attacks = load_attack_data()
+        processed_attacks = process_attack_data(attacks)
+        statistics = get_statistics(attacks)
+        
+        # Sanitize statistics data before passing to template
+        sanitized_stats = {
+            'total_attacks': statistics['total_attacks'],
+            'unique_ips': statistics['unique_ips'],
+            'service_distribution': {
+                sanitize_string(k): v 
+                for k, v in statistics['service_distribution'].items()
+            },
+            'attack_types': {
+                sanitize_string(k): v 
+                for k, v in statistics['attack_types'].items()
+            },
+            'tools_detected': {
+                sanitize_string(k): v 
+                for k, v in statistics['tools_detected'].items()
+            },
+            'recent_attacks': statistics['recent_attacks']
+        }
+        
+        return render_template(
+            'unified_dashboard.html',
+            attacks=processed_attacks,
+            statistics=sanitized_stats
+        )
+    except Exception as e:
+        # Log error and return error page
+        error_msg = f"Error loading dashboard: {str(e)}"
+        print(error_msg)
+        print(traceback.format_exc())
+        return f"<h1>Internal Server Error</h1><p>{error_msg}</p><pre>{traceback.format_exc()}</pre>", 500
 
 if __name__ == '__main__':
+    # Ensure templates directory exists
+    if not os.path.exists('templates'):
+        print("Warning: templates directory not found. Creating it...")
+        os.makedirs('templates', exist_ok=True)
+    
+    # Ensure logs directory exists
+    if not os.path.exists('logs'):
+        os.makedirs('logs', exist_ok=True)
+    
     # Get port from environment variable or use 5001 as default
     port = int(os.environ.get('FLASK_RUN_PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    print(f"Starting dashboard on port {port}")
+    print(f"Templates directory: {os.path.abspath('templates')}")
+    app.run(host='0.0.0.0', port=port, debug=True)  # Enable debug for better error messages

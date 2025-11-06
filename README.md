@@ -75,6 +75,9 @@ pip install paramiko flask
 # Make script executable (if needed)
 chmod +x start.sh
 
+# Fix line endings if you get "bad interpreter" error (Linux/Mac only)
+# dos2unix start.sh  # or: sed -i 's/\r$//' start.sh
+
 # Start the honeypot
 sudo ./start.sh
 ```

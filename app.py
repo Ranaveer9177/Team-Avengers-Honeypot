@@ -155,39 +155,93 @@ def safe_format_datetime(dt):
 
 def enrich_with_geo(ip):
     """
-    Enrich an IPv4/IPv6 address with lat/lon using ip-api.com (simple).
+    Enrich an IPv4/IPv6 address with full geolocation data.
+    Primary: ip-api.com with full fields
+    Fallback: ipinfo.io (if IPINFO_API_TOKEN configured)
     Uses local cache to avoid repeated lookups.
-    Returns (lat, lon) or (None, None).
+    Returns dict with geo fields or None.
     """
     if not ip:
-        return None, None
+        return None
 
-    # If already cached, return it
+    # If already cached, return it (check if it has the full structure or old format)
     cached = _geocache.get(ip)
-    if cached:
-        return cached.get('lat'), cached.get('lon')
+    if cached and 'lat' in cached:
+        # Return cached data if it's a full geo dict (has 'lat' key)
+        # Old cache entries with just {lat, lon, ts} will be upgraded on next miss
+        if 'country' in cached:
+            return cached
+        # Old format: return None to trigger re-fetch with full data
+        elif cached.get('err'):
+            # Cached failure - return None
+            return None
 
-    # Respect simple rate limiting: small sleep if many queries (simple safeguard)
+    # Try ip-api.com first (primary, free, comprehensive)
     try:
-        url = f"{IP_API_URL}/{ip}?fields=status,message,lat,lon"
+        url = f"{IP_API_URL}/{ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as"
         r = requests.get(url, timeout=IP_API_TIMEOUT)
         data = r.json()
         if data.get('status') == 'success':
-            lat = data.get('lat')
-            lon = data.get('lon')
-            _geocache[ip] = {'lat': lat, 'lon': lon, 'ts': int(time.time())}
+            geo_data = {
+                'lat': data.get('lat'),
+                'lon': data.get('lon'),
+                'country': data.get('country', 'Unknown'),
+                'countryCode': data.get('countryCode', ''),
+                'region': data.get('region', ''),
+                'regionName': data.get('regionName', 'Unknown'),
+                'city': data.get('city', 'Unknown'),
+                'zip': data.get('zip', ''),
+                'timezone': data.get('timezone', ''),
+                'isp': data.get('isp', 'Unknown'),
+                'org': data.get('org', 'Unknown'),
+                'as': data.get('as', ''),
+                'ts': int(time.time()),
+                'source': 'ip-api'
+            }
+            _geocache[ip] = geo_data
             _save_geocache()
-            return lat, lon
-        else:
-            # cache miss/failure to reduce repeated lookups
-            _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': data.get('message')}
-            _save_geocache()
-            return None, None
+            return geo_data
     except Exception as e:
-        # network or parsing error: do not crash
-        _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': str(e)}
-        _save_geocache()
-        return None, None
+        print(f"ip-api.com lookup failed for {ip}: {e}")
+
+    # Fallback to ipinfo.io if configured
+    if IPINFO_API_TOKEN:
+        try:
+            url = f"https://ipinfo.io/{ip}/json?token={IPINFO_API_TOKEN}"
+            r = requests.get(url, timeout=IP_API_TIMEOUT)
+            data = r.json()
+            if 'loc' in data:
+                # Parse lat,lon from "loc" field (format: "lat,lon")
+                loc_parts = data.get('loc', ',').split(',')
+                lat = float(loc_parts[0]) if len(loc_parts) > 0 and loc_parts[0] else None
+                lon = float(loc_parts[1]) if len(loc_parts) > 1 and loc_parts[1] else None
+
+                geo_data = {
+                    'lat': lat,
+                    'lon': lon,
+                    'country': data.get('country', 'Unknown'),
+                    'countryCode': data.get('country', ''),
+                    'region': data.get('region', ''),
+                    'regionName': data.get('region', 'Unknown'),
+                    'city': data.get('city', 'Unknown'),
+                    'zip': data.get('postal', ''),
+                    'timezone': data.get('timezone', ''),
+                    'isp': data.get('org', 'Unknown'),
+                    'org': data.get('org', 'Unknown'),
+                    'as': '',
+                    'ts': int(time.time()),
+                    'source': 'ipinfo'
+                }
+                _geocache[ip] = geo_data
+                _save_geocache()
+                return geo_data
+        except Exception as e:
+            print(f"ipinfo.io lookup failed for {ip}: {e}")
+
+    # Both APIs failed - cache failure
+    _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': 'All APIs failed'}
+    _save_geocache()
+    return None
 
 def process_attack_data(attacks):
     """

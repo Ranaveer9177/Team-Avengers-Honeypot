@@ -20,6 +20,7 @@ ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
 IP_API_URL = os.environ.get('IP_API_URL', 'http://ip-api.com/json')  # ip-api.com simple endpoint
 IP_API_TIMEOUT = float(os.environ.get('IP_API_TIMEOUT', 3.0))  # seconds
+IPINFO_API_TOKEN = os.environ.get('IPINFO_API_TOKEN', '')  # Optional fallback API
 
 # Simple in-memory cache (loaded from GEOCACHE_FILE on startup)
 _geocache = {}

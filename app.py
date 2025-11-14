@@ -10,11 +10,11 @@ from collections import OrderedDict, deque
 from queue import Queue
 
 import requests
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context
+from flask import Flask, render_template, request, Response, jsonify, stream_with_context, url_for
 from markupsafe import escape
 
 # Flask app
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Setup logging
 logging.basicConfig(
@@ -818,6 +818,29 @@ def api_attacks_export():
     except Exception as e:
         logger.error(f"Error exporting attacks: {e}")
         return jsonify({'error': 'Failed to export attacks'}), 500
+
+@app.route('/test-static')
+def test_static():
+    """Test route to verify static files are accessible"""
+    import os
+    css_path = os.path.join('static', 'css', 'style.css')
+    if os.path.exists(css_path):
+        size = os.path.getsize(css_path)
+        return jsonify({
+            'status': 'OK',
+            'message': 'Static files are configured correctly',
+            'css_file': css_path,
+            'css_size': f"{size / 1024:.2f} KB",
+            'css_url': url_for('static', filename='css/style.css'),
+            'static_folder': app.static_folder
+        })
+    else:
+        return jsonify({
+            'status': 'ERROR',
+            'message': 'CSS file not found',
+            'css_path': css_path,
+            'static_folder': app.static_folder
+        }), 404
 
 @app.route('/api/reset', methods=['POST'])
 @requires_auth

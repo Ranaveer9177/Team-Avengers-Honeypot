@@ -299,6 +299,10 @@
     </div>
 
     <script>
+        // Dashboard credentials for API calls (passed from backend)
+        const DASHBOARD_USERNAME = {{ DASHBOARD_USERNAME | tojson | safe }};
+        const DASHBOARD_PASSWORD = {{ DASHBOARD_PASSWORD | tojson | safe }};
+        
         // Chart Data
         const serviceData = {{ statistics.service_distribution | tojson | safe }};
         const attackTypeData = {{ statistics.attack_types | tojson | safe }};
@@ -422,13 +426,18 @@
         }
 
         // Refresh Function
-        function refreshDashboard() {
-            const btn = event.target.closest('.btn');
+        function refreshDashboard(event) {
+            const btn = event ? event.target.closest('.btn') : document.querySelector('.btn-primary[onclick*="refreshDashboard"]');
             if (btn) {
-                btn.textContent = '🔄 Refreshing...';
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>🔄</span><span>Refreshing...</span>';
                 btn.disabled = true;
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            } else {
+                location.reload();
             }
-            setTimeout(() => location.reload(), 500);
         }
 
         // Theme Toggle
@@ -556,7 +565,14 @@
 
         async function loadAlerts() {
             try {
-                const response = await fetch('/api/alerts');
+                const response = await fetch('/api/alerts', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to load alerts');
+                }
                 const data = await response.json();
                 const alertList = document.getElementById('alertList');
                 if (alertList && data.alerts) {
@@ -595,15 +611,27 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:honeypot@91771')
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
                     },
                     body: JSON.stringify(filters)
                 });
+                if (!response.ok) {
+                    throw new Error('Failed to apply filters');
+                }
                 const data = await response.json();
                 updateTable(data.attacks);
+                showToast({
+                    severity: 'success',
+                    message: `Filters applied: ${data.count} attacks found`,
+                    timestamp: new Date().toISOString()
+                });
             } catch (e) {
                 console.error('Error applying filters:', e);
-                alert('Error applying filters');
+                showToast({
+                    severity: 'critical',
+                    message: `Error applying filters: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                });
             }
         }
 
@@ -687,10 +715,15 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:honeypot@91771')
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
                     },
                     body: JSON.stringify(filters)
                 });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Export failed' }));
+                    throw new Error(errorData.error || 'Export failed');
+                }
                 
                 if (format === 'csv') {
                     const blob = await response.blob();
@@ -698,7 +731,10 @@
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `attacks_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
                     a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
                 } else {
                     const data = await response.json();
                     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -706,12 +742,24 @@
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `attacks_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
                     a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
                 }
                 closeExportModal();
+                showToast({
+                    severity: 'success',
+                    message: 'Data exported successfully!',
+                    timestamp: new Date().toISOString()
+                });
             } catch (e) {
                 console.error('Error exporting:', e);
-                alert('Error exporting data');
+                showToast({
+                    severity: 'critical',
+                    message: `Error exporting data: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                });
             }
         }
 
@@ -765,8 +813,9 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:honeypot@91771')
-                    }
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    },
+                    credentials: 'include'
                 });
                 
                 const data = await response.json();

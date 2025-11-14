@@ -96,7 +96,45 @@ New-NetFirewallRule -DisplayName "HTTPS Honeypot" -Direction Inbound -LocalPort 
 Host: YOUR_PUBLIC_IP
 Port: 2222
 Username: admin
-Password: Honeypot@XXXXX (changes on restart - see below)
+Password: ANY (all passwords work!)
+```
+
+**HTTP Honeypot:**
+```
+URL: http://YOUR_PUBLIC_IP:8080
+Example: http://10.0.2.15:8080
+Open in web browser - no credentials needed
+```
+
+**HTTPS Honeypot:**
+```
+URL: https://YOUR_PUBLIC_IP:8443
+Example: https://10.0.2.15:8443
+Open in web browser - SSL certificate warning is normal (self-signed)
+```
+
+**FTP Honeypot:**
+```
+Command: ftp -P 2121 YOUR_PUBLIC_IP
+Example: ftp -P 2121 10.0.2.15
+
+Or use FTP client:
+  Host: YOUR_PUBLIC_IP
+  Port: 2121
+  Username: (any)
+  Password: (any)
+```
+
+**MySQL Honeypot:**
+```
+Command: mysql -h YOUR_PUBLIC_IP -P 3306
+Example: mysql -h 10.0.2.15 -P 3306
+
+Or use MySQL client:
+  Host: YOUR_PUBLIC_IP
+  Port: 3306
+  Username: (any)
+  Password: (any)
 ```
 
 **Dashboard:**
@@ -152,7 +190,59 @@ ssh -p 2222 admin@YOUR_PUBLIC_IP
 ssh -p 2222 admin@YOUR_PUBLIC_IP
 ```
 
-#### **Option 3: Dashboard Access (Web Browser)**
+#### **Option 3: HTTP/HTTPS Honeypot Access (Web Browser)**
+
+**HTTP Honeypot:**
+```
+http://YOUR_PUBLIC_IP:8080
+```
+Example: `http://10.0.2.15:8080`
+
+**HTTPS Honeypot:**
+```
+https://YOUR_PUBLIC_IP:8443
+```
+Example: `https://10.0.2.15:8443`
+
+**Features:**
+- Open in any web browser
+- Simulates realistic web server with login forms
+- SSL/TLS encryption (HTTPS)
+- All requests logged and analyzed
+- No credentials needed to access
+- Browser may show SSL warning (normal - self-signed certificate)
+
+#### **Option 4: FTP Honeypot Access**
+
+**Command Line:**
+```bash
+ftp -P 2121 YOUR_PUBLIC_IP
+```
+
+Example: `ftp -P 2121 10.0.2.15`
+
+**Using FTP Client (FileZilla, WinSCP, etc.):**
+- Host: `YOUR_PUBLIC_IP`
+- Port: `2121`
+- Username: Any (all usernames accepted)
+- Password: Any (all passwords accepted)
+
+#### **Option 5: MySQL Honeypot Access**
+
+**Command Line:**
+```bash
+mysql -h YOUR_PUBLIC_IP -P 3306
+```
+
+Example: `mysql -h 10.0.2.15 -P 3306`
+
+**Using MySQL Client (MySQL Workbench, phpMyAdmin, etc.):**
+- Host: `YOUR_PUBLIC_IP`
+- Port: `3306`
+- Username: Any (all usernames accepted)
+- Password: Any (all passwords accepted)
+
+#### **Option 6: Dashboard Access (Web Browser)**
 
 Anyone can access your dashboard:
 ```
@@ -259,6 +349,40 @@ Command:
 Username: admin
 Password: ANY (enter any password - all passwords work!)
 
+=== HTTP/HTTPS Honeypot Access ===
+
+HTTP:
+  http://YOUR_PUBLIC_IP:8080
+  Example: http://10.0.2.15:8080
+
+HTTPS:
+  https://YOUR_PUBLIC_IP:8443
+  Example: https://10.0.2.15:8443
+
+Open in web browser - no credentials needed!
+
+=== FTP Honeypot Connection ===
+
+Command:
+  ftp -P 2121 YOUR_PUBLIC_IP
+
+Example:
+  ftp -P 2121 10.0.2.15
+
+Username: ANY
+Password: ANY
+
+=== MySQL Honeypot Connection ===
+
+Command:
+  mysql -h YOUR_PUBLIC_IP -P 3306
+
+Example:
+  mysql -h 10.0.2.15 -P 3306
+
+Username: ANY
+Password: ANY
+
 === Dashboard Access ===
 
 URL: http://YOUR_PUBLIC_IP:5001
@@ -272,6 +396,7 @@ If connection fails:
 2. Check if honeypot is running
 3. Ask owner to check firewall/router settings
 4. Make sure username is "admin" (password can be anything)
+5. For HTTPS, ignore SSL certificate warning (self-signed is normal)
 ```
 
 ---

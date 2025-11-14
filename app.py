@@ -533,7 +533,13 @@ def dashboard():
             'recent_attacks': statistics['recent_attacks']
         }
 
-        response = Response(render_template('unified_dashboard.html', statistics=sanitized_stats, attacks=processed))
+        response = Response(render_template(
+            'unified_dashboard.html', 
+            statistics=sanitized_stats, 
+            attacks=processed,
+            DASHBOARD_USERNAME=DASHBOARD_USERNAME,
+            DASHBOARD_PASSWORD=DASHBOARD_PASSWORD
+        ))
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'

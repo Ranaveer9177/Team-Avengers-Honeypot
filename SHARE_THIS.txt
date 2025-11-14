@@ -27,6 +27,45 @@ DASHBOARD ACCESS:
     (Username/password required - ask owner)
 
 
+HTTP/HTTPS HONEYPOT ACCESS:
+    HTTP:  http://YOUR_PUBLIC_IP:8080
+    HTTPS: https://YOUR_PUBLIC_IP:8443
+    
+    Examples:
+      http://10.0.2.15:8080
+      https://10.0.2.15:8443
+    
+    ✅ Open in web browser - no credentials needed
+    ✅ Simulates web server with login forms
+    ✅ All requests are logged and monitored
+
+
+FTP HONEYPOT ACCESS:
+    Command: ftp -P 2121 YOUR_PUBLIC_IP
+    
+    Example:
+      ftp -P 2121 10.0.2.15
+    
+    Or use FTP client:
+      Host: YOUR_PUBLIC_IP
+      Port: 2121
+      Username: (any)
+      Password: (any)
+
+
+MYSQL HONEYPOT ACCESS:
+    Command: mysql -h YOUR_PUBLIC_IP -P 3306
+    
+    Example:
+      mysql -h 10.0.2.15 -P 3306
+    
+    Or use MySQL client:
+      Host: YOUR_PUBLIC_IP
+      Port: 3306
+      Username: (any)
+      Password: (any)
+
+
 HOW TO CONNECT:
 
 Windows:

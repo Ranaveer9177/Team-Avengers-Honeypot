@@ -4,12 +4,14 @@ import paramiko
 import logging
 import json
 import ssl
+import time
 from datetime import datetime, timezone
 import os
 import secrets
 import string
 from socket import gethostbyaddr, herror
 import shlex
+from device_detector import DeviceDetector
 
 class FakeFileSystem:
     """Simulates a realistic Ubuntu filesystem for the honeypot"""
@@ -234,17 +236,6 @@ class UnifiedHoneypot(paramiko.ServerInterface):
     def check_channel_exec_request(self, channel, command):
         return True
 
-    def check_channel_request(self, kind, chanid):
-        if kind == 'session':
-            return paramiko.OPEN_SUCCEEDED
-        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-
-    def check_channel_shell_request(self, channel):
-        return True
-
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
-        return True
-
     def get_allowed_auths(self, username):
         return 'password'  # Only allow password authentication
 
@@ -272,6 +263,14 @@ class UnifiedHoneypotServer:
         self.setup_ssl()
         self.active_connections = {}
         self.tool_signatures = self.load_tool_signatures()
+        
+        # Rate limiting: Track connection attempts per IP
+        self.connection_tracker = {}  # {ip: [timestamp1, timestamp2, ...]}
+        self.max_connections_per_ip = 10  # Max connections per minute
+        self.rate_limit_window = 60  # seconds
+        
+        # Connection timeout settings
+        self.connection_timeout = 30  # seconds
         
         # Generate password in format Honeypot@XXXXX where X are random numbers
         random_numbers = ''.join(secrets.choice(string.digits) for _ in range(5))
@@ -358,8 +357,85 @@ class UnifiedHoneypotServer:
         self.ssl_context.load_cert_chain(cert_path, key_path)
 
     def generate_self_signed_cert(self):
-        # Implementation for generating self-signed cert (using OpenSSL)
-        pass
+        """Generate self-signed SSL certificate using OpenSSL or cryptography module"""
+        cert_path = f"{self.config['cert_dir']}/server.crt"
+        key_path = f"{self.config['cert_dir']}/server.key"
+        
+        try:
+            # Try using OpenSSL command-line tool first
+            import subprocess
+            result = subprocess.run([
+                'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
+                '-keyout', key_path, '-out', cert_path,
+                '-days', '365', '-nodes',
+                '-subj', '/CN=localhost'
+            ], capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                self.logger.info("Generated SSL certificate using OpenSSL")
+                return
+        except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+            self.logger.warning(f"OpenSSL not available: {e}")
+        
+        # Fallback: Use cryptography module if OpenSSL not available
+        try:
+            from cryptography import x509
+            from cryptography.x509.oid import NameOID
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            from cryptography.hazmat.primitives import serialization
+            import datetime
+            
+            # Generate private key
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+            
+            # Create certificate
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"State"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, u"City"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Honeypot"),
+                x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
+            ])
+            
+            cert = x509.CertificateBuilder().subject_name(
+                subject
+            ).issuer_name(
+                issuer
+            ).public_key(
+                private_key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.datetime.utcnow()
+            ).not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            ).add_extension(
+                x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
+                critical=False,
+            ).sign(private_key, hashes.SHA256())
+            
+            # Write private key
+            with open(key_path, "wb") as f:
+                f.write(private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
+            
+            # Write certificate
+            with open(cert_path, "wb") as f:
+                f.write(cert.public_bytes(serialization.Encoding.PEM))
+            
+            self.logger.info("Generated SSL certificate using cryptography module")
+        except ImportError:
+            self.logger.error("Neither OpenSSL nor cryptography module available. HTTPS will not work.")
+            self.logger.error("Install with: pip install cryptography")
+        except Exception as e:
+            self.logger.error(f"Failed to generate SSL certificate: {e}")
 
     def load_tool_signatures(self):
         return {
@@ -372,11 +448,18 @@ class UnifiedHoneypotServer:
             'nikto': ['nikto', 'CGI Scanning']
         }
 
-    def get_device_name(self, ip):
+    def get_device_name(self, ip, client_version=None):
+        """Get device name using reverse DNS and optional client version detection"""
         try:
             hostname, _, _ = gethostbyaddr(ip)
+            # If we have client version info, try to detect device type
+            if client_version:
+                detected = DeviceDetector.detect_device(client_version, 'ssh')
+                return f"{hostname} ({detected})"
             return hostname
         except (herror, socket.error):
+            if client_version:
+                return DeviceDetector.detect_device(client_version, 'ssh')
             return "Unknown Device"
 
     def detect_tools(self, data):
@@ -388,6 +471,28 @@ class UnifiedHoneypotServer:
                 detected.append(tool)
         
         return list(set(detected))
+    
+    def check_rate_limit(self, ip):
+        """Check if IP has exceeded rate limit"""
+        current_time = time.time()
+        
+        # Clean up old entries
+        if ip in self.connection_tracker:
+            self.connection_tracker[ip] = [
+                ts for ts in self.connection_tracker[ip] 
+                if current_time - ts < self.rate_limit_window
+            ]
+        else:
+            self.connection_tracker[ip] = []
+        
+        # Check if over limit
+        if len(self.connection_tracker[ip]) >= self.max_connections_per_ip:
+            self.logger.warning(f"Rate limit exceeded for {ip}")
+            return False
+        
+        # Add current connection
+        self.connection_tracker[ip].append(current_time)
+        return True
 
     def _utc_now_iso(self):
         return datetime.now(timezone.utc).isoformat()
@@ -441,6 +546,14 @@ class UnifiedHoneypotServer:
 
     def handle_ssh_connection(self, client, addr):
         try:
+            # Set socket timeout
+            client.settimeout(self.connection_timeout)
+            
+            # Check rate limit
+            if not self.check_rate_limit(addr[0]):
+                client.close()
+                return
+            
             transport = paramiko.Transport(client)
             transport.add_server_key(self.host_key)
             # Set a consistent SSH banner/version
@@ -620,8 +733,124 @@ class UnifiedHoneypotServer:
             except:
                 pass
 
+    def handle_ftp_connection(self, client_socket, addr):
+        """Handle FTP honeypot connections"""
+        try:
+            # Set socket timeout
+            client_socket.settimeout(self.connection_timeout)
+            
+            # Check rate limit
+            if not self.check_rate_limit(addr[0]):
+                client_socket.close()
+                return
+            
+            # Send FTP welcome banner
+            client_socket.send(b"220 Welcome to FTP Server\r\n")
+            
+            data = client_socket.recv(4096)
+            if data:
+                # Save initial payload
+                meta = f"{self._utc_now_iso()}_{addr[0]}_ftp"
+                safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
+                self._write_initial_payload(data, safe_meta)
+                
+                request = data.decode('utf-8', errors='ignore')
+                
+                # Parse FTP commands
+                commands = request.strip().split('\r\n')
+                username = None
+                password = None
+                
+                for cmd in commands:
+                    if cmd.upper().startswith('USER '):
+                        username = cmd[5:].strip()
+                        client_socket.send(b"331 Password required\r\n")
+                    elif cmd.upper().startswith('PASS '):
+                        password = cmd[5:].strip()
+                        client_socket.send(b"530 Login incorrect\r\n")
+                        
+                        # Log the attack with device detection
+                        device = DeviceDetector.detect_device(data, 'ftp')
+                        attack_details = {
+                            'ip': addr[0],
+                            'device_name': device,
+                            'timestamp': self._utc_now_iso(),
+                            'service': 'ftp',
+                            'username': username or 'anonymous',
+                            'password': password or '',
+                            'tools_detected': self.detect_tools(data),
+                            'attack_type': 'ftp_brute_force'
+                        }
+                        self.log_attack(attack_details)
+                    elif cmd.upper().startswith('QUIT'):
+                        client_socket.send(b"221 Goodbye\r\n")
+                        break
+                    else:
+                        client_socket.send(b"500 Unknown command\r\n")
+        except Exception as e:
+            self.logger.error(f"FTP Error from {addr[0]}: {str(e)}")
+        finally:
+            client_socket.close()
+
+    def handle_mysql_connection(self, client_socket, addr):
+        """Handle MySQL honeypot connections"""
+        try:
+            # Set socket timeout
+            client_socket.settimeout(self.connection_timeout)
+            
+            # Check rate limit
+            if not self.check_rate_limit(addr[0]):
+                client_socket.close()
+                return
+            
+            # MySQL handshake packet (simplified version)
+            # Protocol version 10, server version 5.7.0
+            handshake = b'\x4a\x00\x00\x00\x0a' \
+                       b'5.7.0\x00' \
+                       b'\x01\x00\x00\x00' \
+                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                       b'\x00\x00\x00\x00'
+            
+            client_socket.send(handshake)
+            
+            data = client_socket.recv(4096)
+            if data:
+                # Save initial payload
+                meta = f"{self._utc_now_iso()}_{addr[0]}_mysql"
+                safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
+                self._write_initial_payload(data, safe_meta)
+                
+                # Log the connection attempt with device detection
+                device = DeviceDetector.detect_device(data, 'mysql')
+                attack_details = {
+                    'ip': addr[0],
+                    'device_name': device,
+                    'timestamp': self._utc_now_iso(),
+                    'service': 'mysql',
+                    'data': data.hex()[:200],  # Store hex representation
+                    'tools_detected': self.detect_tools(data),
+                    'attack_type': 'mysql_connection_attempt'
+                }
+                self.log_attack(attack_details)
+                
+                # Send access denied
+                error_packet = b'\x17\x00\x00\x02\xff\x15\x04#28000Access denied'
+                client_socket.send(error_packet)
+        except Exception as e:
+            self.logger.error(f"MySQL Error from {addr[0]}: {str(e)}")
+        finally:
+            client_socket.close()
+
     def handle_web_connection(self, client_socket, addr, is_https=False):
         try:
+            # Set socket timeout
+            client_socket.settimeout(self.connection_timeout)
+            
+            # Check rate limit
+            if not self.check_rate_limit(addr[0]):
+                client_socket.close()
+                return
+            
             if is_https:
                 client_socket = self.ssl_context.wrap_socket(client_socket, server_side=True)
 
@@ -639,6 +868,8 @@ class UnifiedHoneypotServer:
 
                 # Parse POST data if present
                 post_data = {}
+                response_body = None
+                
                 if method == 'POST' and '/login' in path:
                     body = request.split('\r\n\r\n')[1] if '\r\n\r\n' in request else ''
                     post_data = {}
@@ -647,11 +878,12 @@ class UnifiedHoneypotServer:
                             key, value = pair.split('=', 1)
                             post_data[key] = value
                     
-                    # Log login attempts
+                    # Log login attempts with device detection
                     if 'username' in post_data and 'password' in post_data:
+                        device = DeviceDetector.detect_device(data, 'https' if is_https else 'http')
                         attack_details = {
                             'ip': addr[0],
-                            'device_name': self.get_device_name(addr[0]),
+                            'device_name': device,
                             'timestamp': self._utc_now_iso(),
                             'service': 'https' if is_https else 'http',
                             'username': post_data['username'],
@@ -662,8 +894,12 @@ class UnifiedHoneypotServer:
                         self.log_attack(attack_details)
                         
                         # Get template and insert error message
-                        with open('templates/login.html', 'r') as f:
-                            template = f.read()
+                        try:
+                            with open('templates/login.html', 'r') as f:
+                                template = f.read()
+                        except FileNotFoundError:
+                            # Fallback if template doesn't exist
+                            template = '<html><body><h1>Login</h1><form method="POST"><input name="username" placeholder="Username"><input name="password" type="password" placeholder="Password"><button type="submit">Login</button></form></body></html>'
                         
                         # Different error messages to make it look more realistic
                         error_messages = [
@@ -678,22 +914,32 @@ class UnifiedHoneypotServer:
                         # Replace template variables
                         response_body = template.replace('{% if error %}{% endif %}', 
                             f'<div class="error">{error_msg}</div>')
-                        
-                else:
-                    # For GET requests or non-login paths, show the login form
-                    with open('templates/login.html', 'r') as f:
-                        response_body = f.read().replace('{% if error %}', '').replace('{% endif %}', '')
-                        if method != 'POST':
-                            attack_details = {
-                                'ip': addr[0],
-                                'device_name': self.get_device_name(addr[0]),
-                                'timestamp': self._utc_now_iso(),
-                                'service': 'https' if is_https else 'http',
-                                'data': request,
-                                'tools_detected': self.detect_tools(data),
-                                'attack_type': 'web_request'
-                            }
-                            self.log_attack(attack_details)
+                
+                # For GET requests, non-login POST, or if response_body not set
+                if response_body is None:
+                    try:
+                        with open('templates/login.html', 'r') as f:
+                            response_body = f.read().replace('{% if error %}', '').replace('{% endif %}', '')
+                    except FileNotFoundError:
+                        # Fallback if template doesn't exist
+                        response_body = '<html><body><h1>Login</h1><form method="POST" action="/login"><input name="username" placeholder="Username"><input name="password" type="password" placeholder="Password"><button type="submit">Login</button></form></body></html>'
+                    
+                    if method != 'POST':
+                        device = DeviceDetector.detect_device(data, 'https' if is_https else 'http')
+                        attack_details = {
+                            'ip': addr[0],
+                            'device_name': device,
+                            'timestamp': self._utc_now_iso(),
+                            'service': 'https' if is_https else 'http',
+                            'data': request,
+                            'tools_detected': self.detect_tools(data),
+                            'attack_type': 'web_request'
+                        }
+                        self.log_attack(attack_details)
+
+                # Ensure response_body is set
+                if response_body is None:
+                    response_body = '<html><body><h1>Service Unavailable</h1></body></html>'
 
                 response = "HTTP/1.1 200 OK\r\n"
                 response += f"Server: {self.config.get('banners', {}).get('http_server', 'Apache/2.4.41 (Ubuntu)')}\r\n"
@@ -721,17 +967,21 @@ class UnifiedHoneypotServer:
             client, addr = server_socket.accept()
             self.logger.info(f"Connection from {addr[0]}:{addr[1]} on {service_type}")
             
+            # Route to appropriate handler based on service type
             if service_type == 'ssh':
-                thread = threading.Thread(
-                    target=self.handle_ssh_connection,
-                    args=(client, addr)
-                )
-            else:
-                thread = threading.Thread(
-                    target=self.handle_web_connection,
-                    args=(client, addr, service_type == 'https')
-                )
+                handler = self.handle_ssh_connection
+                args = (client, addr)
+            elif service_type == 'ftp':
+                handler = self.handle_ftp_connection
+                args = (client, addr)
+            elif service_type == 'mysql':
+                handler = self.handle_mysql_connection
+                args = (client, addr)
+            else:  # http or https
+                handler = self.handle_web_connection
+                args = (client, addr, service_type == 'https')
             
+            thread = threading.Thread(target=handler, args=args)
             thread.daemon = True
             thread.start()
 
@@ -747,11 +997,23 @@ class UnifiedHoneypotServer:
 
         try:
             while True:
-                import time
                 time.sleep(1)
         except KeyboardInterrupt:
             self.logger.info("Shutting down unified honeypot...")
 
+def main():
+    """Main entry point for honeypot server"""
+    try:
+        server = UnifiedHoneypotServer()
+        server.start()
+    except KeyboardInterrupt:
+        print("\n[*] Shutting down honeypot server...")
+    except Exception as e:
+        print(f"[!] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        exit(1)
+
+
 if __name__ == '__main__':
-    server = UnifiedHoneypotServer()
-    server.start()
+    main()

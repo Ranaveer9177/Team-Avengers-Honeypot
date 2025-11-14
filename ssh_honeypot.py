@@ -86,7 +86,16 @@ class SSHServer:
             honeypot = SSHHoneypot(self.allowed_key)
             honeypot.attack_details['ip'] = addr[0]
             honeypot.attack_details['timestamp'] = datetime.now().isoformat()
-            honeypot.attack_details['client_version'] = transport.remote_version.decode()
+            
+            # Safe version decoding with error handling
+            try:
+                if transport.remote_version is not None:
+                    honeypot.attack_details['client_version'] = transport.remote_version.decode('utf-8', errors='replace')
+                else:
+                    honeypot.attack_details['client_version'] = 'Unknown'
+            except (AttributeError, UnicodeDecodeError) as e:
+                self.logger.warning(f"Error decoding remote version from {addr[0]}: {e}")
+                honeypot.attack_details['client_version'] = 'Unknown'
 
             transport.start_server(server=honeypot)
 

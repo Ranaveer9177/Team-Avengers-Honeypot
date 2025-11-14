@@ -9,6 +9,7 @@ from advanced_honeypot import AdvancedHoneypot
 class HoneypotServer:
     def __init__(self, config_file='config/honeypot_config.json'):
         self.honeypots = {}
+        self.honeypots_lock = threading.Lock()  # Thread safety for honeypots dict
         self.config = self.load_config(config_file)
         self.setup_logging()
         self.setup_monitoring()
@@ -60,7 +61,6 @@ class HoneypotServer:
         while True:
             try:
                 self.collect_statistics()
-                import time
                 time.sleep(self.config['monitoring_interval'])
             except Exception as e:
                 self.logger.error(f"Error in monitoring: {str(e)}")
@@ -71,14 +71,15 @@ class HoneypotServer:
             'honeypots': {}
         }
 
-        for name, honeypot in self.honeypots.items():
-            stats['honeypots'][name] = {
-                'active_connections': len(honeypot.active_connections),
-                'services': {
-                    service: {'enabled': config['enabled'], 'port': config['port']}
-                    for service, config in honeypot.config['services'].items()
+        with self.honeypots_lock:
+            for name, honeypot in self.honeypots.items():
+                stats['honeypots'][name] = {
+                    'active_connections': len(honeypot.active_connections),
+                    'services': {
+                        service: {'enabled': config['enabled'], 'port': config['port']}
+                        for service, config in honeypot.config['services'].items()
+                    }
                 }
-            }
 
         # Save statistics
         stats_file = f"{self.config['log_directory']}/statistics.json"
@@ -87,29 +88,39 @@ class HoneypotServer:
             f.write('\n')
 
     def start_honeypot(self, name, config):
-        if name in self.honeypots:
-            self.logger.warning(f"Honeypot {name} already running")
-            return False
+        with self.honeypots_lock:
+            if name in self.honeypots:
+                self.logger.warning(f"Honeypot {name} already running")
+                return False
 
         try:
             honeypot = AdvancedHoneypot(config)
-            self.honeypots[name] = honeypot
-            honeypot.start()
+            with self.honeypots_lock:
+                self.honeypots[name] = honeypot
+            
+            # Start honeypot in a separate thread
+            honeypot_thread = threading.Thread(target=honeypot.start, daemon=True)
+            honeypot_thread.start()
             self.logger.info(f"Started honeypot: {name}")
             return True
         except Exception as e:
             self.logger.error(f"Error starting honeypot {name}: {str(e)}")
+            with self.honeypots_lock:
+                self.honeypots.pop(name, None)
             return False
 
     def stop_honeypot(self, name):
-        if name not in self.honeypots:
-            self.logger.warning(f"Honeypot {name} not found")
-            return False
+        with self.honeypots_lock:
+            if name not in self.honeypots:
+                self.logger.warning(f"Honeypot {name} not found")
+                return False
 
         try:
             # Implement graceful shutdown
-            del self.honeypots[name]
-            self.logger.info(f"Stopped honeypot: {name}")
+            with self.honeypots_lock:
+                honeypot = self.honeypots.pop(name, None)
+            if honeypot:
+                self.logger.info(f"Stopped honeypot: {name}")
             return True
         except Exception as e:
             self.logger.error(f"Error stopping honeypot {name}: {str(e)}")
@@ -142,12 +153,13 @@ class HoneypotServer:
                 return {'status': 'success' if success else 'error'}
             
             elif command['action'] == 'status':
-                return {
-                    'status': 'success',
-                    'honeypots': {
-                        name: {'active': True} for name in self.honeypots
+                with self.honeypots_lock:
+                    return {
+                        'status': 'success',
+                        'honeypots': {
+                            name: {'active': True} for name in self.honeypots
+                        }
                     }
-                }
             
             else:
                 return {'status': 'error', 'message': 'Unknown command'}
@@ -180,7 +192,9 @@ class HoneypotServer:
 
         except KeyboardInterrupt:
             self.logger.info("Shutting down honeypot server...")
-            for name in list(self.honeypots.keys()):
+            with self.honeypots_lock:
+                names = list(self.honeypots.keys())
+            for name in names:
                 self.stop_honeypot(name)
 
 if __name__ == '__main__':

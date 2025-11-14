@@ -16,7 +16,7 @@ class DeviceDetector:
             # SSH client detection
             if 'OpenSSH' in data_str:
                 parts = data_str.split('_')
-                if len(parts) >= 2:
+                if len(parts) >= 2 and parts[1]:
                     device_name = f"OpenSSH {parts[1]}"
             elif 'PuTTY' in data_str:
                 device_name = "PuTTY Client"
@@ -58,30 +58,55 @@ class DeviceDetector:
         """Parse User-Agent string to extract device information"""
         device_name = "Unknown Browser"
         
-        # Browser detection
+        # Browser detection with bounds checking
         if 'Firefox/' in ua:
-            version = ua.split('Firefox/')[1].split()[0]
-            device_name = f"Firefox {version}"
+            parts = ua.split('Firefox/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"Firefox {version}"
         elif 'Chrome/' in ua:
-            version = ua.split('Chrome/')[1].split()[0]
-            device_name = f"Chrome {version}"
+            parts = ua.split('Chrome/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"Chrome {version}"
         elif 'Safari/' in ua and 'Chrome/' not in ua:  # Safari check after Chrome
-            version = ua.split('Version/')[1].split()[0] if 'Version/' in ua else ua.split('Safari/')[1].split()[0]
-            device_name = f"Safari {version}"
+            if 'Version/' in ua:
+                parts = ua.split('Version/')
+                if len(parts) > 1 and parts[1]:
+                    version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                    device_name = f"Safari {version}"
+            else:
+                parts = ua.split('Safari/')
+                if len(parts) > 1 and parts[1]:
+                    version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                    device_name = f"Safari {version}"
         elif 'Edge/' in ua:
-            version = ua.split('Edge/')[1].split()[0]
-            device_name = f"Edge {version}"
-        elif 'Opera/' in ua or 'OPR/' in ua:
-            version = ua.split('OPR/')[1].split()[0] if 'OPR/' in ua else ua.split('Opera/')[1].split()[0]
-            device_name = f"Opera {version}"
+            parts = ua.split('Edge/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"Edge {version}"
+        elif 'OPR/' in ua:
+            parts = ua.split('OPR/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"Opera {version}"
+        elif 'Opera/' in ua:
+            parts = ua.split('Opera/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"Opera {version}"
         elif 'curl/' in ua.lower():
-            version = ua.split('curl/')[1].split()[0]
-            device_name = f"curl {version}"
+            parts = ua.lower().split('curl/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"curl {version}"
         elif 'Postman' in ua:
             device_name = "Postman"
         elif 'wget/' in ua.lower():
-            version = ua.split('wget/')[1].split()[0]
-            device_name = f"wget {version}"
+            parts = ua.lower().split('wget/')
+            if len(parts) > 1 and parts[1]:
+                version = parts[1].split()[0] if parts[1].split() else 'Unknown'
+                device_name = f"wget {version}"
         
         # OS detection
         os_name = None

@@ -49,13 +49,93 @@ class AdvancedHoneypot:
         key_path = 'certs/server.key'
         if not os.path.exists('certs'):
             os.makedirs('certs')
+        # Only generate if certificates don't exist
+        if not os.path.exists(cert_path) or not os.path.exists(key_path):
             self.generate_self_signed_cert()
         self.ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         self.ssl_context.load_cert_chain(cert_path, key_path)
 
     def generate_self_signed_cert(self):
-        # This is a placeholder - in production, use OpenSSL to generate proper certs
-        pass
+        """Generate self-signed SSL certificate using OpenSSL or cryptography module"""
+        cert_path = 'certs/server.crt'
+        key_path = 'certs/server.key'
+        
+        try:
+            # Try using OpenSSL command-line tool first
+            import subprocess
+            result = subprocess.run([
+                'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
+                '-keyout', key_path, '-out', cert_path,
+                '-days', '365', '-nodes',
+                '-subj', '/CN=localhost'
+            ], capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                self.logger.info("Generated SSL certificate using OpenSSL")
+                return
+        except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+            self.logger.warning(f"OpenSSL not available: {e}")
+        
+        # Fallback: Use cryptography module if OpenSSL not available
+        try:
+            from cryptography import x509
+            from cryptography.x509.oid import NameOID
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            from cryptography.hazmat.primitives import serialization
+            import datetime
+            
+            # Generate private key
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+            
+            # Create certificate
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"State"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, u"City"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Honeypot"),
+                x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
+            ])
+            
+            cert = x509.CertificateBuilder().subject_name(
+                subject
+            ).issuer_name(
+                issuer
+            ).public_key(
+                private_key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.datetime.utcnow()
+            ).not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            ).add_extension(
+                x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
+                critical=False,
+            ).sign(private_key, hashes.SHA256())
+            
+            # Write private key
+            with open(key_path, "wb") as f:
+                f.write(private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
+            
+            # Write certificate
+            with open(cert_path, "wb") as f:
+                f.write(cert.public_bytes(serialization.Encoding.PEM))
+            
+            self.logger.info("Generated SSL certificate using cryptography module")
+        except ImportError:
+            self.logger.error("cryptography module not available. Install with: pip install cryptography")
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to generate SSL certificate: {e}")
+            raise
 
     def load_attack_patterns(self):
         return {

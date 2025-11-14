@@ -1,6 +1,6 @@
-# Multi-Service Honeypot System
+# 🛡️ Multi-Service Honeypot System v3.0
 
-A sophisticated honeypot system with advanced attack detection, real-time monitoring, comprehensive logging, and security hardening.
+A sophisticated honeypot system with advanced attack detection, **real-time alerting**, automated incident response, comprehensive monitoring, and a modern web dashboard.
 
 ## 🚀 Features
 
@@ -8,21 +8,55 @@ A sophisticated honeypot system with advanced attack detection, real-time monito
 - **Multi-Service Simulation**: SSH, HTTP, HTTPS, FTP, MySQL
 - **Advanced Attack Detection**: Pattern recognition, tool detection, device fingerprinting
 - **Real-Time Dashboard**: Secure web interface with authentication & geolocation
-- **IP Geolocation**: Automatic geolocation of attack sources with caching
+- **🆕 Real-Time Alerting System**: Server-Sent Events (SSE) for instant notifications
+- **🆕 Automated Incident Response**: Webhook notifications, email alerts, IP blocking
+- **IP Geolocation**: Automatic geolocation with dual API fallback (ip-api.com + ipinfo.io)
 - **World Map Visualization**: Interactive map showing attack origins
 - **Comprehensive Logging**: UTC timestamps, structured JSON logs, PCAP capture
 - **Security Hardening**: XSS protection, authentication, security headers
 - **Persistent SSH Keys**: No more host key verification errors
-- **CI/CD Integration**: Automated testing and linting
+- **🆕 Advanced Filtering & Search**: Multi-criteria filtering with date range pickers
+- **🆕 Export/Report Generation**: CSV and JSON export with filtering
+- **🆕 Mobile Responsive**: Optimized for all device sizes
+
+### 🆕 Real-Time Alerting System
+- **Live Alert Notifications**: Real-time alerts via Server-Sent Events (SSE)
+- **Alert Types**:
+  - High Attack Rate (configurable threshold)
+  - Critical Attack Types (SQL Injection, Command Injection, XSS)
+  - Suspicious Tools (Metasploit, SQLMap, Hydra)
+  - Repeated Attacker (same IP multiple attacks)
+  - New Country Detection
+- **Alert Severity Levels**: Critical, High, Medium, Info
+- **Notification Badges**: Live alert counter in dashboard header
+- **Toast Notifications**: Pop-up alerts for critical events
+- **Alert Panel**: View and manage all alerts
+
+### 🆕 Automated Incident Response
+- **Webhook Notifications**: POST alerts to configured webhook URL
+- **Email Notifications**: Framework ready for SMTP integration
+- **IP Blocking**: Automatic blocking of malicious IPs (if enabled)
+- **Configurable Thresholds**: Customize alert triggers via environment variables
+
+### 🆕 Enhanced Dashboard Features
+- **Dark/Light Mode**: Theme toggle with persistent preferences
+- **Advanced Search**: Real-time table search
+- **Multi-Criteria Filtering**: Filter by date range, service, attack type, country, IP
+- **Custom Date Range Pickers**: Native datetime inputs for precise filtering
+- **Export Functionality**: Download data as CSV or JSON
+- **Real-Time Updates**: Auto-refresh with SSE for alerts
+- **Mobile Responsive**: Fully optimized for mobile devices
 
 ## 📋 Requirements
 
 ### System Requirements
-- Python 3.8+
-- **Linux distributions supported**: Ubuntu, Debian, CentOS, RHEL, Fedora, Arch Linux, SUSE, Kali Linux, and others
-- Root/sudo privileges (for binding to privileged ports and PCAP capture)
-- Bash shell (standard on all Linux distributions)
-- Available ports:
+- **Python 3.8+**
+- **Operating Systems**: 
+  - Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch Linux, SUSE, Kali Linux)
+  - Windows 10/11 (PowerShell 5.1+)
+  - macOS
+- **Root/sudo privileges** (for binding to privileged ports and PCAP capture on Linux)
+- **Available ports**:
   - 2222 (SSH Honeypot)
   - 5001 (Dashboard)
   - 8080 (HTTP Honeypot)
@@ -32,120 +66,311 @@ A sophisticated honeypot system with advanced attack detection, real-time monito
 
 ### Python Packages
 ```bash
-pip install paramiko flask requests markupsafe
+pip install paramiko flask requests markupsafe cryptography
+```
+
+**Optional but Recommended:**
+```bash
+pip install flask-socketio  # For enhanced WebSocket support (future)
 ```
 
 ### Optional Dependencies
-- `tcpdump` - For full PCAP network capture (automatically attempted, logs warning if unavailable)
-- `lsof`, `ss`, or `netstat` - For port checking (script will use whichever is available)
-- `curl` or `wget` - For HTTP testing (optional, script works without it)
-- `netcat` - For port connectivity testing (optional)
+- `tcpdump` - For full PCAP network capture (Linux/macOS)
+- `openssl` - For SSL certificate generation (or uses cryptography module)
+- `lsof`, `ss`, or `netstat` - For port checking (Linux)
 
 ## 🏗️ Project Structure
 
 ```
 honeypot-vscode/
 ├── unified_honeypot.py      # Main honeypot server (SSH, HTTP, HTTPS, FTP, MySQL)
-├── app.py                   # Web dashboard with authentication & IP geolocation
-├── start.sh                 # Cross-platform startup script
-├── device_detector.py       # Device/client fingerprinting utility
+├── app.py                   # Web dashboard with alerting & API endpoints
+├── start.sh                 # Linux/macOS startup script
+├── run_dashboard.ps1        # Windows PowerShell startup script
+├── device_detector.py      # Device/client fingerprinting utility
 ├── ssh_honeypot.py          # Standalone SSH honeypot (legacy)
-├── ssh_dashboard.py         # Standalone SSH dashboard (legacy)
-├── advanced_honeypot.py     # Advanced honeypot implementation (legacy)
-├── advanced_honeypot_server.py  # Advanced server wrapper (legacy)
+├── advanced_honeypot.py     # Advanced honeypot implementation
+├── advanced_honeypot_server.py  # Advanced server wrapper
 ├── config/
 │   └── unified_honeypot.json    # Configuration file
 ├── templates/               # HTML templates
-│   ├── unified_dashboard.html   # Main dashboard template with map
-│   ├── ssh_dashboard.html       # SSH-specific dashboard
-│   ├── dashboard.html           # Legacy dashboard
+│   ├── unified_dashboard.html   # Main dashboard with all features
 │   └── login.html               # Login template
 ├── tests/                   # Unit tests
-│   ├── test_config.py
-│   └── test_dashboard.py
 ├── logs/                    # Log files
 │   ├── attacks.json            # Attack log (JSON lines)
+│   ├── alerts.json             # Alert log (JSON lines)
 │   ├── geocache.json           # IP geolocation cache
 │   └── unified_honeypot.log    # Service logs
-├── certs/                   # SSL certificates
-├── ssh_keys/                # SSH host keys
+├── certs/                   # SSL certificates (auto-generated)
+├── ssh_keys/                # SSH host keys (auto-generated)
 ├── pcaps/                   # Network capture files
-├── .github/workflows/       # CI/CD
-│   └── ci.yml
 └── README.md
 ```
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Linux/macOS
+
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/Ranaveer9177/Team-Avengers-Honeypot.git
 cd Team-Avengers-Honeypot
 ```
 
-### 2. Set Up Python Environment
+#### 2. Set Up Python Environment
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install paramiko flask requests markupsafe
+source .venv/bin/activate
+pip install paramiko flask requests markupsafe cryptography
 ```
 
-### 3. Start the Honeypot System
+#### 3. Start the Honeypot System
 ```bash
 # Make script executable
 chmod +x start.sh
 
-# Fix line endings if you get "bad interpreter" or "No such file or directory" error
-# This is common when cloning on Linux after editing on Windows
+# Fix line endings if needed (common when cloning on Linux after editing on Windows)
 sed -i 's/\r$//' start.sh
-# OR if dos2unix is installed:
-# dos2unix start.sh
 
-# Verify the script is executable and has correct line endings
-file start.sh  # Should show "Bourne-Again shell script, ASCII text executable"
-
-# Start the honeypot
+# Start the honeypot (requires sudo for privileged ports)
 sudo ./start.sh
 ```
 
-**Troubleshooting:**
-- If you get "No such file or directory" even after chmod +x, it's a line ending issue - run `sed -i 's/\r$//' start.sh`
-- If you get "bad interpreter: /bin/bash^M", same fix applies
-- Make sure you're in the correct directory: `cd honeypot-vscode` or `cd Team-Avengers-Honeypot`
-
-The script will automatically:
+**The script will automatically:**
 - ✅ Create required directories (`logs/`, `certs/`, `ssh_keys/`, `pcaps/`, `config/`)
-- ✅ Generate persistent SSH host keys (reused across restarts)
+- ✅ Generate persistent SSH host keys
 - ✅ Generate SSL certificates for HTTPS
 - ✅ Install required Python packages
 - ✅ Start all honeypot services
 - ✅ Launch the secure dashboard
 - ✅ Attempt PCAP capture (if tcpdump is available)
 
-### 4. Access the Dashboard
+#### 4. Access the Dashboard
 - **URL**: http://localhost:5001 (or http://<your-ip>:5001)
 - **Username**: `admin`
 - **Password**: `honeypot@91771`
 
-> **Note**: You can change credentials via environment variables:
-> ```bash
-> export DASHBOARD_USERNAME="your_username"
-> export DASHBOARD_PASSWORD="your_password"
-> ```
+### Windows
 
-### 5. SSH Access
-During startup, a random SSH password is generated:
-```
-[!] IMPORTANT: New SSH Password Generated
-[!] Username: admin
-[!] Password: Honeypot@12345
+#### 1. Clone the Repository
+```powershell
+git clone https://github.com/Ranaveer9177/Team-Avengers-Honeypot.git
+cd Team-Avengers-Honeypot
 ```
 
-Connect using:
+#### 2. Set Up Python Environment
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install paramiko flask requests markupsafe cryptography
+```
+
+#### 3. Start the Honeypot System
+
+**Option A: Using PowerShell Script**
+```powershell
+.\run_dashboard.ps1
+```
+
+**Option B: Manual Start**
+```powershell
+# Start honeypot server
+python unified_honeypot.py
+
+# In another terminal, start dashboard
+python app.py
+```
+
+#### 4. Access the Dashboard
+- **URL**: http://localhost:5001
+- **Username**: `admin`
+- **Password**: `honeypot@91771`
+
+### Manual Start (All Platforms)
+
+If you prefer to start services manually:
+
 ```bash
-ssh -p 2222 admin@<your-ip>
-# Use the password shown during startup
+# Terminal 1: Start honeypot server
+python unified_honeypot.py
+
+# Terminal 2: Start dashboard
+python app.py
 ```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+#### Dashboard Configuration
+```bash
+# Dashboard credentials
+export DASHBOARD_USERNAME="admin"
+export DASHBOARD_PASSWORD="honeypot@91771"
+
+# Dashboard port
+export FLASK_RUN_PORT=5001
+
+# Log file paths
+export ATTACKS_LOG="logs/attacks.json"
+export GEOCACHE_FILE="logs/geocache.json"
+export ALERTS_LOG="logs/alerts.json"
+
+# Geolocation API
+export IP_API_URL="http://ip-api.com/json"
+export IP_API_TIMEOUT=3.0
+```
+
+#### 🆕 Alert Configuration
+```bash
+# Alert thresholds
+export ALERT_HIGH_RATE=10          # Attacks per minute to trigger alert
+export ALERT_REPEATED_IP=5         # Attacks from same IP to trigger alert
+
+# Incident response
+export WEBHOOK_URL="https://your-webhook-url.com/alerts"  # Webhook for alerts
+export NOTIFY_EMAIL="admin@example.com"                  # Email for notifications
+export AUTO_BLOCK_IP="false"                             # Enable IP blocking (true/false)
+```
+
+#### Windows PowerShell
+```powershell
+$env:DASHBOARD_USERNAME="admin"
+$env:DASHBOARD_PASSWORD="honeypot@91771"
+$env:FLASK_RUN_PORT=5001
+$env:ALERT_HIGH_RATE=10
+$env:WEBHOOK_URL="https://your-webhook-url.com/alerts"
+```
+
+### Honeypot Configuration
+
+Edit `config/unified_honeypot.json`:
+
+```json
+{
+  "ssh_port": 2222,
+  "http_port": 8080,
+  "https_port": 8443,
+  "ftp_port": 2121,
+  "mysql_port": 3306,
+  "log_dir": "logs",
+  "ssh_key_dir": "ssh_keys",
+  "cert_dir": "certs",
+  "pcap_dir": "pcaps",
+  "pcap_enabled": true,
+  "initial_payload_max_bytes": 512,
+  "banners": {
+    "ssh_version": "SSH-2.0-OpenSSH_7.4",
+    "http_server": "Apache/2.4.41 (Ubuntu)"
+  }
+}
+```
+
+## 📡 API Endpoints
+
+### Dashboard API
+
+All endpoints require HTTP Basic Authentication (same credentials as dashboard).
+
+#### Get Attacks
+**GET `/api/attacks`**
+- Returns: JSON object with attack data
+- Response:
+```json
+{
+  "count": 150,
+  "attacks": [...]
+}
+```
+
+#### 🆕 Get Alerts
+**GET `/api/alerts`**
+- Returns: Recent alerts (last 100)
+- Response:
+```json
+{
+  "count": 25,
+  "alerts": [
+    {
+      "type": "critical_attack",
+      "severity": "critical",
+      "message": "Critical attack detected: SQL Injection from 192.168.1.100",
+      "timestamp": "2025-01-15T10:30:45.123456+00:00",
+      "data": {...}
+    }
+  ]
+}
+```
+
+#### 🆕 Real-Time Alert Stream
+**GET `/api/alerts/stream`**
+- Server-Sent Events (SSE) stream for real-time alerts
+- Automatically reconnects on failure
+- Usage: Connect with EventSource API
+
+#### 🆕 Filter Attacks
+**POST `/api/attacks/filter`**
+- Filter attacks by multiple criteria
+- Request body:
+```json
+{
+  "start_date": "2025-01-01T00:00:00Z",
+  "end_date": "2025-01-31T23:59:59Z",
+  "service": "ssh",
+  "attack_type": "brute_force",
+  "country": "China",
+  "ip": "192.168.1.100"
+}
+```
+
+#### 🆕 Export Attacks
+**POST `/api/attacks/export`**
+- Export attacks to CSV or JSON
+- Request body:
+```json
+{
+  "format": "csv",
+  "start_date": "2025-01-01T00:00:00Z",
+  "end_date": "2025-01-31T23:59:59Z"
+}
+```
+- Returns: Downloadable file
+
+#### 🆕 Get Statistics
+**GET `/api/stats?start_date=2025-01-01&end_date=2025-01-31`**
+- Get statistics with optional date range
+- Returns: Statistics object
+
+## 🎯 Dashboard Features
+
+### Real-Time Monitoring
+- **Live Attack Feed**: Real-time updates of incoming attacks
+- **Alert Notifications**: Instant alerts for critical events
+- **Auto-Refresh**: Automatic data refresh every 60 seconds
+
+### Advanced Filtering
+- **Date Range**: Custom start and end dates
+- **Service Filter**: Filter by SSH, HTTP, HTTPS, FTP, MySQL
+- **Attack Type**: Filter by attack type
+- **Geographic**: Filter by country
+- **IP Address**: Search by specific IP
+
+### Data Export
+- **CSV Export**: Download filtered data as CSV
+- **JSON Export**: Download filtered data as JSON
+- **Quick Export**: One-click export from table view
+
+### Visualization
+- **Interactive Charts**: Service distribution, attack types, countries
+- **World Map**: Geographic visualization of attack sources
+- **Statistics Cards**: Key metrics at a glance
+- **Attack Table**: Detailed attack log with search
+
+### Mobile Support
+- **Responsive Design**: Optimized for all screen sizes
+- **Touch-Friendly**: Large buttons and touch targets
+- **Mobile Navigation**: Collapsible panels and menus
 
 ## 🔒 Security Features
 
@@ -159,55 +384,34 @@ ssh -p 2222 admin@<your-ip>
   - X-XSS-Protection: 1; mode=block
   - Referrer-Policy: strict-origin-when-cross-origin
 
-### SSH Key Persistence
-- SSH host keys are persisted across restarts
-- No more "Host key verification failed" errors
-- Keys automatically generated on first run
-- Stored in `ssh_keys/server.key`
+### Rate Limiting
+- **API Rate Limiting**: 45 requests/minute for geolocation API
+- **Thread-Safe**: All operations are thread-safe
+- **Cache Management**: LRU cache with TTL (1000 entries, 7 days)
 
-### Service Banners
-- Consistent service identification:
-  - SSH: `SSH-2.0-OpenSSH_7.4`
-  - HTTP/HTTPS: `Apache/2.4.41 (Ubuntu)`
-- Configurable via `config/unified_honeypot.json`
+### SSL/TLS
+- **Auto-Generated Certificates**: SSL certificates generated automatically
+- **HTTPS Support**: Secure HTTPS honeypot service
+- **Certificate Persistence**: Certificates saved for reuse
 
-## 📊 Instrumentation & Logging
-
-### Timestamps
-- All logs use **UTC ISO8601 format** for consistency
-- Example: `2024-01-15T10:30:45.123456+00:00`
+## 📊 Logging & Monitoring
 
 ### Log Files
 - `logs/attacks.json` - Structured attack data (JSON lines)
-- `logs/geocache.json` - IP geolocation cache (persists across restarts)
+- `logs/alerts.json` - Alert log (JSON lines) 🆕
+- `logs/geocache.json` - IP geolocation cache
 - `logs/unified_honeypot.log` - Service logs
-- All attack data includes: IP, timestamp, service, attack type, tools detected, geolocation (lat/lon)
-
-### IP Geolocation
-- **Automatic geolocation** of all attack source IPs
-- Uses ip-api.com free tier API
-- **Local caching** to minimize API calls and improve performance
-- Cache persists across restarts in `logs/geocache.json`
-- Graceful fallback if geolocation fails
-- Rate limiting protection built-in
-
-### PCAP Capture
-- **Initial Payload Capture**: First 512 bytes of each connection saved to `pcaps/`
-- **Full PCAP Capture**: Automatic tcpdump capture (if available)
-- Files saved as: `pcaps/unified_YYYYMMDDTHHMMSSZ.pcap`
-- Configurable via `config/unified_honeypot.json`:
-  ```json
-  {
-    "pcap_enabled": true,
-    "pcap_dir": "pcaps",
-    "initial_payload_max_bytes": 512
-  }
-  ```
 
 ### Attack Detection
 - **Tool Detection**: Nmap, Metasploit, Hydra, SQLMap, Nikto, Burp Suite
 - **Attack Types**: Brute force, SQL injection, command injection, reconnaissance
 - **Device Fingerprinting**: Client version detection and device identification
+
+### IP Geolocation
+- **Dual API Support**: Primary (ip-api.com) with fallback (ipinfo.io)
+- **Local Caching**: LRU cache with 7-day TTL
+- **Rate Limiting**: Automatic rate limit enforcement
+- **Graceful Fallback**: Continues operation if APIs fail
 
 ## 🎯 Service Details
 
@@ -235,16 +439,39 @@ ssh -p 2222 admin@<your-ip>
 - SQL injection detection
 - Connection attempt logging
 
-### Dashboard (Port 5001)
-- Real-time attack visualization
-- Interactive statistics and charts (Chart.js)
-- **World Map Visualization**: Leaflet.js map showing attack source locations
-- **IP Geolocation**: Automatic geolocation using ip-api.com with local caching
-- Service-specific metrics
-- Attack pattern analysis
-- **Protected with HTTP Basic Authentication**
-- **XSS Hardening**: Input sanitization and security headers
-- **API Endpoint**: `/api/attacks` for JSON data access
+## 🔧 Troubleshooting
+
+### Port Already in Use
+```bash
+# Linux
+sudo lsof -i :5001  # Check what's using the port
+sudo kill -9 <PID>   # Kill the process
+
+# Windows
+netstat -ano | findstr :5001
+taskkill /PID <PID> /F
+```
+
+### Dashboard Not Accessible
+- Verify port 5001 is not blocked by firewall
+- Check if service started: `ps aux | grep app.py` (Linux) or `Get-Process python` (Windows)
+- Review logs: `tail -f logs/unified_honeypot.log`
+
+### Alerts Not Showing
+- Check `logs/alerts.json` for alert entries
+- Verify SSE connection in browser console
+- Check alert thresholds in environment variables
+
+### SSL Certificate Errors
+- Certificates are auto-generated on first run
+- Check `certs/` directory for certificate files
+- Regenerate by deleting `certs/server.crt` and `certs/server.key`
+
+### Geolocation Not Working
+- Check internet connection
+- Verify API rate limits (45 req/min for ip-api.com)
+- Check `logs/geocache.json` for cached entries
+- System will fallback to ipinfo.io if primary API fails
 
 ## 🧪 Testing
 
@@ -257,115 +484,6 @@ pytest tests/
 ```bash
 flake8
 ```
-
-### CI/CD
-GitHub Actions automatically runs:
-- Flake8 linting
-- Pytest unit tests
-
-## ⚙️ Configuration
-
-### Honeypot Configuration
-
-Edit `config/unified_honeypot.json` to customize:
-
-```json
-{
-  "ssh_port": 2222,
-  "http_port": 8080,
-  "https_port": 8443,
-  "ftp_port": 2121,
-  "mysql_port": 3306,
-  "log_dir": "logs",
-  "ssh_key_dir": "ssh_keys",
-  "cert_dir": "certs",
-  "pcap_dir": "pcaps",
-  "pcap_enabled": true,
-  "initial_payload_max_bytes": 512,
-  "banners": {
-    "ssh_version": "SSH-2.0-OpenSSH_7.4",
-    "http_server": "Apache/2.4.41 (Ubuntu)"
-  }
-}
-```
-
-### Dashboard Configuration
-
-Dashboard settings can be configured via environment variables:
-
-```bash
-# Dashboard credentials
-export DASHBOARD_USERNAME="admin"
-export DASHBOARD_PASSWORD="honeypot@91771"
-
-# Dashboard port
-export FLASK_RUN_PORT=5001
-
-# Log file paths
-export ATTACKS_LOG="logs/attacks.json"
-export GEOCACHE_FILE="logs/geocache.json"
-
-# Geolocation API (optional)
-export IP_API_URL="http://ip-api.com/json"
-export IP_API_TIMEOUT=3.0
-```
-
-These can also be set in `start.sh` or passed when running `app.py` directly.
-
-## 🔧 Troubleshooting
-
-### SSH Host Key Verification Failed
-This should no longer occur as keys are persisted. If it does:
-```bash
-ssh-keygen -R "[<ip>]:2222"
-```
-
-### Port Already in Use
-The start script attempts to free ports automatically. If issues persist:
-```bash
-sudo lsof -i :2222  # Check what's using the port
-sudo kill -9 <PID>  # Kill the process
-```
-
-### PCAP Capture Not Working
-- Ensure `tcpdump` is installed: `sudo apt-get install tcpdump`
-- Check permissions: `sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump`
-- Check logs for warnings
-
-### Dashboard Not Accessible
-- Verify port 5001 is not blocked by firewall
-- Check if service started: `ps aux | grep app.py`
-- Review logs: `tail -f logs/unified_honeypot.log`
-
-## 📝 Logging Examples
-
-### Attack Log Entry (logs/attacks.json)
-```json
-{
-  "ip": "192.168.1.100",
-  "timestamp": "2024-01-15T10:30:45.123456+00:00",
-  "service": "ssh",
-  "attack_type": "password_auth",
-  "username": "admin",
-  "password": "test123",
-  "tools_detected": ["hydra"],
-  "device_name": "OpenSSH 8.2",
-  "initial_payload": "SSH-2.0-OpenSSH_8.2"
-}
-```
-
-### Geolocation Cache Entry (logs/geocache.json)
-```json
-{
-  "192.168.1.100": {
-    "lat": 37.7749,
-    "lon": -122.4194,
-    "ts": 1705312245
-  }
-}
-```
-
-The geolocation cache automatically stores IP addresses with their coordinates and timestamp to avoid repeated API calls.
 
 ## 🛡️ Security Considerations
 
@@ -383,53 +501,32 @@ The geolocation cache automatically stores IP addresses with their coordinates a
 - Keep system and packages updated
 - Use firewall rules to restrict dashboard access
 - Review attack logs for patterns
+- Configure webhook notifications for critical alerts
+- Set appropriate alert thresholds
 
-## 📡 API Endpoints
+## 📝 Example Usage
 
-### Dashboard API
+### Viewing Alerts
+1. Click the 🔔 notification badge in dashboard header
+2. Alert panel opens showing recent alerts
+3. Click any alert for details
 
-The dashboard provides a JSON API endpoint for programmatic access:
+### Filtering Attacks
+1. Click "🔍 Filter" button
+2. Set filter criteria (date range, service, attack type, etc.)
+3. Click "Apply Filters"
+4. Table updates with filtered results
 
-**GET `/api/attacks`**
-- Returns: JSON object with attack data
-- Authentication: HTTP Basic Auth required (same as dashboard)
-- Response format:
-```json
-{
-  "count": 150,
-  "attacks": [
-    {
-      "timestamp": "2024-01-15 10:30:45",
-      "timestamp_obj": "2024-01-15T10:30:45.123456+00:00",
-      "ip": "192.168.1.100",
-      "device_name": "OpenSSH 8.2",
-      "service": "ssh",
-      "attack_type": "password_auth",
-      "tools_detected": "hydra",
-      "username": "admin",
-      "auth_method": "Password",
-      "lat": 37.7749,
-      "lon": -122.4194
-    }
-  ]
-}
-```
+### Exporting Data
+1. Click "📊 Export" button
+2. Select format (CSV/JSON)
+3. Optionally set date range
+4. Click "Export" to download
 
-Useful for:
-- Integration with SIEM systems
-- Automated reporting
-- Custom dashboards
-- Data analysis scripts
-
-## 📚 Legacy Files
-
-The following files are legacy implementations and are not used by the main `start.sh` script:
-- `ssh_honeypot.py` - Standalone SSH honeypot (functionality merged into `unified_honeypot.py`)
-- `ssh_dashboard.py` - Standalone SSH dashboard (functionality merged into `app.py`)
-- `advanced_honeypot.py` - Advanced honeypot implementation (experimental)
-- `advanced_honeypot_server.py` - Advanced server wrapper (experimental)
-
-These files are kept for reference but are not actively maintained. Use `unified_honeypot.py` and `app.py` for production deployments.
+### Searching Attacks
+1. Type in search box above table
+2. Table filters in real-time
+3. Works with all table columns
 
 ## 🤝 Contributing
 
@@ -450,3 +547,7 @@ Built for security research and threat intelligence gathering.
 ---
 
 **Repository**: https://github.com/Ranaveer9177/Team-Avengers-Honeypot
+
+**Version**: 3.0 - Real-Time Alerting & Advanced Dashboard
+
+**Last Updated**: January 2025

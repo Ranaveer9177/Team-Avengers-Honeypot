@@ -417,10 +417,11 @@ All endpoints require HTTP Basic Authentication (same credentials as dashboard).
 
 ### SSH Honeypot (Port 2222)
 - Full SSH server simulation
-- Dynamic password authentication (format: `Honeypot@XXXXX`)
+- **Accept any password** - All passwords work for `admin` user
 - Interactive shell simulation
 - Command execution logging
 - Persistent host keys
+- **Easy connection**: `ssh -p 2222 admin@YOUR_IP` (any password accepted)
 
 ### HTTP/HTTPS Honeypots (Ports 8080/8443)
 - Realistic web server responses
@@ -496,7 +497,7 @@ flake8
 
 ### Best Practices
 - Use strong dashboard credentials
-- Regularly rotate SSH passwords (they change on each restart)
+- SSH accepts any password for `admin` user (for easy honeypot access)
 - Monitor disk space (PCAP files can be large)
 - Keep system and packages updated
 - Use firewall rules to restrict dashboard access

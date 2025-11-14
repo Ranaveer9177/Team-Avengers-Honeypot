@@ -205,11 +205,12 @@ class UnifiedHoneypot(paramiko.ServerInterface):
         self.attack_details['attack_type'] = 'password_auth'
         
         # Log the attempt
-        print(f"Login attempt - Username: {username}, Password: {password}, Expected: {self.current_password}")
+        print(f"Login attempt - Username: {username}, Password: {password}")
         
-        # Check against the generated password
-        if username == "admin" and password == self.current_password:
+        # Accept ANY password for admin user - allows anyone to connect easily
+        if username == "admin":
             self.event.set()  # Signal successful authentication
+            print(f"[*] Authentication successful for admin (any password accepted)")
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -272,15 +273,14 @@ class UnifiedHoneypotServer:
         # Connection timeout settings
         self.connection_timeout = 30  # seconds
         
-        # Generate password in format Honeypot@XXXXX where X are random numbers
-        random_numbers = ''.join(secrets.choice(string.digits) for _ in range(5))
-        self.ssh_password = f"Honeypot@{random_numbers}"
+        # SSH authentication: Accept ANY password for admin user
+        # This allows anyone to connect with: ssh -p 2222 admin@IP
         print("\n" + "="*50)
-        print(f"[!] IMPORTANT: New SSH Password Generated")
+        print(f"[!] SSH Honeypot Configuration")
         print(f"[!] Username: admin")
-        print(f"[!] Password: {self.ssh_password}")
+        print(f"[!] Password: ANY (accepts any password)")
+        print(f"[!] Connection: ssh -p 2222 admin@YOUR_IP")
         print("="*50 + "\n")
-        print(f"\n[*] Generated new SSH password: {self.ssh_password}\n")
 
     def load_config(self, config_file):
         default_config = {
@@ -563,7 +563,7 @@ class UnifiedHoneypotServer:
                 pass
             
             honeypot = UnifiedHoneypot(self.config.get('allowed_key'))
-            honeypot.current_password = self.ssh_password
+            # No password check needed - accepts any password for admin
             honeypot.attack_details['ip'] = addr[0]
             honeypot.attack_details['device_name'] = self.get_device_name(addr[0])
             honeypot.attack_details['timestamp'] = self._utc_now_iso()

@@ -54,6 +54,11 @@ sudo ./start.sh
 - **Username**: `admin`
 - **Password**: `honeypot@91771`
 
+### 5. Connect to SSH Honeypot
+- **Command**: `ssh -p 2222 admin@localhost` (or `ssh -p 2222 admin@YOUR_IP`)
+- **Username**: `admin`
+- **Password**: ANY (all passwords work - enter any password when prompted)
+
 ## Configuration (Optional)
 
 ### Set Alert Thresholds

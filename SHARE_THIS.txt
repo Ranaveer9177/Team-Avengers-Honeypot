@@ -1,0 +1,111 @@
+================================================================================
+                    SSH HONEYPOT CONNECTION INFORMATION
+================================================================================
+
+TO CONNECT FROM ANYWHERE:
+
+Command:
+    ssh -p 2222 admin@YOUR_PUBLIC_IP
+
+Replace "YOUR_PUBLIC_IP" with the honeypot owner's public IP address.
+
+Example:
+    ssh -p 2222 admin@203.0.113.45
+
+
+CREDENTIALS:
+    Username: admin
+    Password: ANY (you can use any password - all passwords are accepted!)
+    
+    ✅ No need to ask for password - just use any password you want!
+
+
+DASHBOARD ACCESS:
+    URL: http://YOUR_PUBLIC_IP:5001
+    
+    Example: http://203.0.113.45:5001
+    (Username/password required - ask owner)
+
+
+HTTP/HTTPS HONEYPOT ACCESS:
+    HTTP:  http://YOUR_PUBLIC_IP:8080
+    HTTPS: https://YOUR_PUBLIC_IP:8443
+    
+    Examples:
+      http://10.0.2.15:8080
+      https://10.0.2.15:8443
+    
+    ✅ Open in web browser - no credentials needed
+    ✅ Simulates web server with login forms
+    ✅ All requests are logged and monitored
+
+
+FTP HONEYPOT ACCESS:
+    Command: ftp -P 2121 YOUR_PUBLIC_IP
+    
+    Example:
+      ftp -P 2121 10.0.2.15
+    
+    Or use FTP client:
+      Host: YOUR_PUBLIC_IP
+      Port: 2121
+      Username: (any)
+      Password: (any)
+
+
+MYSQL HONEYPOT ACCESS:
+    Command: mysql -h YOUR_PUBLIC_IP -P 3306
+    
+    Example:
+      mysql -h 10.0.2.15 -P 3306
+    
+    Or use MySQL client:
+      Host: YOUR_PUBLIC_IP
+      Port: 3306
+      Username: (any)
+      Password: (any)
+
+
+HOW TO CONNECT:
+
+Windows:
+    - Open PowerShell or Command Prompt
+    - Run: ssh -p 2222 admin@YOUR_PUBLIC_IP
+    - Or use PuTTY: https://www.putty.org/
+    
+Linux/Mac:
+    - Open Terminal
+    - Run: ssh -p 2222 admin@YOUR_PUBLIC_IP
+
+
+TROUBLESHOOTING:
+    - "Connection refused" → Honeypot might not be running
+    - "Connection timeout" → Firewall/router might be blocking
+    - "Permission denied" → Make sure username is "admin" (password can be anything)
+    
+    Ask the owner to:
+    1. Verify honeypot is running
+    2. Check Windows Firewall allows port 2222
+    3. Configure router port forwarding (if behind router)
+    4. Provide current password
+
+
+================================================================================
+                    OWNER INFORMATION (Don't Share This Part)
+================================================================================
+
+To find YOUR_PUBLIC_IP:
+    Visit: https://whatismyipaddress.com/
+    Or run: (Invoke-WebRequest -Uri "https://ifconfig.me" -UseBasicParsing).Content.Trim()
+
+Password Information:
+    ANY password works! Users can use any password they want.
+    Username must be "admin" for authentication to succeed.
+
+To allow connections:
+    1. Run setup_firewall.ps1 as Administrator
+    2. Configure router port forwarding (if behind router)
+    3. Make sure honeypot is running
+
+================================================================================
+

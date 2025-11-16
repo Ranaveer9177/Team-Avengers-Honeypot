@@ -1,0 +1,18 @@
+# Core dependencies for Honeypot System
+paramiko>=3.0.0
+flask>=2.3.0
+requests>=2.31.0
+markupsafe>=2.1.0
+
+# SSL certificate generation (fallback if OpenSSL not available)
+cryptography>=41.0.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code quality
+flake8>=6.0.0
+
+# Optional but recommended
+python-dotenv>=1.0.0

@@ -1,0 +1,17 @@
+{
+    "ssh_port": 2222,
+    "http_port": 8080,
+    "https_port": 8443,
+    "ftp_port": 2121,
+    "mysql_port": 3306,
+    "log_dir": "logs",
+    "ssh_key_dir": "ssh_keys",
+    "cert_dir": "certs",
+    "pcap_dir": "pcaps",
+    "pcap_enabled": true,
+    "initial_payload_max_bytes": 512,
+    "banners": {
+        "ssh_version": "SSH-2.0-OpenSSH_7.4",
+        "http_server": "Apache/2.4.41 (Ubuntu)"
+    }
+}

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>🛡️ Honeypot Security Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    </head>
+
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙 Dark</button>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🛡️ Honeypot Security Dashboard</h1>
+                    <p class="subtitle">Real-Time Threat Intelligence & Attack Monitoring</p>
+                </div>
+                <div class="header-right">
+                    <div class="notification-badge" onclick="toggleAlertPanel()">
+                        <div class="notification-icon">🔔</div>
+                        <span class="notification-count" id="alertCount">0</span>
+                    </div>
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span>Live</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="openExportModal()">
+                        <span>📊</span>
+                        <span>Export</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleFilters()">
+                        <span>🔍</span>
+                        <span>Filter</span>
+                    </button>
+                    <button class="btn btn-danger" onclick="openResetModal()" title="Reset dashboard and backup data">
+                        <span>🗑️</span>
+                        <span>Reset</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="refreshDashboard()">
+                        <span>🔄</span>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Alert Panel -->
+        <div class="alert-panel" id="alertPanel">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Recent Alerts</h3>
+            </div>
+            <div id="alertList"></div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Filter Panel -->
+        <div class="filter-panel" id="filterPanel" style="display: none;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 20px;">Advanced Filters</h3>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="datetime-local" id="startDate" />
+                </div>
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="datetime-local" id="endDate" />
+                </div>
+                <div class="filter-group">
+                    <label>Service</label>
+                    <select id="filterService">
+                        <option value="">All Services</option>
+                        {% for service in statistics.service_distribution.keys() %}
+                        <option value="{{ service }}">{{ service }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Attack Type</label>
+                    <select id="filterAttackType">
+                        <option value="">All Types</option>
+                        {% for attack_type in statistics.attack_types.keys() %}
+                        <option value="{{ attack_type }}">{{ attack_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Country</label>
+                    <select id="filterCountry">
+                        <option value="">All Countries</option>
+                        {% for country in statistics.countries.keys() %}
+                        <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>IP Address</label>
+                    <input type="text" id="filterIP" placeholder="e.g., 192.168.1.1" />
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-1">
+                <div class="stat-title">Total Attacks</div>
+                <div class="stat-value">{{ statistics.total_attacks }}</div>
+            </div>
+            <div class="stat-card stat-2">
+                <div class="stat-title">Unique IPs</div>
+                <div class="stat-value">{{ statistics.unique_ips }}</div>
+            </div>
+            <div class="stat-card stat-3">
+                <div class="stat-title">Top Country</div>
+                <div class="stat-value">
+                    {% if statistics.top_countries %}
+                        {{ statistics.top_countries[0][0] }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card stat-4">
+                <div class="stat-title">Top Service</div>
+                <div class="stat-value">
+                    {% if statistics.service_distribution %}
+                        {% set sorted_services = statistics.service_distribution.items()|sort(attribute=1, reverse=true) %}
+                        {{ sorted_services[0][0] if sorted_services else 'N/A' }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="section-header">
+            <h2>Attack Analytics</h2>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <canvas id="serviceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <canvas id="attackTypeChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <canvas id="countriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="section-header">
+            <h2>Geographic Attack Map</h2>
+        </div>
+        <div class="map-container">
+            <div id="attackMap"></div>
+        </div>
+
+        <!-- Recent Attacks Table -->
+        <div class="section-header">
+            <h2>Recent Attack Logs</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="searchInput" placeholder="Search attacks..." style="padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;" />
+                <button class="btn btn-secondary" onclick="exportTable()">📥 Export CSV</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table id="attacksTable">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>IP Address</th>
+                        <th>Location</th>
+                        <th>Service</th>
+                        <th>Attack Type</th>
+                        <th>Username</th>
+                        <th>Tools</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if statistics.recent_attacks %}
+                        {% for attack in statistics.recent_attacks %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">{{ attack.timestamp }}</td>
+                            <td style="font-family: 'JetBrains Mono', monospace; color: var(--primary-light); font-weight: 600;">{{ attack.ip }}</td>
+                            <td>{{ attack.city }}, {{ attack.country }}</td>
+                            <td><span class="badge badge-service">{{ attack.service }}</span></td>
+                            <td><span class="badge badge-attack">{{ attack.attack_type }}</span></td>
+                            <td>{{ attack.username or 'N/A' }}</td>
+                            <td>
+                                {% if attack.tools_detected and attack.tools_detected != 'N/A' %}
+                                    <span class="badge badge-success">{{ attack.tools_detected }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-muted);">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">No attacks recorded yet</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p><strong>🛡️ Honeypot Security Dashboard v3.0</strong></p>
+            <p style="margin-top: 8px;">Real-Time Cyber Defense Intelligence with Advanced Alerting | Team Avengers © 2025</p>
+        </footer>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Data</h3>
+                <button class="close-btn" onclick="closeExportModal()">×</button>
+            </div>
+            <div class="filter-group" style="margin-bottom: 15px;">
+                <label>Format</label>
+                <select id="exportFormat">
+                    <option value="csv">CSV</option>
+                    <option value="json">JSON</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="datetime-local" id="exportStartDate" />
+                </div>
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="datetime-local" id="exportEndDate" />
+                </div>
+            </div>
+            <div class="filter-actions" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="performExport()">Export</button>
+                <button class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal" id="resetModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>⚠️ Reset Dashboard</h3>
+                <button class="close-btn" onclick="closeResetModal()">×</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <p style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 20px; line-height: 1.6;">
+                    This action will:
+                </p>
+                <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 20px; line-height: 2;">
+                    <li>Export all current attack data to a timestamped text file in <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">logs/backups/</code></li>
+                    <li>Export all alerts to a backup file</li>
+                    <li>Clear all attack logs and alerts from the dashboard</li>
+                    <li>Reset all statistics to zero</li>
+                </ul>
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="color: var(--danger); font-weight: 600; margin: 0;">
+                        ⚠️ This action cannot be undone! Make sure you want to proceed.
+                    </p>
+                </div>
+            </div>
+            <div class="filter-actions" style="margin-top: 20px;">
+                <button class="btn btn-danger" onclick="performReset()" id="resetConfirmBtn">
+                    <span>🗑️</span>
+                    <span>Confirm Reset</span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeResetModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard credentials for API calls (passed from backend)
+        const DASHBOARD_USERNAME = {{ DASHBOARD_USERNAME | tojson | safe }};
+        const DASHBOARD_PASSWORD = {{ DASHBOARD_PASSWORD | tojson | safe }};
+        
+        // Chart Data
+        const serviceData = {{ statistics.service_distribution | tojson | safe }};
+        const attackTypeData = {{ statistics.attack_types | tojson | safe }};
+        const countriesData = {{ statistics.countries | tojson | safe }};
+
+        // Chart Configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                        font: { family: 'Inter', size: 12 },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-card'),
+                    titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                    bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
+                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color'),
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            cutout: '60%',
+            animation: {
+                animateRotate: true,
+                duration: 1200
+            }
+        };
+
+        const chartColors = [
+            '#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', 
+            '#10b981', '#f59e0b', '#ef4444', '#14b8a6'
+        ];
+
+        function createChart(id, label, dataObj) {
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+
+            if (!dataObj || Object.keys(dataObj).length === 0) {
+                ctx.parentElement.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted);">No data available</div>';
+                return;
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(dataObj),
+                    datasets: [{
+                        data: Object.values(dataObj),
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-primary')
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        title: {
+                            display: true,
+                            text: label,
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                            font: { family: 'Inter', size: 16, weight: '600' },
+                            padding: { bottom: 20 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Charts
+        createChart('serviceChart', 'Service Distribution', serviceData);
+        createChart('attackTypeChart', 'Attack Types', attackTypeData);
+        createChart('countriesChart', 'Top Countries', countriesData);
+
+        // Leaflet Map
+        const attacks = {{ attacks | tojson | safe }};
+        const map = L.map('attackMap').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        const attackIcon = L.divIcon({
+            className: 'attack-marker',
+            html: '<div style="width:12px;height:12px;background:#ef4444;border:2px solid white;border-radius:50%;box-shadow:0 0 10px #ef4444;"></div>',
+            iconSize: [12, 12]
+        });
+
+        if (Array.isArray(attacks) && attacks.length > 0) {
+            let markers = [];
+            attacks.forEach(a => {
+                const lat = parseFloat(a.lat);
+                const lon = parseFloat(a.lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    const marker = L.marker([lat, lon], { icon: attackIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="font-family: 'Inter', sans-serif; color: var(--text-primary);">
+                                <strong style="color: var(--primary);">${a.city || 'Unknown'}, ${a.country || 'Unknown'}</strong><br>
+                                <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-secondary);">IP: ${a.ip}</span><br>
+                                Service: ${a.service || 'Unknown'}<br>
+                                Type: ${a.attack_type || 'Unknown'}
+                            </div>
+                        `);
+                    markers.push(marker);
+                }
+            });
+
+            if (markers.length > 0) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Refresh Function
+        function refreshDashboard(event) {
+            const btn = event ? event.target.closest('.btn') : document.querySelector('.btn-primary[onclick*="refreshDashboard"]');
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>🔄</span><span>Refreshing...</span>';
+                btn.disabled = true;
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            } else {
+                location.reload();
+            }
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggle');
+            btn.textContent = theme === 'light' ? '☀️ Light' : '🌙 Dark';
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+        });
+
+        // Real-Time Alert System
+        let alertCount = 0;
+        let eventSource = null;
+
+        function connectAlertStream() {
+            // EventSource doesn't support custom headers, so we'll use a token-based approach
+            // For now, we'll use polling as fallback if SSE fails
+            try {
+                eventSource = new EventSource('/api/alerts/stream');
+            
+            eventSource.onmessage = function(event) {
+                if (event.data.startsWith('data: ')) {
+                    try {
+                        const alert = JSON.parse(event.data.substring(6));
+                        handleNewAlert(alert);
+                    } catch (e) {
+                        console.error('Error parsing alert:', e);
+                    }
+                }
+            };
+            
+            eventSource.onerror = function(event) {
+                console.error('SSE connection error');
+                setTimeout(connectAlertStream, 5000); // Reconnect after 5 seconds
+            };
+        }
+
+        function handleNewAlert(alert) {
+            alertCount++;
+            updateAlertCount();
+            addAlertToList(alert);
+            showToast(alert);
+        }
+
+        function updateAlertCount() {
+            const countEl = document.getElementById('alertCount');
+            if (countEl) {
+                countEl.textContent = alertCount;
+                countEl.style.display = alertCount > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function addAlertToList(alert) {
+            const alertList = document.getElementById('alertList');
+            if (!alertList) return;
+            
+            const alertItem = document.createElement('div');
+            alertItem.className = `alert-item ${alert.severity}`;
+            alertItem.innerHTML = `
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${alert.message}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(alert.timestamp).toLocaleString()}</div>
+            `;
+            alertList.insertBefore(alertItem, alertList.firstChild);
+            
+            // Keep only last 50 alerts
+            while (alertList.children.length > 50) {
+                alertList.removeChild(alertList.lastChild);
+            }
+        }
+
+        function showToast(alert) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            
+            const icons = {
+                'critical': '🚨',
+                'high': '⚠️',
+                'medium': 'ℹ️',
+                'info': 'ℹ️',
+                'success': '✅'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${alert.severity || 'info'}`;
+            toast.innerHTML = `
+                <span style="font-size: 1.5rem;">${icons[alert.severity] || 'ℹ️'}</span>
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${alert.message}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">${new Date(alert.timestamp).toLocaleString()}</div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            const duration = alert.severity === 'success' ? 3000 : 5000;
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function toggleAlertPanel() {
+            const panel = document.getElementById('alertPanel');
+            if (panel) {
+                panel.classList.toggle('active');
+                if (panel.classList.contains('active')) {
+                    loadAlerts();
+                }
+            }
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to load alerts');
+                }
+                const data = await response.json();
+                const alertList = document.getElementById('alertList');
+                if (alertList && data.alerts) {
+                    alertList.innerHTML = '';
+                    data.alerts.slice(0, 50).forEach(alert => {
+                        addAlertToList(alert);
+                    });
+                    alertCount = data.count || 0;
+                    updateAlertCount();
+                }
+            } catch (e) {
+                console.error('Error loading alerts:', e);
+            }
+        }
+
+        // Filter Functions
+        function toggleFilters() {
+            const panel = document.getElementById('filterPanel');
+            if (panel) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        async function applyFilters() {
+            const filters = {
+                start_date: document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value).toISOString() : null,
+                end_date: document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value).toISOString() : null,
+                service: document.getElementById('filterService').value,
+                attack_type: document.getElementById('filterAttackType').value,
+                country: document.getElementById('filterCountry').value,
+                ip: document.getElementById('filterIP').value
+            };
+            
+            try {
+                const response = await fetch('/api/attacks/filter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    },
+                    body: JSON.stringify(filters)
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to apply filters');
+                }
+                const data = await response.json();
+                updateTable(data.attacks);
+                showToast({
+                    severity: 'success',
+                    message: `Filters applied: ${data.count} attacks found`,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('Error applying filters:', e);
+                showToast({
+                    severity: 'critical',
+                    message: `Error applying filters: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('filterService').value = '';
+            document.getElementById('filterAttackType').value = '';
+            document.getElementById('filterCountry').value = '';
+            document.getElementById('filterIP').value = '';
+            location.reload();
+        }
+
+        function updateTable(attacks) {
+            const tbody = document.querySelector('#attacksTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            attacks.forEach(attack => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">${attack.timestamp || 'N/A'}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; color: var(--primary-light); font-weight: 600;">${attack.ip || 'N/A'}</td>
+                    <td>${attack.city || 'Unknown'}, ${attack.country || 'Unknown'}</td>
+                    <td><span class="badge badge-service">${attack.service || 'N/A'}</span></td>
+                    <td><span class="badge badge-attack">${attack.attack_type || 'N/A'}</span></td>
+                    <td>${attack.username || 'N/A'}</td>
+                    <td>
+                        ${attack.tools_detected && attack.tools_detected !== 'N/A' 
+                            ? `<span class="badge badge-success">${attack.tools_detected}</span>` 
+                            : '<span style="color: var(--text-muted);">N/A</span>'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Search Function
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const rows = document.querySelectorAll('#attacksTable tbody tr');
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+            }
+        });
+
+        // Export Functions
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        async function performExport() {
+            const format = document.getElementById('exportFormat').value;
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+            
+            const filters = {
+                format: format,
+                start_date: startDate ? new Date(startDate).toISOString() : null,
+                end_date: endDate ? new Date(endDate).toISOString() : null
+            };
+            
+            try {
+                const response = await fetch('/api/attacks/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    },
+                    body: JSON.stringify(filters)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Export failed' }));
+                    throw new Error(errorData.error || 'Export failed');
+                }
+                
+                if (format === 'csv') {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `attacks_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    const data = await response.json();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `attacks_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+                closeExportModal();
+                showToast({
+                    severity: 'success',
+                    message: 'Data exported successfully!',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('Error exporting:', e);
+                showToast({
+                    severity: 'critical',
+                    message: `Error exporting data: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        function exportTable() {
+            const rows = document.querySelectorAll('#attacksTable tbody tr');
+            let csv = 'Timestamp,IP Address,Location,Service,Attack Type,Username,Tools\n';
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cells = row.querySelectorAll('td');
+                    const values = Array.from(cells).map(cell => {
+                        let text = cell.textContent.trim();
+                        text = text.replace(/"/g, '""');
+                        return `"${text}"`;
+                    });
+                    csv += values.join(',') + '\n';
+                }
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attacks_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // Reset Functions
+        function openResetModal() {
+            const modal = document.getElementById('resetModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('resetModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        async function performReset() {
+            const btn = document.getElementById('resetConfirmBtn');
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span><span>Processing...</span>';
+                
+                const response = await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(DASHBOARD_USERNAME + ':' + DASHBOARD_PASSWORD)
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast({
+                        severity: 'success',
+                        message: `Dashboard reset successful! ${data.attacks_backed_up} attacks backed up to ${data.backup_file}`,
+                        timestamp: new Date().toISOString()
+                    });
+                    closeResetModal();
+                    // Reload page after 2 seconds
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to reset dashboard');
+                }
+            } catch (e) {
+                console.error('Error resetting dashboard:', e);
+                showToast({
+                    severity: 'critical',
+                    message: `Error: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            
+            // Connect to alert stream
+            connectAlertStream();
+            
+            // Load initial alerts
+            loadAlerts();
+            
+            // Close modal on outside click
+            const exportModal = document.getElementById('exportModal');
+            if (exportModal) {
+                exportModal.addEventListener('click', function(e) {
+                    if (e.target === exportModal) {
+                        closeExportModal();
+                    }
+                });
+            }
+            
+            const resetModal = document.getElementById('resetModal');
+            if (resetModal) {
+                resetModal.addEventListener('click', function(e) {
+                    if (e.target === resetModal) {
+                        closeResetModal();
+                    }
+                });
+            }
+        });
+
+        // Auto refresh every 60 seconds (reduced from full reload to data refresh)
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadAlerts();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>

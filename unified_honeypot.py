@@ -282,8 +282,10 @@ class UnifiedHoneypotServer:
         self.max_connections_per_ip = 10  # Max connections per minute
         self.rate_limit_window = 60  # seconds
         
-        # Connection timeout settings
-        self.connection_timeout = 30  # seconds
+        # Connection timeout settings (increased for persistence)
+        self.connection_timeout = None  # No timeout for persistent connections
+        self.keepalive_interval = 30  # Send keepalive every 30 seconds
+        self.max_idle_time = 3600  # 1 hour max idle time
         
         # Load SSH password if encrypted mode is enabled
         self.ssh_password = self.load_ssh_password()
@@ -578,8 +580,20 @@ class UnifiedHoneypotServer:
 
     def handle_ssh_connection(self, client, addr):
         try:
-            # Set socket timeout
-            client.settimeout(self.connection_timeout)
+            # Set socket timeout to None for persistent connections
+            if self.connection_timeout:
+                client.settimeout(self.connection_timeout)
+            else:
+                client.settimeout(None)  # No timeout for persistent connections
+            
+            # Set socket options for keepalive
+            client.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            if hasattr(socket, 'TCP_KEEPIDLE'):
+                client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
+            if hasattr(socket, 'TCP_KEEPINTVL'):
+                client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 30)
+            if hasattr(socket, 'TCP_KEEPCNT'):
+                client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
             
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
@@ -588,6 +602,10 @@ class UnifiedHoneypotServer:
             
             transport = paramiko.Transport(client)
             transport.add_server_key(self.host_key)
+            
+            # Configure transport for persistent connections
+            transport.set_keepalive(self.keepalive_interval)
+            
             # Set a consistent SSH banner/version
             try:
                 transport.local_version = self.config.get('banners', {}).get('ssh_version', 'SSH-2.0-OpenSSH_7.4')
@@ -624,34 +642,77 @@ class UnifiedHoneypotServer:
             # Initialize filesystem for this session
             fs = FakeFileSystem()
             
-            # Interactive shell loop
+            # Interactive shell loop with persistent connection handling
+            last_activity = time.time()
             while True:
-                channel.send('$ ')
-                command = ''
                 try:
-                    while True:
-                        char = channel.recv(1)
-                        if not char:
-                            break
-                        if char == b'\r' or char == b'\n':
-                            channel.send(b'\n')
-                            break
-                        elif char == b'\x03':  # Ctrl+C
-                            channel.send(b'^C\n')
-                            command = ''
-                            break
-                        elif char == b'\x7f' or char == b'\x08':  # Backspace
-                            if len(command) > 0:
-                                command = command[:-1]
-                                channel.send(b'\b \b')
-                        else:
-                            command += char.decode('utf-8', errors='ignore')
-                            channel.send(char)
+                    # Check for idle timeout (1 hour max idle)
+                    if time.time() - last_activity > self.max_idle_time:
+                        channel.send('\n\nSession idle timeout. Connection closed.\n')
+                        break
+                    
+                    channel.send('$ ')
+                    command = ''
+                    char_received = False
+                    
+                    # Set channel timeout for receiving input (5 minutes for persistence)
+                    channel.settimeout(300)
+                    
+                    try:
+                        while True:
+                            char = channel.recv(1)
+                            if not char:
+                                # Check if connection is still alive
+                                if time.time() - last_activity > 300:  # 5 minutes of no input
+                                    break
+                                continue
+                            
+                            char_received = True
+                            last_activity = time.time()  # Update last activity time
+                            
+                            if char == b'\r' or char == b'\n':
+                                channel.send(b'\n')
+                                break
+                            elif char == b'\x03':  # Ctrl+C
+                                channel.send(b'^C\n')
+                                command = ''
+                                break
+                            elif char == b'\x7f' or char == b'\x08':  # Backspace
+                                if len(command) > 0:
+                                    command = command[:-1]
+                                    channel.send(b'\b \b')
+                            else:
+                                command += char.decode('utf-8', errors='ignore')
+                                channel.send(char)
+                    except (socket.timeout, TimeoutError) as e:
+                        # Timeout is OK for persistent connections - just continue
+                        if not char_received:
+                            # Send keepalive to maintain connection
+                            try:
+                                channel.send('')  # Empty send as keepalive
+                            except:
+                                break
+                        continue
+                    except Exception as e:
+                        # Check if it's a timeout or connection error
+                        error_str = str(e).lower()
+                        error_type = type(e).__name__.lower()
+                        if 'timeout' in error_str or 'timed out' in error_str or 'timeout' in error_type:
+                            # Timeout is OK - continue for persistent connection
+                            continue
+                        print(f"Error reading command: {str(e)}")
+                        break
+                    
+                    if not char_received and time.time() - last_activity > 300:
+                        # No input for 5 minutes, but keep connection alive
+                        continue
+                    
+                    if not char:  # Connection closed
+                        break
                 except Exception as e:
-                    print(f"Error reading command: {str(e)}")
-                    break
-                
-                if not char:  # Connection closed
+                    # Handle any other errors gracefully
+                    if 'timeout' not in str(e).lower():
+                        print(f"Error in SSH session: {str(e)}")
                     break
                 
                 command = command.strip()

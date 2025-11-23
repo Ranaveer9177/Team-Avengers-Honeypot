@@ -501,15 +501,15 @@ All endpoints require HTTP Basic Authentication (same credentials as dashboard).
 
 ### SSH Honeypot (Port 2222)
 - Full SSH server simulation
-- **Two Modes**:
-  - **Open Mode** (default): Accepts any password for `admin` user
-  - **Encrypted Mode**: Requires auto-generated secure password (configure via boot menu)
-- Interactive shell simulation
-- Command execution logging
-- Persistent host keys
+- **Two Authentication Modes**:
+  - **Open Mode** (Option 1): Accepts any password for `admin` user - perfect for easy testing
+  - **Encrypted Mode** (Option 2): Requires password in format `honeypot@XXXX` (4 random digits) - enhanced security
+- Interactive shell simulation with realistic filesystem
+- Command execution logging and analysis
+- Persistent host keys (no more host key verification errors)
 - **Connection**: `ssh -p 2222 admin@YOUR_IP`
-  - Open mode: Any password accepted
-  - Encrypted mode: Use password from boot menu Option 2
+  - Open mode (Option 1): Any password accepted
+  - Encrypted mode (Option 2): Use password `honeypot@XXXX` (e.g., `honeypot@1234`, `honeypot@5678`)
 
 ### HTTP/HTTPS Honeypots (Ports 8080/8443)
 - Realistic web server responses

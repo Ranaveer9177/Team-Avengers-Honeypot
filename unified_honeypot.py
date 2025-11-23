@@ -180,9 +180,10 @@ class FakeFileSystem:
         return False
 
 class UnifiedHoneypot(paramiko.ServerInterface):
-    def __init__(self, allowed_key=None):
+    def __init__(self, allowed_key=None, ssh_password=None):
         self.event = threading.Event()
         self.allowed_key = allowed_key
+        self.ssh_password = ssh_password  # Store the required password
         self.filesystem = FakeFileSystem()
         
         self.attack_details = {
@@ -207,12 +208,23 @@ class UnifiedHoneypot(paramiko.ServerInterface):
         # Log the attempt
         print(f"Login attempt - Username: {username}, Password: {password}")
         
-        # Accept ANY password for admin user - allows anyone to connect easily
-        if username == "admin":
-            self.event.set()  # Signal successful authentication
-            print(f"[*] Authentication successful for admin (any password accepted)")
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+        # Check if encrypted mode is enabled (password file exists)
+        if self.ssh_password:
+            # Encrypted mode: require specific password
+            if username == "admin" and password == self.ssh_password:
+                self.event.set()  # Signal successful authentication
+                print(f"[*] Authentication successful for admin (encrypted mode)")
+                return paramiko.AUTH_SUCCESSFUL
+            else:
+                print(f"[*] Authentication failed - incorrect password")
+                return paramiko.AUTH_FAILED
+        else:
+            # Normal mode: Accept ANY password for admin user
+            if username == "admin":
+                self.event.set()  # Signal successful authentication
+                print(f"[*] Authentication successful for admin (any password accepted)")
+                return paramiko.AUTH_SUCCESSFUL
+            return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         self.attack_details['username'] = username
@@ -273,12 +285,19 @@ class UnifiedHoneypotServer:
         # Connection timeout settings
         self.connection_timeout = 30  # seconds
         
-        # SSH authentication: Accept ANY password for admin user
-        # This allows anyone to connect with: ssh -p 2222 admin@IP
+        # Load SSH password if encrypted mode is enabled
+        self.ssh_password = self.load_ssh_password()
+        
+        # SSH authentication configuration
         print("\n" + "="*50)
         print(f"[!] SSH Honeypot Configuration")
         print(f"[!] Username: admin")
-        print(f"[!] Password: ANY (accepts any password)")
+        if self.ssh_password:
+            print(f"[!] Mode: ENCRYPTED (password required)")
+            print(f"[!] Password: {self.ssh_password}")
+        else:
+            print(f"[!] Mode: OPEN (accepts any password)")
+            print(f"[!] Password: ANY (accepts any password)")
         print(f"[!] Connection: ssh -p 2222 admin@YOUR_IP")
         print("="*50 + "\n")
 
@@ -309,6 +328,19 @@ class UnifiedHoneypotServer:
             self.config = default_config
             with open(config_file, 'w') as f:
                 json.dump(default_config, f, indent=4)
+    
+    def load_ssh_password(self):
+        """Load SSH password from config file if encrypted mode is enabled"""
+        password_file = 'config/ssh_password.json'
+        try:
+            if os.path.exists(password_file):
+                with open(password_file, 'r') as f:
+                    password_data = json.load(f)
+                    if password_data.get('encrypted_mode', False):
+                        return password_data.get('password', None)
+        except Exception as e:
+            self.logger.warning(f"Error loading SSH password: {e}")
+        return None
 
     def setup_logging(self):
         os.makedirs(self.config['log_dir'], exist_ok=True)
@@ -562,8 +594,7 @@ class UnifiedHoneypotServer:
             except Exception:
                 pass
             
-            honeypot = UnifiedHoneypot(self.config.get('allowed_key'))
-            # No password check needed - accepts any password for admin
+            honeypot = UnifiedHoneypot(self.config.get('allowed_key'), self.ssh_password)
             honeypot.attack_details['ip'] = addr[0]
             honeypot.attack_details['device_name'] = self.get_device_name(addr[0])
             honeypot.attack_details['timestamp'] = self._utc_now_iso()

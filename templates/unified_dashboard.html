@@ -427,7 +427,11 @@
 
         // Refresh Function
         function refreshDashboard(event) {
-            const btn = event ? event.target.closest('.btn') : document.querySelector('.btn-primary[onclick*="refreshDashboard"]');
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const btn = event ? event.target.closest('.btn') : document.querySelector('button[onclick*="refreshDashboard"]');
             if (btn) {
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<span>🔄</span><span>Refreshing...</span>';
@@ -467,26 +471,55 @@
         let eventSource = null;
 
         function connectAlertStream() {
-            // EventSource doesn't support custom headers, so we'll use a token-based approach
-            // For now, we'll use polling as fallback if SSE fails
+            // EventSource will use browser's existing authentication
+            // If SSE fails, fallback to polling
             try {
-                eventSource = new EventSource('/api/alerts/stream');
-            
-            eventSource.onmessage = function(event) {
-                if (event.data.startsWith('data: ')) {
-                    try {
-                        const alert = JSON.parse(event.data.substring(6));
-                        handleNewAlert(alert);
-                    } catch (e) {
-                        console.error('Error parsing alert:', e);
-                    }
+                // Close existing connection if any
+                if (eventSource) {
+                    eventSource.close();
                 }
-            };
-            
-            eventSource.onerror = function(event) {
-                console.error('SSE connection error');
-                setTimeout(connectAlertStream, 5000); // Reconnect after 5 seconds
-            };
+                
+                eventSource = new EventSource('/api/alerts/stream');
+                
+                eventSource.onmessage = function(event) {
+                    if (event.data && event.data.trim() && !event.data.startsWith(':')) {
+                        try {
+                            const alert = JSON.parse(event.data);
+                            handleNewAlert(alert);
+                        } catch (e) {
+                            // Try parsing with 'data: ' prefix
+                            if (event.data.startsWith('data: ')) {
+                                try {
+                                    const alert = JSON.parse(event.data.substring(6));
+                                    handleNewAlert(alert);
+                                } catch (e2) {
+                                    console.error('Error parsing alert:', e2);
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                eventSource.onerror = function(event) {
+                    console.warn('SSE connection error, will retry...');
+                    if (eventSource) {
+                        eventSource.close();
+                        eventSource = null;
+                    }
+                    // Retry after delay
+                    setTimeout(connectAlertStream, 5000);
+                };
+                
+                eventSource.onopen = function() {
+                    console.log('Alert stream connected');
+                };
+            } catch (e) {
+                console.error('Error connecting to alert stream:', e);
+                // Fallback to polling every 30 seconds
+                if (!window.alertPollInterval) {
+                    window.alertPollInterval = setInterval(loadAlerts, 30000);
+                }
+            }
         }
 
         function handleNewAlert(alert) {
@@ -592,7 +625,14 @@
         function toggleFilters() {
             const panel = document.getElementById('filterPanel');
             if (panel) {
-                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                const isVisible = panel.style.display === 'block' || panel.classList.contains('active');
+                if (isVisible) {
+                    panel.style.display = 'none';
+                    panel.classList.remove('active');
+                } else {
+                    panel.style.display = 'block';
+                    panel.classList.add('active');
+                }
             }
         }
 
@@ -688,6 +728,7 @@
         function openExportModal() {
             const modal = document.getElementById('exportModal');
             if (modal) {
+                modal.style.display = 'flex';
                 modal.classList.add('active');
             }
         }
@@ -695,6 +736,7 @@
         function closeExportModal() {
             const modal = document.getElementById('exportModal');
             if (modal) {
+                modal.style.display = 'none';
                 modal.classList.remove('active');
             }
         }
@@ -790,6 +832,7 @@
         function openResetModal() {
             const modal = document.getElementById('resetModal');
             if (modal) {
+                modal.style.display = 'flex';
                 modal.classList.add('active');
             }
         }
@@ -797,6 +840,7 @@
         function closeResetModal() {
             const modal = document.getElementById('resetModal');
             if (modal) {
+                modal.style.display = 'none';
                 modal.classList.remove('active');
             }
         }
@@ -845,6 +889,21 @@
                 btn.innerHTML = originalText;
             }
         }
+
+        // Make all functions globally accessible for onclick handlers
+        window.toggleTheme = toggleTheme;
+        window.refreshDashboard = refreshDashboard;
+        window.openExportModal = openExportModal;
+        window.closeExportModal = closeExportModal;
+        window.toggleFilters = toggleFilters;
+        window.applyFilters = applyFilters;
+        window.clearFilters = clearFilters;
+        window.openResetModal = openResetModal;
+        window.closeResetModal = closeResetModal;
+        window.performReset = performReset;
+        window.performExport = performExport;
+        window.exportTable = exportTable;
+        window.toggleAlertPanel = toggleAlertPanel;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {

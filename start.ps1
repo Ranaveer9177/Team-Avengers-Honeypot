@@ -2,8 +2,23 @@
 # Run with: .\start.ps1 or powershell -ExecutionPolicy Bypass -File start.ps1
 
 param(
-    [switch]$Help
+    [switch]$Help,
+    [switch]$SkipMenu
 )
+
+# Check if boot menu should be shown
+if (-not $SkipMenu) {
+    # Show boot menu
+    try {
+        python boot_menu.py 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            exit 0
+        }
+    } catch {
+        # If Python or boot menu fails, continue with normal startup
+        Write-Host "Boot menu not available, starting honeypot directly..." -ForegroundColor Yellow
+    }
+}
 
 # Script configuration
 $ErrorActionPreference = "Continue"

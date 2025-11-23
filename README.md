@@ -5,6 +5,8 @@ A sophisticated honeypot system with advanced attack detection, **real-time aler
 ## 🚀 Features
 
 ### Core Capabilities
+- **🆕 Interactive Boot Menu**: User-friendly menu system with encrypted honeypot option
+- **🆕 Encrypted Honeypot Mode**: Auto-generate secure SSH passwords for enhanced security
 - **Multi-Service Simulation**: SSH, HTTP, HTTPS, FTP, MySQL
 - **Advanced Attack Detection**: Pattern recognition, tool detection, device fingerprinting
 - **Real-Time Dashboard**: Secure web interface with authentication & geolocation
@@ -18,6 +20,7 @@ A sophisticated honeypot system with advanced attack detection, **real-time aler
 - **🆕 Advanced Filtering & Search**: Multi-criteria filtering with date range pickers
 - **🆕 Export/Report Generation**: CSV and JSON export with filtering
 - **🆕 Mobile Responsive**: Optimized for all device sizes
+- **🆕 Fully Functional Dashboard**: All buttons and features working correctly
 
 ### 🆕 Real-Time Alerting System
 - **Live Alert Notifications**: Real-time alerts via Server-Sent Events (SSE)
@@ -43,9 +46,11 @@ A sophisticated honeypot system with advanced attack detection, **real-time aler
 - **Advanced Search**: Real-time table search
 - **Multi-Criteria Filtering**: Filter by date range, service, attack type, country, IP
 - **Custom Date Range Pickers**: Native datetime inputs for precise filtering
-- **Export Functionality**: Download data as CSV or JSON
+- **Export Functionality**: Download data as CSV or JSON (fully functional buttons)
+- **Reset Dashboard**: Backup and clear all data with confirmation modal
 - **Real-Time Updates**: Auto-refresh with SSE for alerts
-- **Mobile Responsive**: Fully optimized for mobile devices
+- **Mobile Responsive**: Fully optimized for all device sizes
+- **🆕 All Buttons Working**: Export, Filter, Reset, Refresh, and Alert panel fully functional
 
 ## 📋 Requirements
 
@@ -83,11 +88,14 @@ pip install flask-socketio  # For enhanced WebSocket support (future)
 
 ```
 honeypot-vscode/
+├── boot_menu.py             # 🆕 Interactive boot menu
+├── launch.sh                # 🆕 Linux/Mac launcher
+├── launch.bat               # 🆕 Windows launcher
 ├── unified_honeypot.py      # Main honeypot server (SSH, HTTP, HTTPS, FTP, MySQL)
 ├── app.py                   # Web dashboard with alerting & API endpoints
 ├── start.sh                 # Linux/macOS startup script
-├── run_dashboard.ps1        # Windows PowerShell startup script
-├── device_detector.py      # Device/client fingerprinting utility
+├── start.ps1                # Windows PowerShell startup script
+├── device_detector.py       # Device/client fingerprinting utility
 ├── ssh_honeypot.py          # Standalone SSH honeypot (legacy)
 ├── advanced_honeypot.py     # Advanced honeypot implementation
 ├── advanced_honeypot_server.py  # Advanced server wrapper
@@ -128,14 +136,25 @@ pip install paramiko flask requests markupsafe cryptography
 #### 3. Start the Honeypot System
 ```bash
 # Make script executable
-chmod +x start.sh
+chmod +x start.sh launch.sh
 
 # Fix line endings if needed (common when cloning on Linux after editing on Windows)
 sed -i 's/\r$//' start.sh
 
-# Start the honeypot (requires sudo for privileged ports)
+# Option 1: Start with boot menu (recommended)
+./launch.sh
+# or
+python3 boot_menu.py
+
+# Option 2: Start directly (requires sudo for privileged ports)
 sudo ./start.sh
 ```
+
+**The boot menu provides:**
+- 🍯 Interactive menu with "HONEYPOT" banner
+- 📋 Option 1: Open Honeypot (starts all services)
+- 🔐 Option 2: Encrypted Honeypot (generates secure SSH password automatically)
+- 🚪 Option 3: Exit
 
 **The script will automatically:**
 - ✅ Create required directories (`logs/`, `certs/`, `ssh_keys/`, `pcaps/`, `config/`)
@@ -168,12 +187,20 @@ pip install paramiko flask requests markupsafe cryptography
 
 #### 3. Start the Honeypot System
 
-**Option A: Using PowerShell Script**
+**Option A: Using Boot Menu (Recommended)**
 ```powershell
-.\run_dashboard.ps1
+# Launch boot menu
+python boot_menu.py
+# or
+.\launch.bat
 ```
 
-**Option B: Manual Start**
+**Option B: Using PowerShell Script**
+```powershell
+.\start.ps1
+```
+
+**Option C: Manual Start**
 ```powershell
 # Start honeypot server
 python unified_honeypot.py
@@ -182,10 +209,63 @@ python unified_honeypot.py
 python app.py
 ```
 
+**Boot Menu Features:**
+- Interactive menu with "HONEYPOT" banner
+- Quick access to start services
+- Encrypted honeypot mode with auto-generated secure passwords
+- View all connection information and passwords
+- Automatically detects your IP address
+
 #### 4. Access the Dashboard
 - **URL**: http://localhost:5001
 - **Username**: `admin`
 - **Password**: `honeypot@91771`
+
+### 🆕 Boot Menu
+
+The honeypot system includes an interactive boot menu that appears when you start the system:
+
+**Features:**
+- 🍯 **HONEYPOT Banner**: Professional display with system branding
+- 📋 **Menu Options**:
+  1. **Open Honeypot** - Starts all honeypot services (SSH, HTTP, HTTPS, FTP, MySQL, Dashboard)
+  2. **Encrypted Honeypot** - Generates a secure auto-generated password for SSH connections
+  3. **Exit** - Closes the boot menu
+
+**Usage:**
+```bash
+# Linux/Mac
+./launch.sh
+python3 boot_menu.py
+
+# Windows
+.\launch.bat
+python boot_menu.py
+```
+
+**Encrypted Honeypot Mode:**
+- Automatically generates a secure 20-character password
+- Password is saved to `config/ssh_password.json`
+- Only the generated password will be accepted for SSH connections
+- Displays connection details with the generated password
+- Enhanced security for SSH honeypot access
+
+**Connection Information Display:**
+- Dashboard URL, username, and password
+- SSH connection command and credentials (with generated password in encrypted mode)
+- HTTP/HTTPS service URLs
+- FTP and MySQL connection details
+- Automatically detected IP address
+
+**Skip Menu:**
+To start services directly without the menu:
+```bash
+# Linux/Mac
+./start.sh --skip-menu
+
+# Windows
+.\start.ps1 -SkipMenu
+```
 
 ### Manual Start (All Platforms)
 
@@ -357,9 +437,10 @@ All endpoints require HTTP Basic Authentication (same credentials as dashboard).
 - **IP Address**: Search by specific IP
 
 ### Data Export
-- **CSV Export**: Download filtered data as CSV
-- **JSON Export**: Download filtered data as JSON
+- **CSV Export**: Download filtered data as CSV (fully functional)
+- **JSON Export**: Download filtered data as JSON (fully functional)
 - **Quick Export**: One-click export from table view
+- **Export Modal**: User-friendly interface with date range selection
 
 ### Visualization
 - **Interactive Charts**: Service distribution, attack types, countries
@@ -417,11 +498,15 @@ All endpoints require HTTP Basic Authentication (same credentials as dashboard).
 
 ### SSH Honeypot (Port 2222)
 - Full SSH server simulation
-- **Accept any password** - All passwords work for `admin` user
+- **Two Modes**:
+  - **Open Mode** (default): Accepts any password for `admin` user
+  - **Encrypted Mode**: Requires auto-generated secure password (configure via boot menu)
 - Interactive shell simulation
 - Command execution logging
 - Persistent host keys
-- **Easy connection**: `ssh -p 2222 admin@YOUR_IP` (any password accepted)
+- **Connection**: `ssh -p 2222 admin@YOUR_IP`
+  - Open mode: Any password accepted
+  - Encrypted mode: Use password from boot menu Option 2
 
 ### HTTP/HTTPS Honeypots (Ports 8080/8443)
 - Realistic web server responses
@@ -550,5 +635,11 @@ Built for security research and threat intelligence gathering.
 **Repository**: https://github.com/Ranaveer9177/Team-Avengers-Honeypot
 
 **Version**: 3.0 - Real-Time Alerting & Advanced Dashboard
+
+**🆕 Latest Updates**:
+- Interactive Boot Menu with Encrypted Honeypot Option
+- Auto-Generated Secure SSH Passwords
+- Fully Functional Dashboard Buttons
+- Enhanced Security Features
 
 **Last Updated**: January 2025

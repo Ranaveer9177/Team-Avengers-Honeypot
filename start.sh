@@ -3,6 +3,20 @@
 # Cross-platform Linux compatibility script for Honeypot System
 # Supports: Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, SUSE, Kali, and others
 
+# Check if boot menu should be shown
+if [ "$1" != "--skip-menu" ] 2>/dev/null; then
+    # Show boot menu
+    if command -v python3 >/dev/null 2>&1; then
+        python3 boot_menu.py
+    elif command -v python >/dev/null 2>&1; then
+        python boot_menu.py
+    else
+        echo "Python not found. Boot menu not available, starting honeypot directly..."
+    fi
+    # Exit after menu (menu will handle starting services if needed)
+    exit 0
+fi
+
 set -euo pipefail
 
 # Colors for output

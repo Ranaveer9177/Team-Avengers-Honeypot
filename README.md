@@ -152,8 +152,8 @@ sudo ./start.sh
 
 **The boot menu provides:**
 - 🍯 Interactive menu with "HONEYPOT" banner
-- 📋 Option 1: Open Honeypot (starts all services)
-- 🔐 Option 2: Encrypted Honeypot (generates secure SSH password automatically)
+- 📋 Option 1: Open Honeypot (starts all services, accepts any password)
+- 🔐 Option 2: Encrypted Honeypot (starts all services with password format: honeypot@XXXX)
 - 🚪 Option 3: Exit
 
 **The script will automatically:**
@@ -211,8 +211,9 @@ python app.py
 
 **Boot Menu Features:**
 - Interactive menu with "HONEYPOT" banner
-- Quick access to start services
-- Encrypted honeypot mode with auto-generated secure passwords
+- Quick access to start services (both options start all honeypot services)
+- Option 1: Open mode (accepts any SSH password)
+- Option 2: Encrypted mode (password format: honeypot@XXXX with 4 random digits)
 - View all connection information and passwords
 - Automatically detects your IP address
 
@@ -228,8 +229,8 @@ The honeypot system includes an interactive boot menu that appears when you star
 **Features:**
 - 🍯 **HONEYPOT Banner**: Professional display with system branding
 - 📋 **Menu Options**:
-  1. **Open Honeypot** - Starts all honeypot services (SSH, HTTP, HTTPS, FTP, MySQL, Dashboard)
-  2. **Encrypted Honeypot** - Generates a secure auto-generated password for SSH connections
+  1. **Open Honeypot** - Starts all honeypot services (SSH, HTTP, HTTPS, FTP, MySQL, Dashboard) with open authentication
+  2. **Encrypted Honeypot** - Starts all honeypot services with encrypted password (format: honeypot@XXXX where XXXX is 4 random digits)
   3. **Exit** - Closes the boot menu
 
 **Usage:**
@@ -243,12 +244,14 @@ python3 boot_menu.py
 python boot_menu.py
 ```
 
-**Encrypted Honeypot Mode:**
-- Automatically generates a secure 20-character password
+**Encrypted Honeypot Mode (Option 2):**
+- Automatically generates encrypted password in format: `honeypot@XXXX` (where XXXX is 4 random digits)
 - Password is saved to `config/ssh_password.json`
+- Starts all honeypot services (same as Option 1)
 - Only the generated password will be accepted for SSH connections
 - Displays connection details with the generated password
 - Enhanced security for SSH honeypot access
+- Example passwords: `honeypot@1234`, `honeypot@5678`, `honeypot@9012`
 
 **Connection Information Display:**
 - Dashboard URL, username, and password

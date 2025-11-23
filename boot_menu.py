@@ -60,6 +60,11 @@ def generate_secure_password(length=16):
     password = ''.join(secrets.choice(alphabet) for i in range(length))
     return password
 
+def generate_encrypted_password():
+    """Generate encrypted password in format honeypot@XXXX where XXXX is 4 random digits"""
+    random_digits = ''.join(secrets.choice(string.digits) for i in range(4))
+    return f"honeypot@{random_digits}"
+
 def get_ip_address():
     """Get the local IP address"""
     ip_address = "localhost"
@@ -110,18 +115,18 @@ def get_ip_address():
                 pass
     return ip_address
 
-def setup_encrypted_honeypot():
-    """Setup encrypted honeypot with auto-generated password"""
+def start_encrypted_honeypot():
+    """Start the honeypot services with encrypted password"""
     clear_screen()
     print_banner()
     
     print("\n" + "="*60)
-    print("  ENCRYPTED HONEYPOT SETUP")
+    print("  ENCRYPTED HONEYPOT SETUP & START")
     print("="*60)
     
-    # Generate secure password
-    print("\n  [*] Generating secure password for SSH server...")
-    ssh_password = generate_secure_password(20)
+    # Generate encrypted password in format honeypot@XXXX
+    print("\n  [*] Generating encrypted password for SSH server...")
+    ssh_password = generate_encrypted_password()
     
     # Save password to config file
     config_dir = 'config'
@@ -145,7 +150,7 @@ def setup_encrypted_honeypot():
     try:
         with open(password_file, 'w') as f:
             json.dump(password_data, f, indent=2)
-        print("  [+] Password saved to config file")
+        print(f"  [+] Encrypted password saved: {ssh_password}")
     except Exception as e:
         print(f"  [!] Error saving password: {e}")
         return
@@ -163,10 +168,9 @@ def setup_encrypted_honeypot():
     print(f"     Username: admin")
     print(f"     Password: {ssh_password}")
     print("\n  🔒 Security:")
-    print("     - Password is auto-generated and secure")
+    print("     - Password format: honeypot@XXXX (4 random digits)")
     print("     - Password is saved in: config/ssh_password.json")
     print("     - Only this password will be accepted for SSH connections")
-    print("     - Password will be required for all SSH login attempts")
     
     print("\n  📊 Dashboard Access:")
     dashboard_username = os.environ.get('DASHBOARD_USERNAME', 'admin')
@@ -176,10 +180,37 @@ def setup_encrypted_honeypot():
     print(f"     Password: {dashboard_password}")
     
     print("\n" + "="*60)
-    print("\n  [*] Encrypted honeypot is now configured!")
-    print("  [*] Use Option 1 to start the honeypot with encrypted password.")
-    print("\n" + "="*60)
-    input("\n  Press Enter to return to main menu...")
+    print("  STARTING ENCRYPTED HONEYPOT SERVICES...")
+    print("="*60)
+    print("\n  [*] This will start all honeypot services with encrypted password.")
+    print("  [*] Press Ctrl+C to stop all services.\n")
+    
+    # Import and run the startup logic
+    import subprocess
+    import sys
+    
+    # Determine which startup script to use with --skip-menu flag
+    if platform.system() == 'Windows':
+        script = 'start.ps1'
+        cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-File', script, '-SkipMenu']
+    else:
+        script = 'start.sh'
+        cmd = ['bash', script, '--skip-menu']
+    
+    try:
+        # Run the startup script with skip menu flag
+        subprocess.run(cmd, check=True)
+    except KeyboardInterrupt:
+        print("\n\n  [!] Honeypot services stopped.")
+        print("  [*] Returning to main menu...\n")
+        input("  Press Enter to continue...")
+    except subprocess.CalledProcessError as e:
+        print(f"\n  [!] Error starting honeypot: {e}")
+        input("  Press Enter to return to main menu...")
+    except FileNotFoundError:
+        print(f"\n  [!] Startup script '{script}' not found.")
+        print("  [*] Please run the startup script manually.")
+        input("  Press Enter to return to main menu...")
 
 def start_honeypot():
     """Start the honeypot services"""
@@ -230,7 +261,7 @@ def main():
         if choice == '1':
             start_honeypot()
         elif choice == '2':
-            setup_encrypted_honeypot()
+            start_encrypted_honeypot()
         elif choice == '3':
             clear_screen()
             print_banner()

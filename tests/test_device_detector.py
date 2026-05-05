@@ -16,7 +16,8 @@ def test_ssh_client_detection():
 def test_http_user_agent_detection():
     """Test HTTP User-Agent detection"""
     ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/96.0.4664.110'
-    result = DeviceDetector.detect_device(ua, 'http')
+    payload = f"GET / HTTP/1.1\\r\\nUser-Agent: {ua}\\r\\n"
+    result = DeviceDetector.detect_device(payload, 'http')
     assert 'Chrome' in result
     assert 'Windows' in result
 

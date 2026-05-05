@@ -1,20 +1,23 @@
 import json
 import os
+import sys
 import time
 import traceback
 import logging
 import threading
+import ipaddress
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from collections import OrderedDict, deque
 from queue import Queue
 
 import requests
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context, url_for
+from flask import Flask, render_template, request, Response, jsonify, stream_with_context, url_for, session
 from markupsafe import escape
 
 # Flask app
 app = Flask(__name__, template_folder='templates', static_folder='static')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(32).hex())
 
 # Setup logging
 logging.basicConfig(
@@ -42,8 +45,19 @@ _api_lock = threading.Lock()  # Thread-safe rate limiting
 MAX_CACHE_SIZE = 1000
 CACHE_TTL_DAYS = 7
 _geocache = OrderedDict()  # OrderedDict for LRU behavior
+_geocache_lock = threading.Lock()  # BUG-002 FIX: Thread-safe geocache access
+_geocache_dirty = 0  # BUG-012 FIX: Track unsaved changes for batch writes
+GEOCACHE_BATCH_SIZE = 10  # Save after this many new entries
 _last_cleanup_time = 0  # Track last cleanup time
 CLEANUP_INTERVAL = 300  # Cleanup every 5 minutes (300 seconds)
+
+# BUG-001 FIX: Safe print that handles Unicode on Windows terminals
+def safe_print(msg):
+    """Print with Unicode fallback for Windows terminals"""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        print(msg.encode('ascii', 'replace').decode('ascii'))
 
 # Real-Time Alerting System
 ALERT_QUEUE = Queue()  # Thread-safe queue for alerts
@@ -101,14 +115,24 @@ def _load_geocache():
 
 def _save_geocache():
     """Save geocache to file, maintaining LRU order"""
+    global _geocache_dirty
     try:
         os.makedirs(os.path.dirname(GEOCACHE_FILE) or '.', exist_ok=True)
         # Convert OrderedDict to regular dict for JSON serialization
-        cache_dict = dict(_geocache)
+        with _geocache_lock:
+            cache_dict = dict(_geocache)
         with open(GEOCACHE_FILE, 'w') as f:
             json.dump(cache_dict, f, indent=2)
+        _geocache_dirty = 0
     except Exception as e:
         logger.warning(f"Failed saving geocache: {e}")
+
+def _maybe_save_geocache():
+    """BUG-012 FIX: Batch geocache saves — only write to disk every GEOCACHE_BATCH_SIZE entries"""
+    global _geocache_dirty
+    _geocache_dirty += 1
+    if _geocache_dirty >= GEOCACHE_BATCH_SIZE:
+        _save_geocache()
 
 def _cleanup_cache():
     """Remove expired entries and enforce size limit (LRU eviction)"""
@@ -160,10 +184,10 @@ def set_security_headers(response):
     """Add security headers to prevent XSS and other attacks"""
     response.headers['Content-Security-Policy'] = (
         "default-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "
-        "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "
-        "style-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data: https://cdn-icons-png.flaticon.com; "
+        "img-src 'self' data: https://cdn-icons-png.flaticon.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; "
         "connect-src 'self' http://ip-api.com https://ipinfo.io; "
         "frame-ancestors 'none';"
     )
@@ -245,9 +269,11 @@ def safe_format_datetime(dt):
         return str(dt)
 
 def _check_rate_limit():
-    """Check and enforce API rate limiting (45 requests/minute)"""
+    """Check and enforce API rate limiting (45 requests/minute)
+    BUG-005 FIX: Sleep outside the lock to avoid blocking all threads"""
     global _api_request_times
     current_time = time.time()
+    wait_time = 0
     
     with _api_lock:
         # Remove requests older than the rate limit window
@@ -257,15 +283,17 @@ def _check_rate_limit():
         if len(_api_request_times) >= API_RATE_LIMIT:
             oldest_request = min(_api_request_times)
             wait_time = API_RATE_WINDOW - (current_time - oldest_request) + 0.1
-            if wait_time > 0:
-                logger.warning(f"Rate limit reached ({API_RATE_LIMIT} req/min), waiting {wait_time:.1f}s")
-                time.sleep(wait_time)
-                # Clean up again after wait
-                current_time = time.time()
-                _api_request_times = [t for t in _api_request_times if current_time - t < API_RATE_WINDOW]
-        
-        # Record this request
-        _api_request_times.append(time.time())
+    
+    # BUG-005 FIX: Sleep OUTSIDE the lock so other threads aren't blocked
+    if wait_time > 0:
+        logger.warning(f"Rate limit reached ({API_RATE_LIMIT} req/min), waiting {wait_time:.1f}s")
+        time.sleep(wait_time)
+    
+    with _api_lock:
+        # Clean up and record this request
+        current_time = time.time()
+        _api_request_times = [t for t in _api_request_times if current_time - t < API_RATE_WINDOW]
+        _api_request_times.append(current_time)
 
 def enrich_with_geo(ip):
     """
@@ -287,11 +315,12 @@ def enrich_with_geo(ip):
         _cleanup_cache()
         _last_cleanup_time = current_time
 
-    # If already cached, move to end (LRU) and return it
-    if ip in _geocache:
-        cached = _geocache.pop(ip)  # Remove from current position
-        _geocache[ip] = cached  # Add to end (most recently used)
-        return cached.get('lat'), cached.get('lon')
+    # BUG-002 FIX: Thread-safe geocache access with lock
+    with _geocache_lock:
+        if ip in _geocache:
+            cached = _geocache.pop(ip)  # Remove from current position
+            _geocache[ip] = cached  # Add to end (most recently used)
+            return cached.get('lat'), cached.get('lon')
 
     # Enforce rate limiting
     _check_rate_limit()
@@ -320,8 +349,9 @@ def enrich_with_geo(ip):
                 'ts': int(time.time())
             }
             # Add to cache (LRU: new entries go to end)
-            _geocache[ip] = geo_data
-            _save_geocache()
+            with _geocache_lock:
+                _geocache[ip] = geo_data
+            _maybe_save_geocache()  # BUG-012 FIX: Batch save
             return lat, lon
         else:
             # API returned error, try fallback
@@ -354,22 +384,25 @@ def enrich_with_geo(ip):
                     'as': data.get('org', 'Unknown'),
                     'ts': int(time.time())
                 }
-                _geocache[ip] = geo_data
-                _save_geocache()
+                with _geocache_lock:
+                    _geocache[ip] = geo_data
+                _maybe_save_geocache()  # BUG-012 FIX: Batch save
                 logger.info(f"Fallback geolocation successful for {ip}")
                 return lat, lon
         except Exception as fallback_error:
             logger.warning(f"Fallback geolocation also failed for {ip}: {fallback_error}")
         
         # Both APIs failed, cache the failure
-        _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': f'Both APIs failed'}
-        _save_geocache()
+        with _geocache_lock:
+            _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': 'Both APIs failed'}
+        _maybe_save_geocache()  # BUG-012 FIX: Batch save
         return None, None
     except Exception as e:
         # Unexpected error: do not crash
         logger.error(f"Unexpected error enriching IP {ip}: {e}")
-        _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': f'Error: {str(e)[:50]}'}
-        _save_geocache()
+        with _geocache_lock:
+            _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': f'Error: {str(e)[:50]}'}
+        _maybe_save_geocache()  # BUG-012 FIX: Batch save
         return None, None
 
 def get_geo_details(ip):
@@ -761,6 +794,13 @@ def api_attacks_filter():
         country = data.get('country')
         ip = data.get('ip')
         
+        # BUG-007 FIX: Validate IP address format
+        if ip:
+            try:
+                ipaddress.ip_address(ip.strip())
+            except ValueError:
+                return jsonify({'error': 'Invalid IP address format'}), 400
+        
         filtered = processed
         if start_date:
             start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
@@ -775,7 +815,7 @@ def api_attacks_filter():
         if country:
             filtered = [a for a in filtered if a.get('country', '').lower() == country.lower()]
         if ip:
-            filtered = [a for a in filtered if a.get('ip', '').lower() == ip.lower()]
+            filtered = [a for a in filtered if a.get('ip', '').lower() == ip.strip().lower()]
         
         return jsonify({'count': len(filtered), 'attacks': filtered})
     except Exception as e:
@@ -994,17 +1034,18 @@ def main():
         os.makedirs(os.path.dirname(ATTACKS_LOG) or 'logs', exist_ok=True)
         os.makedirs(os.path.dirname(GEOCACHE_FILE) or 'logs', exist_ok=True)
         
-        print("=" * 60)
-        print("  🍯 Honeypot Security Dashboard - Professional Edition")
-        print("=" * 60)
-        print(f"[*] Starting dashboard on http://0.0.0.0:{FLASK_RUN_PORT}")
-        print(f"[*] Local access: http://localhost:{FLASK_RUN_PORT}")
-        print(f"[*] Username: {DASHBOARD_USERNAME}")
-        print(f"[*] Password: {DASHBOARD_PASSWORD}")
-        print(f"[*] Features: Real-time monitoring, Search, Filter, Export")
-        print("=" * 60)
-        print("[*] Dashboard is ready! Press Ctrl+C to stop.")
-        print("=" * 60)
+        # BUG-001 FIX: Use safe_print for Unicode compatibility
+        safe_print("=" * 60)
+        safe_print("  Honeypot Security Dashboard - Professional Edition")
+        safe_print("=" * 60)
+        safe_print(f"[*] Starting dashboard on http://0.0.0.0:{FLASK_RUN_PORT}")
+        safe_print(f"[*] Local access: http://localhost:{FLASK_RUN_PORT}")
+        safe_print(f"[*] Username: {DASHBOARD_USERNAME}")
+        safe_print(f"[*] Password: {DASHBOARD_PASSWORD}")
+        safe_print(f"[*] Features: Real-time monitoring, Search, Filter, Export")
+        safe_print("=" * 60)
+        safe_print("[*] Dashboard is ready! Press Ctrl+C to stop.")
+        safe_print("=" * 60)
         
         app.run(host='0.0.0.0', port=FLASK_RUN_PORT, debug=False, threaded=True)
     except KeyboardInterrupt:

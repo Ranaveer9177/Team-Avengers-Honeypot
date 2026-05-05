@@ -310,7 +310,8 @@ fi
 # Create necessary directories with proper permissions (preserve existing keys/certs)
 print_status "Setting up directories..."
 sudo mkdir -p ssh_keys certs logs config pcaps
-sudo chmod 777 ssh_keys certs logs config pcaps
+sudo chmod 700 ssh_keys certs  # BUG-010 FIX: Restrict access to sensitive key/cert dirs
+sudo chmod 755 logs config pcaps
 
 # SSH host key will be generated automatically by unified_honeypot.py if missing
 print_status "SSH host key will be managed by unified_honeypot.py"

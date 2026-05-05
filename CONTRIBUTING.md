@@ -122,22 +122,29 @@ def test_example_function_with_invalid_input():
 ## 🏗️ Project Structure
 
 ```
-honeypot-vscode/
-├── unified_honeypot.py      # Main honeypot server
-├── app.py                   # Dashboard application
-├── device_detector.py       # Device fingerprinting
-├── start.sh                 # Linux startup script
-├── start.ps1                # Windows startup script
+Team-Avengers-Honeypot/
+├── unified_honeypot.py      # Core honeypot server (SSH, HTTP, HTTPS, FTP, MySQL)
+├── app.py                   # Flask dashboard with API endpoints & alerting
+├── device_detector.py       # Device/client fingerprinting utility
+├── boot_menu.py             # Interactive CLI boot menu
+├── setup.py                 # Python packaging
+├── start.sh                 # Linux/macOS startup script
+├── start.ps1                # Windows PowerShell startup script
 ├── config/                  # Configuration files
 ├── templates/               # HTML templates
-├── tests/                   # Test suite
-│   ├── test_honeypot.py
-│   ├── test_dashboard.py
-│   ├── test_device_detector.py
-│   └── test_app.py
+│   ├── unified_dashboard.html   # Dashboard (tabbed sidebar UI)
+│   └── login.html               # Web honeypot login page
+├── static/
+│   ├── css/style.css            # Dashboard styles
+│   └── js/dashboard.js          # Dashboard logic
+├── tests/                   # Unit tests (16/16 passing)
+│   ├── test_app.py              # Dashboard API tests
+│   ├── test_config.py           # Config parsing tests
+│   ├── test_dashboard.py        # Data sanitization tests
+│   ├── test_device_detector.py  # Device detection tests
+│   └── test_honeypot.py         # Honeypot logic tests
 ├── logs/                    # Log files (not in git)
-├── pcaps/                   # Packet captures (not in git)
-└── docs/                    # Additional documentation
+└── pcaps/                   # Packet captures (not in git)
 ```
 
 ## 🧪 Testing Guidelines
@@ -261,6 +268,8 @@ All pull requests will be reviewed for:
 - Code refactoring
 - Minor bug fixes
 - Style improvements
+
+> **Note:** As of v4.0, the following obsolete files have been removed: `ssh_honeypot.py`, `ssh_dashboard.py`, `app_test.py`, `advanced_honeypot.py`, `advanced_honeypot_server.py`. Do not recreate these files.
 
 ## 📚 Resources
 

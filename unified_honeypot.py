@@ -152,7 +152,8 @@ class FakeFileSystem:
         if parts[0] == '/':
             parts = parts[1:]
         
-        current = self.filesystem
+        # Start from root contents
+        current = self.filesystem.get('/', {}).get('contents', {})
         
         # Navigate to parent directory
         for i, part in enumerate(parts[:-1]):
@@ -282,8 +283,9 @@ class UnifiedHoneypotServer:
         self.max_connections_per_ip = 10  # Max connections per minute
         self.rate_limit_window = 60  # seconds
         
-        # Connection timeout settings (increased for persistence)
-        self.connection_timeout = None  # No timeout for persistent connections
+        # BUG-003 FIX: Separate timeout for SSH (persistent) vs other services
+        self.ssh_timeout = None  # No timeout for persistent SSH connections
+        self.service_timeout = 30  # 30s timeout for FTP/MySQL/HTTP
         self.keepalive_interval = 30  # Send keepalive every 30 seconds
         self.max_idle_time = 3600  # 1 hour max idle time
         
@@ -690,7 +692,7 @@ class UnifiedHoneypotServer:
                             # Send keepalive to maintain connection
                             try:
                                 channel.send('')  # Empty send as keepalive
-                            except:
+                            except Exception:
                                 break
                         continue
                     except Exception as e:
@@ -731,7 +733,7 @@ class UnifiedHoneypotServer:
                     parts = shlex.split(command)
                     cmd = parts[0] if parts else ''
                     args = parts[1:] if len(parts) > 1 else []
-                except:
+                except Exception:
                     cmd = command.split()[0] if command.split() else ''
                     args = command.split()[1:] if len(command.split()) > 1 else []
                 
@@ -822,14 +824,14 @@ class UnifiedHoneypotServer:
         finally:
             try:
                 transport.close()
-            except:
+            except Exception:
                 pass
 
     def handle_ftp_connection(self, client_socket, addr):
-        """Handle FTP honeypot connections"""
+        """Handle FTP honeypot connections (BUG-006 FIX: multi-step protocol)"""
         try:
-            # Set socket timeout
-            client_socket.settimeout(self.connection_timeout)
+            # BUG-003 FIX: Use service_timeout instead of None
+            client_socket.settimeout(self.service_timeout)
             
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
@@ -839,26 +841,29 @@ class UnifiedHoneypotServer:
             # Send FTP welcome banner
             client_socket.send(b"220 Welcome to FTP Server\r\n")
             
-            data = client_socket.recv(4096)
-            if data:
-                # Save initial payload
-                meta = f"{self._utc_now_iso()}_{addr[0]}_ftp"
-                safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
-                self._write_initial_payload(data, safe_meta)
-                
-                request = data.decode('utf-8', errors='ignore')
-                
-                # Parse FTP commands
-                commands = request.strip().split('\r\n')
-                username = None
-                password = None
-                
-                for cmd in commands:
-                    if cmd.upper().startswith('USER '):
-                        username = cmd[5:].strip()
+            username = None
+            password = None
+            
+            # BUG-006 FIX: Read FTP commands in a loop (multi-step exchange)
+            for _ in range(10):  # Max 10 commands per session
+                try:
+                    data = client_socket.recv(4096)
+                    if not data:
+                        break
+                    
+                    # Save initial payload on first recv
+                    if username is None and password is None:
+                        meta = f"{self._utc_now_iso()}_{addr[0]}_ftp"
+                        safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
+                        self._write_initial_payload(data, safe_meta)
+                    
+                    line = data.decode('utf-8', errors='ignore').strip()
+                    
+                    if line.upper().startswith('USER '):
+                        username = line[5:].strip()
                         client_socket.send(b"331 Password required\r\n")
-                    elif cmd.upper().startswith('PASS '):
-                        password = cmd[5:].strip()
+                    elif line.upper().startswith('PASS '):
+                        password = line[5:].strip()
                         client_socket.send(b"530 Login incorrect\r\n")
                         
                         # Log the attack with device detection
@@ -874,11 +879,16 @@ class UnifiedHoneypotServer:
                             'attack_type': 'ftp_brute_force'
                         }
                         self.log_attack(attack_details)
-                    elif cmd.upper().startswith('QUIT'):
+                        # Reset for next attempt
+                        username = None
+                        password = None
+                    elif line.upper().startswith('QUIT'):
                         client_socket.send(b"221 Goodbye\r\n")
                         break
                     else:
                         client_socket.send(b"500 Unknown command\r\n")
+                except (socket.timeout, TimeoutError):
+                    break
         except Exception as e:
             self.logger.error(f"FTP Error from {addr[0]}: {str(e)}")
         finally:
@@ -887,8 +897,8 @@ class UnifiedHoneypotServer:
     def handle_mysql_connection(self, client_socket, addr):
         """Handle MySQL honeypot connections"""
         try:
-            # Set socket timeout
-            client_socket.settimeout(self.connection_timeout)
+            # BUG-003 FIX: Use service_timeout instead of None
+            client_socket.settimeout(self.service_timeout)
             
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
@@ -935,8 +945,8 @@ class UnifiedHoneypotServer:
 
     def handle_web_connection(self, client_socket, addr, is_https=False):
         try:
-            # Set socket timeout
-            client_socket.settimeout(self.connection_timeout)
+            # BUG-003 FIX: Use service_timeout instead of None
+            client_socket.settimeout(self.service_timeout)
             
             # Check rate limit
             if not self.check_rate_limit(addr[0]):

@@ -5,40 +5,78 @@ All notable changes to the Multi-Service Honeypot System will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0] - 2026-05-05
 
 ### Added
-- FTP honeypot service handler with full protocol simulation
-- MySQL honeypot service handler with handshake protocol
-- Windows PowerShell startup script (start.ps1) for Windows users
-- Comprehensive test suite:
-  - `test_device_detector.py` - Device detection tests
-  - `test_honeypot.py` - Honeypot functionality tests
-  - `test_app.py` - Dashboard application tests
-- Device detection integration using DeviceDetector class
-- Enhanced SSH device fingerprinting with client version detection
-- requirements.txt file with all project dependencies
-- CONTRIBUTING.md with development guidelines
-- CHANGELOG.md to track project changes
+- **Tabbed Dashboard UI**: Sidebar navigation with Dashboard, Attack Logs, and Connections tabs
+- **Dark Theme**: Full glassmorphism dark-themed interface with Inter/JetBrains Mono fonts
+- **Attack Logs View**: Paginated table with real-time search, sortable columns, expandable row details
+- **Connections View**: Top attackers leaderboard, country/ISP analysis, attack timeline chart
+- **CSV Export**: One-click export from logs tab
+- **JSON Export**: Full data export via export modal
+- **Reset with Backup**: Dashboard reset creates timestamped backups before clearing data
+- **Session-Based Auth**: Flask sessions with cookies (no credentials in page source)
+- **Batch Geocache Writes**: `_maybe_save_geocache()` batches writes every 10 lookups
+- **Thread-Safe Geocache**: Added `threading.Lock()` to all `_geocache` operations
+- **IP Validation**: `/api/attacks/filter` validates IP format using `ipaddress` module
+- **Safe Print**: Unicode-safe console output for Windows terminals
+- **Separate Timeouts**: SSH uses persistent timeout (None), FTP/MySQL/HTTP use 30s
 
 ### Changed
-- Improved error handling in geolocation API calls
-- Enhanced device name detection with reverse DNS and client version
-- Updated config file with missing PCAP and banner fields
-- Improved service routing logic for FTP and MySQL handlers
-- Better exception handling throughout the codebase
+- Dashboard redesigned from flat layout to sidebar + tabbed architecture
+- FTP handler now uses multi-step protocol loop (USER → 331 → PASS → 530)
+- Rate limiter `time.sleep()` moved outside lock to prevent thread blocking
+- Bare `except:` clauses replaced with `except Exception:` throughout
+- `start.sh` permissions: `chmod 700` for ssh_keys/certs, `chmod 755` for logs/config/pcaps
+- Content-Security-Policy updated for Chart.js, Leaflet, and CartoDB tile servers
+
+### Removed
+- `ssh_honeypot.py` — old SSH-only honeypot (superseded by `unified_honeypot.py`)
+- `ssh_dashboard.py` — old SSH dashboard (superseded by `app.py`)
+- `app_test.py` — dummy data test dashboard (no longer needed)
+- `advanced_honeypot.py` — abandoned experimental honeypot
+- `advanced_honeypot_server.py` — abandoned server wrapper
+- Credentials removed from frontend JavaScript (`_DASH_USER`, `_DASH_PASS`)
 
 ### Fixed
-- Duplicate method definitions in UnifiedHoneypot class
-- Removed redundant imports in unified_honeypot.py
-- Fixed missing service handlers for FTP and MySQL
-- Improved private IP filtering in geolocation enrichment
-- Better error messages and logging
+- BUG-001: `UnicodeEncodeError` on Windows terminals with emoji characters
+- BUG-002: Race condition in `_geocache` OrderedDict (thread-safe with Lock)
+- BUG-003: `connection_timeout = None` applied to FTP/MySQL/HTTP (now uses 30s)
+- BUG-004: Bare `except:` clauses swallowing KeyboardInterrupt/SystemExit
+- BUG-005: `_api_lock` blocking all threads during rate-limit sleep
+- BUG-006: FTP handler single `recv()` not handling multi-step protocol
+- BUG-007: No IP validation on `/api/attacks/filter` endpoint
+- BUG-008: Dashboard credentials exposed in page source JavaScript
+- BUG-010: `chmod 777` on sensitive directories (ssh_keys, certs)
+- BUG-012: Geocache writing to disk on every single IP lookup
+- Test: `test_http_user_agent_detection` — payload now includes User-Agent header
+- Test: `test_fake_filesystem_file_reading` — fixed root node traversal
+- Test: `test_tool_detection` — fixed Windows file-lock cleanup
 
 ### Security
-- Added input sanitization for all user-facing data
-- Enhanced XSS protection in dashboard
-- Improved error handling to prevent information leakage
+- Session-based authentication replaces Basic Auth in API calls from dashboard JS
+- IP filter input validation prevents probe attacks
+- Sensitive directories restricted to owner-only access
+
+## [3.0.0] - 2025-01-15
+
+### Added
+- Interactive Boot Menu with Encrypted Honeypot option
+- Auto-generated secure SSH passwords (format: honeypot@XXXX)
+- Real-Time Alerting System with Server-Sent Events (SSE)
+- Automated Incident Response (webhooks, email framework, IP blocking)
+- Advanced Filtering & Search with date range pickers
+- Export/Report Generation (CSV and JSON)
+- Mobile responsive design
+
+## [2.0.0] - 2024-06-01
+
+### Added
+- FTP honeypot service handler
+- MySQL honeypot service handler
+- Windows PowerShell startup script
+- Device detection with DeviceDetector class
+- Comprehensive test suite
 
 ## [1.0.0] - 2024-01-15
 
@@ -48,45 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web dashboard with authentication
 - IP geolocation with caching
 - Interactive world map visualization
-- Attack pattern detection
-- Tool signature recognition
+- Attack pattern and tool detection
 - PCAP capture support
 - Persistent SSH host keys
-- Comprehensive logging system
-
-### Security
-- HTTP Basic Authentication for dashboard
-- XSS protection and input sanitization
-- Security headers (CSP, X-Frame-Options, etc.)
-- SSL/TLS support for HTTPS
-
-## Release Notes
-
-### Version 1.1.0 (Upcoming)
-
-**Highlights:**
-- Complete FTP and MySQL honeypot implementations
-- Windows support with PowerShell startup script
-- Enhanced device detection and fingerprinting
-- Comprehensive test suite with >80% coverage
-- Improved error handling and logging
-
-**Breaking Changes:**
-- None
-
-**Migration Guide:**
-- Update config file to include new fields (automatic on first run)
-- Install new dependencies: `pip install -r requirements.txt`
-- Windows users can now use `start.ps1` instead of WSL
-
-**Known Issues:**
-- PCAP capture requires tcpdump on Linux/Mac
-- Windows PCAP capture not yet implemented
-- Geolocation API has rate limits (45 requests/minute)
-
-**Contributors:**
-- Core Team
-- Community Contributors
 
 ---
 

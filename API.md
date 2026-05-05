@@ -16,342 +16,242 @@ export DASHBOARD_USERNAME="your_username"
 export DASHBOARD_PASSWORD="your_password"
 ```
 
+> **Note (v4.0):** The dashboard frontend now uses session-based cookies for API calls. Credentials are no longer embedded in the page source JavaScript.
+
 ## Base URL
 
 ```
 http://localhost:5001
 ```
 
-Or use your server's IP address:
-```
-http://<your-ip>:5001
-```
-
 ## Endpoints
 
 ### GET /
 
-**Description:** Main dashboard HTML page
+**Description:** Main dashboard HTML page with tabbed navigation (Dashboard, Attack Logs, Connections).
 
 **Authentication:** Required (HTTP Basic Auth)
 
 **Response:** HTML page with:
-- Attack statistics
-- Service distribution charts
-- Interactive world map
-- Recent attacks table
+- Dashboard tab: Stat cards, doughnut charts, interactive world map
+- Attack Logs tab: Paginated table with search, sort, filter, and CSV export
+- Connections tab: Top attackers, country/ISP analysis, attack timeline
 
 **Status Codes:**
-- `200 OK` - Success
-- `401 Unauthorized` - Invalid credentials
-- `500 Internal Server Error` - Server error
+- `200 OK` — Success
+- `401 Unauthorized` — Invalid credentials
 
 ---
 
 ### GET /api/attacks
 
-**Description:** Retrieve attack data in JSON format
+**Description:** Retrieve attack data in JSON format.
 
-**Authentication:** Required (HTTP Basic Auth)
+**Authentication:** Required
 
-**Response Format:**
+**Response:**
 ```json
 {
   "count": 150,
   "attacks": [
     {
-      "timestamp": "2024-01-15 10:30:45",
-      "timestamp_obj": "2024-01-15T10:30:45.123456+00:00",
-      "ip": "192.168.1.100",
-      "device_name": "OpenSSH 8.2 (Linux)",
+      "timestamp": "2026-05-05 08:12:33",
+      "timestamp_obj": "2026-05-05T08:12:33+00:00",
+      "ip": "185.220.101.34",
+      "device_name": "Linux Server",
       "service": "ssh",
-      "attack_type": "password_auth",
-      "tools_detected": "hydra, nmap",
-      "username": "admin",
+      "attack_type": "Brute Force",
+      "tools_detected": "hydra",
+      "username": "root",
       "auth_method": "Password",
-      "lat": 37.7749,
-      "lon": -122.4194
+      "city": "Brandenburg",
+      "country": "Germany",
+      "isp": "Tor Exit Node",
+      "lat": 52.41,
+      "lon": 12.53
     }
   ]
 }
 ```
 
-**Response Fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `count` | integer | Total number of attacks |
-| `attacks` | array | Array of attack objects (max 500) |
-| `timestamp` | string | Human-readable timestamp (UTC) |
-| `timestamp_obj` | string | ISO format timestamp for sorting |
-| `ip` | string | Source IP address |
-| `device_name` | string | Detected device/client name |
-| `service` | string | Target service (ssh, http, https, ftp, mysql) |
-| `attack_type` | string | Type of attack detected |
-| `tools_detected` | string | Comma-separated list of detected tools |
-| `username` | string | Username used in attack (if applicable) |
-| `auth_method` | string | Authentication method (Password/Key) |
-| `lat` | float | Latitude (null if geolocation unavailable) |
-| `lon` | float | Longitude (null if geolocation unavailable) |
-
-**Status Codes:**
-- `200 OK` - Success
-- `401 Unauthorized` - Invalid credentials
-- `500 Internal Server Error` - Failed to load attacks
-
-**Example Request (curl):**
+**Example:**
 ```bash
-curl -u admin:honeypot@91771 http://localhost:5001/api/attacks
+curl -u admin:'honeypot@91771' http://localhost:5001/api/attacks
 ```
 
-**Example Request (Python):**
-```python
-import requests
-from requests.auth import HTTPBasicAuth
+---
 
-response = requests.get(
-    'http://localhost:5001/api/attacks',
-    auth=HTTPBasicAuth('admin', 'honeypot@91771')
-)
+### GET /api/alerts
 
-if response.status_code == 200:
-    data = response.json()
-    print(f"Total attacks: {data['count']}")
-    for attack in data['attacks']:
-        print(f"{attack['timestamp']} - {attack['ip']} - {attack['service']}")
+**Description:** Get recent alerts (last 100).
+
+**Authentication:** Required
+
+**Response:**
+```json
+{
+  "count": 25,
+  "alerts": [
+    {
+      "type": "critical_attack",
+      "severity": "critical",
+      "message": "Critical attack detected: SQL Injection from 45.33.32.156",
+      "timestamp": "2026-05-05T08:15:41+00:00",
+      "data": {}
+    }
+  ]
+}
 ```
 
-**Example Request (JavaScript):**
+---
+
+### GET /api/alerts/stream
+
+**Description:** Server-Sent Events (SSE) stream for real-time alerts.
+
+**Authentication:** Required
+
+**Usage:**
 ```javascript
-const username = 'admin';
-const password = 'honeypot@91771';
-const url = 'http://localhost:5001/api/attacks';
+const source = new EventSource('/api/alerts/stream');
+source.onmessage = (event) => {
+  const alert = JSON.parse(event.data);
+  console.log('New alert:', alert);
+};
+```
 
-fetch(url, {
-  headers: {
-    'Authorization': 'Basic ' + btoa(username + ':' + password)
-  }
-})
-.then(response => response.json())
-.then(data => {
-  console.log(`Total attacks: ${data.count}`);
-  data.attacks.forEach(attack => {
-    console.log(`${attack.timestamp} - ${attack.ip} - ${attack.service}`);
-  });
-});
+---
+
+### POST /api/attacks/filter
+
+**Description:** Filter attacks by multiple criteria. IP addresses are validated using the `ipaddress` module.
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "start_date": "2026-05-01T00:00:00Z",
+  "end_date": "2026-05-31T23:59:59Z",
+  "service": "ssh",
+  "attack_type": "Brute Force",
+  "country": "Germany",
+  "ip": "185.220.101.34"
+}
+```
+
+**Response:**
+```json
+{
+  "count": 5,
+  "attacks": [...]
+}
+```
+
+**Error (invalid IP):**
+```json
+{
+  "error": "Invalid IP address format"
+}
+```
+
+---
+
+### POST /api/attacks/export
+
+**Description:** Export attacks to CSV or JSON format.
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "format": "csv",
+  "start_date": "2026-05-01T00:00:00Z",
+  "end_date": "2026-05-31T23:59:59Z"
+}
+```
+
+**Response:** Downloadable file (CSV or JSON).
+
+---
+
+### POST /api/reset
+
+**Description:** Reset the dashboard — creates a timestamped backup of all logs, then clears the data.
+
+**Authentication:** Required
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Dashboard reset successfully",
+  "backup_file": "logs/backups/attacks_backup_20260505_112507.txt"
+}
+```
+
+---
+
+### GET /api/stats
+
+**Description:** Get statistics with optional date range.
+
+**Query Parameters:**
+- `start_date` (optional): ISO date string
+- `end_date` (optional): ISO date string
+
+**Response:**
+```json
+{
+  "total_attacks": 150,
+  "unique_ips": 42,
+  "service_distribution": {"ssh": 80, "http": 45, "ftp": 25},
+  "attack_types": {"Brute Force": 90, "SQL Injection": 30},
+  "top_countries": [["Germany", 40], ["USA", 30]],
+  "top_isps": [["Tor Exit Node", 15], ["DigitalOcean", 10]]
+}
 ```
 
 ## Attack Types
 
-The system detects various attack types:
-
 | Attack Type | Description |
-|-------------|-------------|
+|---|---|
 | `password_auth` | SSH password authentication attempt |
 | `key_auth` | SSH key authentication attempt |
 | `brute_force_web` | Web application brute force |
 | `ftp_brute_force` | FTP brute force attempt |
 | `mysql_connection_attempt` | MySQL connection attempt |
-| `web_request` | Generic web request |
 | `sql_injection` | SQL injection attempt |
 | `command_injection` | Command injection attempt |
 | `reconnaissance` | Reconnaissance activity |
+| `xss` | Cross-site scripting attempt |
 
 ## Tools Detected
 
-The system can identify these penetration testing tools:
-
-- **nmap** - Network scanner
-- **metasploit** - Exploitation framework
-- **hydra** - Password cracker
-- **medusa** - Parallel login brute-forcer
-- **burpsuite** - Web security testing tool
-- **sqlmap** - SQL injection tool
-- **nikto** - Web server scanner
-
-## Data Filtering
-
-The API currently returns the most recent 500 attacks. For production use, consider implementing:
-
-- Pagination parameters (`?page=1&limit=50`)
-- Date range filtering (`?start_date=2024-01-01&end_date=2024-01-31`)
-- Service filtering (`?service=ssh`)
-- IP filtering (`?ip=192.168.1.100`)
+| Tool | Description |
+|---|---|
+| `nmap` | Network scanner |
+| `metasploit` | Exploitation framework |
+| `hydra` | Password cracker |
+| `medusa` | Parallel login brute-forcer |
+| `burpsuite` | Web security testing tool |
+| `sqlmap` | SQL injection tool |
+| `nikto` | Web server scanner |
 
 ## Rate Limiting
 
-Currently no rate limiting is implemented. For production:
+- Geolocation API: 45 requests/minute (thread-safe, non-blocking)
+- Rate limit sleep happens outside the lock (v4.0 fix)
+- Geocache batches disk writes every 10 new entries
 
-- Implement rate limiting (e.g., 100 requests/minute)
-- Use API tokens instead of Basic Auth
-- Add request logging and monitoring
+## Security
 
-## Security Considerations
+1. **Change default credentials** before production use
+2. **Use HTTPS** — deploy behind a reverse proxy (nginx)
+3. **Restrict access** — firewall rules for port 5001
+4. **VPN access** — never expose dashboard to public internet
 
-### Best Practices
+---
 
-1. **Change Default Credentials**
-   ```bash
-   export DASHBOARD_USERNAME="your_secure_username"
-   export DASHBOARD_PASSWORD="your_strong_password"
-   ```
-
-2. **Use HTTPS in Production**
-   - Deploy behind a reverse proxy (nginx, Apache)
-   - Use SSL/TLS certificates
-   - Never expose the dashboard directly to the internet
-
-3. **Firewall Rules**
-   ```bash
-   # Allow only from specific IP
-   ufw allow from 192.168.1.0/24 to any port 5001
-   ```
-
-4. **VPN Access**
-   - Use VPN for remote dashboard access
-   - Never expose port 5001 to the public internet
-
-5. **API Token Authentication** (Future Enhancement)
-   - Implement JWT or OAuth2
-   - Use API keys with expiration
-   - Add role-based access control
-
-## Integration Examples
-
-### SIEM Integration
-
-```python
-# Example: Send attacks to SIEM system
-import requests
-from requests.auth import HTTPBasicAuth
-
-def fetch_and_forward_attacks(siem_url, siem_token):
-    # Fetch from honeypot
-    response = requests.get(
-        'http://localhost:5001/api/attacks',
-        auth=HTTPBasicAuth('admin', 'honeypot@91771')
-    )
-    
-    if response.status_code == 200:
-        attacks = response.json()['attacks']
-        
-        # Forward to SIEM
-        for attack in attacks:
-            requests.post(
-                siem_url,
-                headers={'Authorization': f'Bearer {siem_token}'},
-                json=attack
-            )
-```
-
-### Automated Alerting
-
-```python
-# Example: Send alerts for specific attacks
-import requests
-from requests.auth import HTTPBasicAuth
-import smtplib
-from email.mime.text import MIMEText
-
-def check_for_critical_attacks():
-    response = requests.get(
-        'http://localhost:5001/api/attacks',
-        auth=HTTPBasicAuth('admin', 'honeypot@91771')
-    )
-    
-    if response.status_code == 200:
-        attacks = response.json()['attacks']
-        
-        # Filter critical attacks
-        critical = [a for a in attacks if 'metasploit' in a.get('tools_detected', '')]
-        
-        if critical:
-            send_alert_email(critical)
-
-def send_alert_email(attacks):
-    msg = MIMEText(f"Critical attacks detected: {len(attacks)}")
-    msg['Subject'] = 'Honeypot Alert'
-    msg['From'] = 'honeypot@example.com'
-    msg['To'] = 'admin@example.com'
-    
-    # Send email (configure your SMTP server)
-    # ...
-```
-
-### Dashboard Widget
-
-```html
-<!-- Example: Simple dashboard widget -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Honeypot Stats</title>
-    <script>
-        async function updateStats() {
-            const response = await fetch('http://localhost:5001/api/attacks', {
-                headers: {
-                    'Authorization': 'Basic ' + btoa('admin:honeypot@91771')
-                }
-            });
-            
-            const data = await response.json();
-            
-            document.getElementById('total').textContent = data.count;
-            document.getElementById('recent').textContent = data.attacks.length;
-        }
-        
-        // Update every 30 seconds
-        setInterval(updateStats, 30000);
-        updateStats();
-    </script>
-</head>
-<body>
-    <h1>Honeypot Statistics</h1>
-    <p>Total Attacks: <span id="total">0</span></p>
-    <p>Recent Attacks: <span id="recent">0</span></p>
-</body>
-</html>
-```
-
-## Error Handling
-
-All endpoints return appropriate HTTP status codes:
-
-| Status Code | Meaning |
-|-------------|---------|
-| 200 | Success |
-| 401 | Authentication required or invalid credentials |
-| 500 | Internal server error |
-
-Error responses include a message:
-```json
-{
-  "error": "Failed to load attacks"
-}
-```
-
-## Future Enhancements
-
-Planned API improvements:
-
-- [ ] Pagination support
-- [ ] Advanced filtering options
-- [ ] Real-time WebSocket updates
-- [ ] Export formats (CSV, PDF)
-- [ ] Attack statistics endpoint
-- [ ] Service status endpoint
-- [ ] Configuration endpoint (read-only)
-- [ ] API token authentication
-- [ ] Rate limiting
-- [ ] API versioning (/api/v1/)
-
-## Support
-
-For API questions or issues:
-- Create an issue on GitHub
-- Check the documentation
-- Review example code in `examples/` directory
-
-## License
-
-This API is part of the Multi-Service Honeypot System. See LICENSE file for details.
+**Version:** 4.0 | **Last Updated:** May 2026

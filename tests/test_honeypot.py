@@ -93,7 +93,7 @@ def test_honeypot_config_loading(tmp_path):
 
 def test_tool_detection():
     """Test attack tool detection"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         os.chdir(tmpdir)
         
         # Create required directories
@@ -133,3 +133,8 @@ def test_tool_detection():
         data = "hydra attempting login combination"
         tools = server.detect_tools(data)
         assert 'hydra' in tools
+        
+        # Close logger handlers to release file locks before tmpdir cleanup (Windows fix)
+        for handler in server.logger.handlers[:]:
+            handler.close()
+            server.logger.removeHandler(handler)

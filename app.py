@@ -6,6 +6,9 @@ import traceback
 import logging
 import threading
 import ipaddress
+import hashlib
+import hmac
+import secrets as _secrets
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from collections import OrderedDict, deque
@@ -17,7 +20,30 @@ from markupsafe import escape
 
 # Flask app
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(32).hex())
+
+
+def _load_or_create_secret_key():
+    """VULN-002 FIX: Load or create a persistent secret key instead of regenerating on every restart."""
+    env_key = os.environ.get('FLASK_SECRET_KEY')
+    if env_key:
+        return env_key
+    key_path = os.path.join('config', '.flask_secret.key')
+    try:
+        os.makedirs(os.path.dirname(key_path) or '.', exist_ok=True)
+        if os.path.exists(key_path):
+            with open(key_path, 'r') as f:
+                return f.read().strip()
+        # Generate and persist a new key
+        new_key = _secrets.token_hex(32)
+        with open(key_path, 'w') as f:
+            f.write(new_key)
+        return new_key
+    except Exception:
+        # Fallback: generate ephemeral key (log warning)
+        return _secrets.token_hex(32)
+
+
+app.secret_key = _load_or_create_secret_key()
 
 # Setup logging
 logging.basicConfig(
@@ -32,6 +58,7 @@ DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'honeypot@91771')
 GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
+FLASK_BIND_HOST = os.environ.get('FLASK_BIND_HOST', '127.0.0.1')  # VULN-012 FIX: Default to localhost
 IP_API_URL = os.environ.get('IP_API_URL', 'http://ip-api.com/json')  # ip-api.com simple endpoint
 IP_API_TIMEOUT = float(os.environ.get('IP_API_TIMEOUT', 3.0))  # seconds
 
@@ -52,12 +79,15 @@ _last_cleanup_time = 0  # Track last cleanup time
 CLEANUP_INTERVAL = 300  # Cleanup every 5 minutes (300 seconds)
 
 # BUG-001 FIX: Safe print that handles Unicode on Windows terminals
+
+
 def safe_print(msg):
     """Print with Unicode fallback for Windows terminals"""
     try:
         print(msg)
     except UnicodeEncodeError:
         print(msg.encode('ascii', 'replace').decode('ascii'))
+
 
 # Real-Time Alerting System
 ALERT_QUEUE = Queue()  # Thread-safe queue for alerts
@@ -84,7 +114,10 @@ INCIDENT_RESPONSES = {
 # Track recent attacks for alerting
 _recent_attacks = deque(maxlen=1000)  # Last 1000 attacks
 _attack_counts = {}  # IP -> count in last minute
+_attack_counts_lock = threading.Lock()  # VULN-007 FIX: Thread-safe access
+_MAX_TRACKED_IPS = 10000  # VULN-007 FIX: Cap to prevent memory DoS
 _known_countries = set()  # Track known countries
+
 
 def _load_geocache():
     """Load geocache from file, filtering expired entries and limiting size"""
@@ -97,7 +130,7 @@ def _load_geocache():
                 _geocache = OrderedDict()
                 current_time = int(time.time())
                 ttl_seconds = CACHE_TTL_DAYS * 24 * 60 * 60
-                
+
                 for ip, data in raw_cache.items():
                     cache_time = data.get('ts', 0)
                     if current_time - cache_time < ttl_seconds:
@@ -105,13 +138,14 @@ def _load_geocache():
                     # Limit size during load
                     if len(_geocache) >= MAX_CACHE_SIZE:
                         break
-                
+
                 logger.info(f"Loaded {len(_geocache)} valid cache entries (expired entries filtered)")
         else:
             _geocache = OrderedDict()
     except Exception as e:
         logger.warning(f"Failed reading geocache: {e}, starting with empty cache.")
         _geocache = OrderedDict()
+
 
 def _save_geocache():
     """Save geocache to file, maintaining LRU order"""
@@ -127,6 +161,7 @@ def _save_geocache():
     except Exception as e:
         logger.warning(f"Failed saving geocache: {e}")
 
+
 def _maybe_save_geocache():
     """BUG-012 FIX: Batch geocache saves — only write to disk every GEOCACHE_BATCH_SIZE entries"""
     global _geocache_dirty
@@ -134,32 +169,38 @@ def _maybe_save_geocache():
     if _geocache_dirty >= GEOCACHE_BATCH_SIZE:
         _save_geocache()
 
+
 def _cleanup_cache():
     """Remove expired entries and enforce size limit (LRU eviction)"""
     global _geocache
     current_time = int(time.time())
     ttl_seconds = CACHE_TTL_DAYS * 24 * 60 * 60
-    
+
     # Remove expired entries
     expired_keys = []
     for ip, data in _geocache.items():
         cache_time = data.get('ts', 0)
         if current_time - cache_time >= ttl_seconds:
             expired_keys.append(ip)
-    
+
     for key in expired_keys:
         _geocache.pop(key, None)
-    
+
     # Enforce size limit (LRU: remove oldest entries)
     while len(_geocache) >= MAX_CACHE_SIZE:
         _geocache.popitem(last=False)  # Remove oldest (first) item
 
+
 # Load cache at startup
 _load_geocache()
 
+
 def check_auth(username, password):
-    """Verify dashboard credentials"""
-    return username == DASHBOARD_USERNAME and password == DASHBOARD_PASSWORD
+    """Verify dashboard credentials using constant-time comparison to prevent timing attacks"""
+    user_ok = hmac.compare_digest(username, DASHBOARD_USERNAME)
+    pass_ok = hmac.compare_digest(password, DASHBOARD_PASSWORD)
+    return user_ok and pass_ok
+
 
 def authenticate():
     """Return 401 response with authentication challenge"""
@@ -168,6 +209,7 @@ def authenticate():
         401,
         {'WWW-Authenticate': 'Basic realm="Honeypot Dashboard"'}
     )
+
 
 def requires_auth(f):
     """Decorator to require HTTP Basic Authentication"""
@@ -178,6 +220,7 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
+
 
 @app.after_request
 def set_security_headers(response):
@@ -197,6 +240,7 @@ def set_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers.pop('Server', None)
     return response
+
 
 def load_attack_data(log_file=ATTACKS_LOG):
     """Read newline-delimited JSON attack log file; returns list of dicts"""
@@ -225,6 +269,7 @@ def load_attack_data(log_file=ATTACKS_LOG):
         return []
     return attacks
 
+
 def sanitize_string(value, max_length=200):
     """Sanitize string values to prevent XSS attacks"""
     if value is None:
@@ -238,6 +283,7 @@ def sanitize_string(value, max_length=200):
     if len(value) > max_length:
         value = value[:max_length] + '...'
     return escape(value)
+
 
 def safe_parse_datetime_obj(timestamp_str):
     """
@@ -258,6 +304,7 @@ def safe_parse_datetime_obj(timestamp_str):
     except Exception:
         return None
 
+
 def safe_format_datetime(dt):
     """Format datetime to readable string, or return 'Unknown'."""
     if not dt:
@@ -268,32 +315,34 @@ def safe_format_datetime(dt):
     except Exception:
         return str(dt)
 
+
 def _check_rate_limit():
     """Check and enforce API rate limiting (45 requests/minute)
     BUG-005 FIX: Sleep outside the lock to avoid blocking all threads"""
     global _api_request_times
     current_time = time.time()
     wait_time = 0
-    
+
     with _api_lock:
         # Remove requests older than the rate limit window
         _api_request_times = [t for t in _api_request_times if current_time - t < API_RATE_WINDOW]
-        
+
         # If we're at the limit, calculate delay needed
         if len(_api_request_times) >= API_RATE_LIMIT:
             oldest_request = min(_api_request_times)
             wait_time = API_RATE_WINDOW - (current_time - oldest_request) + 0.1
-    
+
     # BUG-005 FIX: Sleep OUTSIDE the lock so other threads aren't blocked
     if wait_time > 0:
         logger.warning(f"Rate limit reached ({API_RATE_LIMIT} req/min), waiting {wait_time:.1f}s")
         time.sleep(wait_time)
-    
+
     with _api_lock:
         # Clean up and record this request
         current_time = time.time()
         _api_request_times = [t for t in _api_request_times if current_time - t < API_RATE_WINDOW]
         _api_request_times.append(current_time)
+
 
 def enrich_with_geo(ip):
     """
@@ -304,8 +353,12 @@ def enrich_with_geo(ip):
     if not ip or ip == 'Unknown':
         return None, None
 
-    # Skip private IP ranges
-    if ip.startswith(('127.', '10.', '192.168.', '172.')):
+    # VULN-009 FIX: Use ipaddress module for accurate private IP detection
+    try:
+        addr = ipaddress.ip_address(ip.strip())
+        if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+            return None, None
+    except ValueError:
         return None, None
 
     # Cleanup cache periodically (every 5 minutes)
@@ -365,7 +418,7 @@ def enrich_with_geo(ip):
             r = requests.get(fallback_url, timeout=IP_API_TIMEOUT)
             r.raise_for_status()
             data = r.json()
-            
+
             # Parse ipinfo.io response format
             loc = data.get('loc', '').split(',')
             if len(loc) == 2:
@@ -391,7 +444,7 @@ def enrich_with_geo(ip):
                 return lat, lon
         except Exception as fallback_error:
             logger.warning(f"Fallback geolocation also failed for {ip}: {fallback_error}")
-        
+
         # Both APIs failed, cache the failure
         with _geocache_lock:
             _geocache[ip] = {'lat': None, 'lon': None, 'ts': int(time.time()), 'err': 'Both APIs failed'}
@@ -405,6 +458,7 @@ def enrich_with_geo(ip):
         _maybe_save_geocache()  # BUG-012 FIX: Batch save
         return None, None
 
+
 def get_geo_details(ip):
     """
     Get extended geolocation details for an IP from cache.
@@ -412,8 +466,10 @@ def get_geo_details(ip):
     """
     if not ip or ip == 'Unknown':
         return {}
-    
-    cached = _geocache.get(ip, {})
+
+    # VULN-014 FIX: Thread-safe geocache access
+    with _geocache_lock:
+        cached = _geocache.get(ip, {})
     return {
         'city': cached.get('city', 'Unknown'),
         'country': cached.get('country', 'Unknown'),
@@ -423,6 +479,7 @@ def get_geo_details(ip):
         'org': cached.get('org', 'Unknown'),
         'as': cached.get('as', 'Unknown')
     }
+
 
 def process_attack_data(attacks):
     """
@@ -478,6 +535,7 @@ def process_attack_data(attacks):
             continue
     return processed
 
+
 def get_statistics(processed_attacks):
     """
     Build statistics dict from processed attacks (expects sanitized entries).
@@ -508,16 +566,16 @@ def get_statistics(processed_attacks):
         if isinstance(tools_str, str) and tools_str:
             for t in [x.strip() for x in tools_str.split(',') if x.strip()]:
                 stats['tools_detected'][t] = stats['tools_detected'].get(t, 0) + 1
-        
+
         # Geographic statistics
         country = a.get('country', 'Unknown')
         if country and country != 'Unknown':
             stats['countries'][country] = stats['countries'].get(country, 0) + 1
-        
+
         city = a.get('city', 'Unknown')
         if city and city != 'Unknown':
             stats['cities'][city] = stats['cities'].get(city, 0) + 1
-        
+
         isp = a.get('isp', 'Unknown')
         if isp and isp != 'Unknown':
             stats['isps'][isp] = stats['isps'].get(isp, 0) + 1
@@ -538,6 +596,7 @@ def get_statistics(processed_attacks):
 
     stats['recent_attacks'] = sorted(processed_attacks, key=_sort_key, reverse=True)[:50]
     return stats
+
 
 @app.route('/')
 @requires_auth
@@ -566,48 +625,57 @@ def dashboard():
             'recent_attacks': statistics['recent_attacks']
         }
 
+        # VULN-003 FIX: Do NOT pass credentials into template context
         response = Response(render_template(
-            'unified_dashboard.html', 
-            statistics=sanitized_stats, 
-            attacks=processed,
-            DASHBOARD_USERNAME=DASHBOARD_USERNAME,
-            DASHBOARD_PASSWORD=DASHBOARD_PASSWORD
+            'unified_dashboard.html',
+            statistics=sanitized_stats,
+            attacks=processed
         ))
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
         return response
     except Exception as e:
-        error_msg = f"Error loading dashboard: {str(e)}"
-        print(error_msg)
-        print(traceback.format_exc())
-        return f"<h1>Internal Server Error</h1><p>{escape(error_msg)}</p><pre>{escape(traceback.format_exc())}</pre>", 500
+        # VULN-001 FIX: Do NOT expose stack traces to users
+        logger.error(f"Dashboard error: {e}\n{traceback.format_exc()}")
+        return '<h1>Internal Server Error</h1><p>An unexpected error occurred. Please check server logs.</p>', 500
+
 
 def check_and_trigger_alerts(attack):
     """Check attack against thresholds and trigger alerts if needed"""
     global _recent_attacks, _attack_counts, _known_countries
-    
+
     current_time = time.time()
     ip = attack.get('ip', 'Unknown')
     attack_type = attack.get('attack_type', '').lower()
     tools = attack.get('tools_detected', '').lower()
     country = attack.get('country', 'Unknown')
-    
+
     # Add to recent attacks
     _recent_attacks.append({
         'attack': attack,
         'timestamp': current_time
     })
-    
-    # Update attack counts per IP
-    if ip not in _attack_counts:
-        _attack_counts[ip] = []
-    _attack_counts[ip].append(current_time)
-    # Clean old entries (older than 1 minute)
-    _attack_counts[ip] = [t for t in _attack_counts[ip] if current_time - t < 60]
-    
+
+    # VULN-007 FIX: Thread-safe, bounded attack count tracking
+    with _attack_counts_lock:
+        if ip not in _attack_counts:
+            _attack_counts[ip] = []
+        _attack_counts[ip].append(current_time)
+        # Clean old entries (older than 1 minute)
+        _attack_counts[ip] = [t for t in _attack_counts[ip] if current_time - t < 60]
+
+        # Prune stale IPs and enforce cap
+        if len(_attack_counts) > _MAX_TRACKED_IPS:
+            stale_ips = [k for k, v in _attack_counts.items() if not v]
+            for stale_ip in stale_ips:
+                del _attack_counts[stale_ip]
+            # If still over cap, remove oldest entries
+            while len(_attack_counts) > _MAX_TRACKED_IPS:
+                _attack_counts.pop(next(iter(_attack_counts)))
+
     alerts_triggered = []
-    
+
     # Check for high attack rate
     recent_count = len([a for a in _recent_attacks if current_time - a['timestamp'] < 60])
     if recent_count >= ALERT_THRESHOLDS['high_attack_rate']:
@@ -619,7 +687,7 @@ def check_and_trigger_alerts(attack):
             'data': {'attack_count': recent_count}
         }
         alerts_triggered.append(alert)
-    
+
     # Check for critical attack types
     for critical_type in ALERT_THRESHOLDS['critical_attack_types']:
         if critical_type.lower() in attack_type:
@@ -632,7 +700,7 @@ def check_and_trigger_alerts(attack):
             }
             alerts_triggered.append(alert)
             break
-    
+
     # Check for suspicious tools
     for tool in ALERT_THRESHOLDS['suspicious_tools']:
         if tool.lower() in tools:
@@ -645,7 +713,7 @@ def check_and_trigger_alerts(attack):
             }
             alerts_triggered.append(alert)
             break
-    
+
     # Check for repeated attacker
     if len(_attack_counts.get(ip, [])) >= ALERT_THRESHOLDS['repeated_attacker']:
         alert = {
@@ -656,7 +724,7 @@ def check_and_trigger_alerts(attack):
             'data': {'ip': ip, 'count': len(_attack_counts[ip])}
         }
         alerts_triggered.append(alert)
-    
+
     # Check for new country
     if ALERT_THRESHOLDS['new_country'] and country != 'Unknown' and country not in _known_countries:
         _known_countries.add(country)
@@ -668,12 +736,13 @@ def check_and_trigger_alerts(attack):
             'data': {'country': country, 'ip': ip}
         }
         alerts_triggered.append(alert)
-    
+
     # Process alerts
     for alert in alerts_triggered:
         _process_alert(alert)
-    
+
     return alerts_triggered
+
 
 def _process_alert(alert):
     """Process alert: log, notify subscribers, trigger responses"""
@@ -685,13 +754,14 @@ def _process_alert(alert):
             f.write('\n')
     except Exception as e:
         logger.error(f"Failed to log alert: {e}")
-    
+
     # Add to queue for SSE subscribers
     ALERT_QUEUE.put(alert)
-    
+
     # Trigger automated responses
     if alert['severity'] in ['critical', 'high']:
         _trigger_incident_response(alert)
+
 
 def _trigger_incident_response(alert):
     """Trigger automated incident response actions"""
@@ -705,16 +775,17 @@ def _trigger_incident_response(alert):
             )
         except Exception as e:
             logger.warning(f"Webhook notification failed: {e}")
-    
+
     # Email notification (if configured)
     if INCIDENT_RESPONSES.get('notify_email'):
         # Email sending would be implemented here
         logger.info(f"Email notification would be sent to {INCIDENT_RESPONSES['notify_email']}")
-    
+
     # IP blocking (if enabled)
     if INCIDENT_RESPONSES.get('block_ip') and 'ip' in alert.get('data', {}):
         ip = alert['data']['ip']
         logger.warning(f"IP blocking would be triggered for {ip}")
+
 
 @app.route('/api/attacks')
 @requires_auth
@@ -731,6 +802,7 @@ def api_attacks():
     except Exception as e:
         print(f"API error: {e}")
         return jsonify({'error': 'Failed to load attacks'}), 500
+
 
 @app.route('/api/alerts')
 @requires_auth
@@ -754,6 +826,7 @@ def api_alerts():
         logger.error(f"Error loading alerts: {e}")
         return jsonify({'error': 'Failed to load alerts'}), 500
 
+
 @app.route('/api/alerts/stream')
 @requires_auth
 def api_alerts_stream():
@@ -764,10 +837,10 @@ def api_alerts_stream():
                 # Wait for alert with timeout
                 alert = ALERT_QUEUE.get(timeout=30)
                 yield f"data: {json.dumps(alert)}\n\n"
-            except:
+            except Exception:  # VULN-013 FIX: Never use bare except
                 # Send keepalive
                 yield ": keepalive\n\n"
-    
+
     return Response(
         stream_with_context(event_stream()),
         mimetype='text/event-stream',
@@ -777,6 +850,7 @@ def api_alerts_stream():
         }
     )
 
+
 @app.route('/api/attacks/filter', methods=['POST'])
 @requires_auth
 def api_attacks_filter():
@@ -785,7 +859,7 @@ def api_attacks_filter():
         data = request.get_json() or {}
         raw = load_attack_data()
         processed = process_attack_data(raw)
-        
+
         # Apply filters
         start_date = data.get('start_date')
         end_date = data.get('end_date')
@@ -793,21 +867,23 @@ def api_attacks_filter():
         attack_type = data.get('attack_type')
         country = data.get('country')
         ip = data.get('ip')
-        
+
         # BUG-007 FIX: Validate IP address format
         if ip:
             try:
                 ipaddress.ip_address(ip.strip())
             except ValueError:
                 return jsonify({'error': 'Invalid IP address format'}), 400
-        
+
         filtered = processed
         if start_date:
             start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            filtered = [a for a in filtered if a.get('timestamp_obj') and datetime.fromisoformat(a['timestamp_obj'].replace('Z', '+00:00')) >= start_dt]
+            filtered = [a for a in filtered if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) >= start_dt]
         if end_date:
             end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            filtered = [a for a in filtered if a.get('timestamp_obj') and datetime.fromisoformat(a['timestamp_obj'].replace('Z', '+00:00')) <= end_dt]
+            filtered = [a for a in filtered if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) <= end_dt]
         if service:
             filtered = [a for a in filtered if a.get('service', '').lower() == service.lower()]
         if attack_type:
@@ -816,11 +892,12 @@ def api_attacks_filter():
             filtered = [a for a in filtered if a.get('country', '').lower() == country.lower()]
         if ip:
             filtered = [a for a in filtered if a.get('ip', '').lower() == ip.strip().lower()]
-        
+
         return jsonify({'count': len(filtered), 'attacks': filtered})
     except Exception as e:
         logger.error(f"Error filtering attacks: {e}")
         return jsonify({'error': 'Failed to filter attacks'}), 500
+
 
 @app.route('/api/attacks/export', methods=['POST'])
 @requires_auth
@@ -831,17 +908,18 @@ def api_attacks_export():
         format_type = data.get('format', 'json')  # json or csv
         raw = load_attack_data()
         processed = process_attack_data(raw)
-        
+
         # Apply same filters as filter endpoint
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         # ... (same filtering logic)
-        
+
         if format_type == 'csv':
             import csv
             import io
             output = io.StringIO()
-            writer = csv.DictWriter(output, fieldnames=['timestamp', 'ip', 'country', 'city', 'service', 'attack_type', 'username', 'tools_detected'])
+            writer = csv.DictWriter(output, fieldnames=['timestamp', 'ip', 'country',
+                                    'city', 'service', 'attack_type', 'username', 'tools_detected'])
             writer.writeheader()
             for attack in processed:
                 writer.writerow({
@@ -865,28 +943,25 @@ def api_attacks_export():
         logger.error(f"Error exporting attacks: {e}")
         return jsonify({'error': 'Failed to export attacks'}), 500
 
+
 @app.route('/test-static')
+@requires_auth  # VULN-004 FIX: Require authentication
 def test_static():
     """Test route to verify static files are accessible"""
     import os
     css_path = os.path.join('static', 'css', 'style.css')
     if os.path.exists(css_path):
-        size = os.path.getsize(css_path)
         return jsonify({
             'status': 'OK',
-            'message': 'Static files are configured correctly',
-            'css_file': css_path,
-            'css_size': f"{size / 1024:.2f} KB",
-            'css_url': url_for('static', filename='css/style.css'),
-            'static_folder': app.static_folder
+            'message': 'Static files are configured correctly'
+            # VULN-004 FIX: Do not leak internal paths
         })
     else:
         return jsonify({
             'status': 'ERROR',
-            'message': 'CSS file not found',
-            'css_path': css_path,
-            'static_folder': app.static_folder
+            'message': 'CSS file not found'
         }), 404
+
 
 @app.route('/api/reset', methods=['POST'])
 @requires_auth
@@ -896,23 +971,23 @@ def api_reset():
         # Load all current attack data
         raw_attacks = load_attack_data()
         processed = process_attack_data(raw_attacks)
-        
+
         # Create backups directory if it doesn't exist
         backups_dir = os.path.join(os.path.dirname(ATTACKS_LOG) or 'logs', 'backups')
         os.makedirs(backups_dir, exist_ok=True)
-        
-        # Generate timestamp for backup file
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+        # VULN-017 FIX: Standardize on UTC timestamps
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         backup_file = os.path.join(backups_dir, f'attacks_backup_{timestamp}.txt')
-        
+
         # Format data as readable text
         with open(backup_file, 'w', encoding='utf-8') as f:
             f.write("=" * 80 + "\n")
             f.write(f"HONEYPOT ATTACK DATA BACKUP\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
+            f.write(f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
             f.write(f"Total Attacks: {len(processed)}\n")
             f.write("=" * 80 + "\n\n")
-            
+
             if processed:
                 # Write summary statistics
                 stats = get_statistics(processed)
@@ -930,7 +1005,7 @@ def api_reset():
                 for country, count in stats.get('top_countries', [])[:10]:
                     f.write(f"  {country}: {count}\n")
                 f.write("\n" + "=" * 80 + "\n\n")
-                
+
                 # Write detailed attack logs
                 f.write("DETAILED ATTACK LOGS\n")
                 f.write("-" * 80 + "\n\n")
@@ -950,12 +1025,12 @@ def api_reset():
                     f.write("\n")
             else:
                 f.write("No attack data to backup.\n")
-        
+
         # Clear the attacks log file
         if os.path.exists(ATTACKS_LOG):
             with open(ATTACKS_LOG, 'w') as f:
                 f.write('')  # Clear file
-        
+
         # Also clear alerts log (optional)
         if os.path.exists(ALERTS_LOG):
             alerts_backup = os.path.join(backups_dir, f'alerts_backup_{timestamp}.txt')
@@ -969,14 +1044,14 @@ def api_reset():
                             if line:
                                 try:
                                     alerts_data.append(json.loads(line))
-                                except:
+                                except Exception:  # VULN-013 FIX: No bare except
                                     pass
-                
+
                 if alerts_data:
                     with open(alerts_backup, 'w', encoding='utf-8') as f:
                         f.write("=" * 80 + "\n")
-                        f.write(f"HONEYPOT ALERTS BACKUP\n")
-                        f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
+                        f.write("HONEYPOT ALERTS BACKUP\n")
+                        f.write(f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
                         f.write(f"Total Alerts: {len(alerts_data)}\n")
                         f.write("=" * 80 + "\n\n")
                         for alert in alerts_data:
@@ -985,13 +1060,13 @@ def api_reset():
                             f.write(f"  Type: {alert.get('type', 'N/A')}\n")
                             f.write(f"  Timestamp: {alert.get('timestamp', 'N/A')}\n")
                             f.write("\n")
-                
+
                 # Clear alerts log
                 with open(ALERTS_LOG, 'w') as f:
                     f.write('')
             except Exception as e:
                 logger.warning(f"Error backing up alerts: {e}")
-        
+
         logger.info(f"Dashboard reset: {len(processed)} attacks backed up to {backup_file}")
         return jsonify({
             'success': True,
@@ -1003,6 +1078,7 @@ def api_reset():
         logger.error(f"Error resetting dashboard: {e}")
         return jsonify({'error': f'Failed to reset dashboard: {str(e)}'}), 500
 
+
 @app.route('/api/stats')
 @requires_auth
 def api_stats():
@@ -1012,20 +1088,23 @@ def api_stats():
         end_date = request.args.get('end_date')
         raw = load_attack_data()
         processed = process_attack_data(raw)
-        
+
         # Apply date filters if provided
         if start_date:
             start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(a['timestamp_obj'].replace('Z', '+00:00')) >= start_dt]
+            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) >= start_dt]
         if end_date:
             end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(a['timestamp_obj'].replace('Z', '+00:00')) <= end_dt]
-        
+            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) <= end_dt]
+
         stats = get_statistics(processed)
         return jsonify(stats)
     except Exception as e:
         logger.error(f"Error getting stats: {e}")
         return jsonify({'error': 'Failed to get statistics'}), 500
+
 
 def main():
     """Main entry point for dashboard application"""
@@ -1033,7 +1112,7 @@ def main():
         # Ensure directories exist
         os.makedirs(os.path.dirname(ATTACKS_LOG) or 'logs', exist_ok=True)
         os.makedirs(os.path.dirname(GEOCACHE_FILE) or 'logs', exist_ok=True)
-        
+
         # BUG-001 FIX: Use safe_print for Unicode compatibility
         safe_print("=" * 60)
         safe_print("  Honeypot Security Dashboard - Professional Edition")
@@ -1046,8 +1125,9 @@ def main():
         safe_print("=" * 60)
         safe_print("[*] Dashboard is ready! Press Ctrl+C to stop.")
         safe_print("=" * 60)
-        
-        app.run(host='0.0.0.0', port=FLASK_RUN_PORT, debug=False, threaded=True)
+
+        # VULN-012 FIX: Bind to localhost by default, configurable via FLASK_BIND_HOST
+        app.run(host=FLASK_BIND_HOST, port=FLASK_RUN_PORT, debug=False, threaded=True)
     except KeyboardInterrupt:
         print("\n[*] Shutting down dashboard...")
         print("[*] Dashboard stopped successfully.")

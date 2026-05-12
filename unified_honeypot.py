@@ -5,6 +5,7 @@ import logging
 import json
 import ssl
 import time
+import hashlib
 from datetime import datetime, timezone
 import os
 import secrets
@@ -13,9 +14,10 @@ from socket import gethostbyaddr, herror
 import shlex
 from device_detector import DeviceDetector
 
+
 class FakeFileSystem:
     """Simulates a realistic Ubuntu filesystem for the honeypot"""
-    
+
     def __init__(self):
         self.current_dir = '/home/admin'
         self.filesystem = {
@@ -28,25 +30,25 @@ class FakeFileSystem:
                             'admin': {
                                 'type': 'directory',
                                 'contents': {
-                    'Documents': {'type': 'directory', 'contents': {
-                        'project1': {'type': 'file', 'content': 'Project documentation and notes.\n'},
-                        'meeting_notes.txt': {'type': 'file', 'content': 'Meeting notes from last week.\n'},
-                        'backup': {'type': 'directory', 'contents': {}}
-                    }},
-                    'Downloads': {'type': 'directory', 'contents': {
-                        'file1.pdf': {'type': 'file', 'content': 'PDF document content.\n'},
-                        'image.jpg': {'type': 'file', 'content': 'Image file (binary data)\n'},
-                        'archive.tar.gz': {'type': 'file', 'content': 'Compressed archive\n'}
-                    }},
-                    'Desktop': {'type': 'directory', 'contents': {
-                        'notes.txt': {'type': 'file', 'content': 'Quick notes\n'},
-                        'screenshot.png': {'type': 'file', 'content': 'Screenshot image\n'}
-                    }},
-                    '.bashrc': {'type': 'file', 'content': '# ~/.bashrc: executed by bash(1) for non-login shells.\n# See /usr/share/doc/bash/examples/startup-files (in the package bash-doc)\n'},
-                    '.bash_history': {'type': 'file', 'content': 'cd Documents\nls -la\ncat notes.txt\n'},
-                    '.ssh': {'type': 'directory', 'contents': {
-                        'id_rsa.pub': {'type': 'file', 'content': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... admin@ubuntu\n'}
-                    }}
+                                    'Documents': {'type': 'directory', 'contents': {
+                                        'project1': {'type': 'file', 'content': 'Project documentation and notes.\n'},
+                                        'meeting_notes.txt': {'type': 'file', 'content': 'Meeting notes from last week.\n'},
+                                        'backup': {'type': 'directory', 'contents': {}}
+                                    }},
+                                    'Downloads': {'type': 'directory', 'contents': {
+                                        'file1.pdf': {'type': 'file', 'content': 'PDF document content.\n'},
+                                        'image.jpg': {'type': 'file', 'content': 'Image file (binary data)\n'},
+                                        'archive.tar.gz': {'type': 'file', 'content': 'Compressed archive\n'}
+                                    }},
+                                    'Desktop': {'type': 'directory', 'contents': {
+                                        'notes.txt': {'type': 'file', 'content': 'Quick notes\n'},
+                                        'screenshot.png': {'type': 'file', 'content': 'Screenshot image\n'}
+                                    }},
+                                    '.bashrc': {'type': 'file', 'content': '# ~/.bashrc: executed by bash(1) for non-login shells.\n# See /usr/share/doc/bash/examples/startup-files (in the package bash-doc)\n'},
+                                    '.bash_history': {'type': 'file', 'content': 'cd Documents\nls -la\ncat notes.txt\n'},
+                                    '.ssh': {'type': 'directory', 'contents': {
+                                        'id_rsa.pub': {'type': 'file', 'content': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... admin@ubuntu\n'}
+                                    }}
                                 }
                             }
                         }
@@ -78,7 +80,7 @@ class FakeFileSystem:
                 }
             }
         }
-    
+
     def normalize_path(self, path):
         """Normalize a path relative to current directory"""
         if path.startswith('/'):
@@ -86,30 +88,30 @@ class FakeFileSystem:
         if self.current_dir == '/':
             return '/' + path
         return self.current_dir.rstrip('/') + '/' + path
-    
+
     def get_path_parts(self, path):
         """Split path into parts"""
         normalized = self.normalize_path(path)
         parts = [p for p in normalized.split('/') if p]
         return ['/'] + parts if normalized.startswith('/') else parts
-    
+
     def get_item(self, path):
         """Get filesystem item at path (directory contents)"""
         parts = self.get_path_parts(path)
         if not parts:
             return None
-        
+
         # Start from root
         current = self.filesystem.get('/', {}).get('contents', {})
-        
+
         # Handle root directory
         if parts == ['/'] or (len(parts) == 1 and parts[0] == '/'):
             return current
-        
+
         # Remove leading '/' if present
         if parts[0] == '/':
             parts = parts[1:]
-        
+
         # Navigate through directories
         for i, part in enumerate(parts):
             if part in current:
@@ -124,16 +126,16 @@ class FakeFileSystem:
             else:
                 return None
         return current
-    
+
     def list_directory(self, path='.'):
         """List directory contents"""
         if path == '.':
             path = self.current_dir
-        
+
         target = self.get_item(path)
         if target is None:
             return None
-        
+
         items = []
         for name, item in target.items():
             if item['type'] == 'directory':
@@ -141,52 +143,54 @@ class FakeFileSystem:
             else:
                 items.append(name)
         return sorted(items)
-    
+
     def read_file(self, path):
         """Read file content"""
         parts = self.get_path_parts(path)
         if not parts or parts == ['/']:
             return None
-        
+
         # Handle absolute paths
         if parts[0] == '/':
             parts = parts[1:]
-        
+
         # Start from root contents
         current = self.filesystem.get('/', {}).get('contents', {})
-        
+
         # Navigate to parent directory
         for i, part in enumerate(parts[:-1]):
             if part in current and current[part]['type'] == 'directory':
                 current = current[part].get('contents', {})
             else:
                 return None
-        
+
         # Get the file
         filename = parts[-1]
         if filename in current and current[filename]['type'] == 'file':
             return current[filename].get('content', '')
         return None
-    
+
     def change_directory(self, path):
         """Change current directory"""
         if path == '~' or path == '':
             self.current_dir = '/home/admin'
             return True
-        
+
         normalized = self.normalize_path(path)
         if self.get_item(normalized):
             self.current_dir = normalized
             return True
         return False
 
+
 class UnifiedHoneypot(paramiko.ServerInterface):
-    def __init__(self, allowed_key=None, ssh_password=None):
+    def __init__(self, allowed_key=None, ssh_password_hash=None, ssh_password_salt=None):
         self.event = threading.Event()
         self.allowed_key = allowed_key
-        self.ssh_password = ssh_password  # Store the required password
+        self.ssh_password_hash = ssh_password_hash  # VULN-005 FIX: Store hash, not plaintext
+        self.ssh_password_salt = ssh_password_salt
         self.filesystem = FakeFileSystem()
-        
+
         self.attack_details = {
             'ip': None,
             'device_name': None,
@@ -205,20 +209,24 @@ class UnifiedHoneypot(paramiko.ServerInterface):
         self.attack_details['username'] = username
         self.attack_details['password'] = password
         self.attack_details['attack_type'] = 'password_auth'
-        
+
         # Log the attempt
         print(f"Login attempt - Username: {username}, Password: {password}")
-        
-        # Check if encrypted mode is enabled (password file exists)
-        if self.ssh_password:
-            # Encrypted mode: require specific password
-            if username == "admin" and password == self.ssh_password:
-                self.event.set()  # Signal successful authentication
-                print(f"[*] Authentication successful for admin (encrypted mode)")
-                return paramiko.AUTH_SUCCESSFUL
-            else:
-                print(f"[*] Authentication failed - incorrect password")
-                return paramiko.AUTH_FAILED
+
+        # Check if encrypted mode is enabled (password hash file exists)
+        if self.ssh_password_hash:
+            # VULN-005 FIX: Encrypted mode — verify against hashed password
+            if username == "admin":
+                attempt_hash = hashlib.pbkdf2_hmac(
+                    'sha256', password.encode('utf-8'),
+                    self.ssh_password_salt, 100000
+                ).hex()
+                if attempt_hash == self.ssh_password_hash:
+                    self.event.set()
+                    print(f"[*] Authentication successful for admin (encrypted mode)")
+                    return paramiko.AUTH_SUCCESSFUL
+            print(f"[*] Authentication failed - incorrect password")
+            return paramiko.AUTH_FAILED
         else:
             # Normal mode: Accept ANY password for admin user
             if username == "admin":
@@ -231,7 +239,7 @@ class UnifiedHoneypot(paramiko.ServerInterface):
         self.attack_details['username'] = username
         self.attack_details['key_attempted'] = key.get_base64()
         self.attack_details['attack_type'] = 'key_auth'
-        
+
         if self.allowed_key and key.get_base64() == self.allowed_key:
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -269,6 +277,7 @@ class UnifiedHoneypot(paramiko.ServerInterface):
             ]
         }
 
+
 class UnifiedHoneypotServer:
     def __init__(self, config_file='config/unified_honeypot.json'):
         self.load_config(config_file)
@@ -277,33 +286,34 @@ class UnifiedHoneypotServer:
         self.setup_ssl()
         self.active_connections = {}
         self.tool_signatures = self.load_tool_signatures()
-        
+
         # Rate limiting: Track connection attempts per IP
         self.connection_tracker = {}  # {ip: [timestamp1, timestamp2, ...]}
         self.max_connections_per_ip = 10  # Max connections per minute
         self.rate_limit_window = 60  # seconds
-        
+
         # BUG-003 FIX: Separate timeout for SSH (persistent) vs other services
         self.ssh_timeout = None  # No timeout for persistent SSH connections
         self.service_timeout = 30  # 30s timeout for FTP/MySQL/HTTP
+        self.connection_timeout = None  # VULN-018 FIX: Initialize missing attribute
         self.keepalive_interval = 30  # Send keepalive every 30 seconds
         self.max_idle_time = 3600  # 1 hour max idle time
-        
+
         # Load SSH password if encrypted mode is enabled
-        self.ssh_password = self.load_ssh_password()
-        
+        self.ssh_password_hash, self.ssh_password_salt = self.load_ssh_password()
+
         # SSH authentication configuration
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(f"[!] SSH Honeypot Configuration")
         print(f"[!] Username: admin")
-        if self.ssh_password:
+        if self.ssh_password_hash:
             print(f"[!] Mode: ENCRYPTED (password required)")
-            print(f"[!] Password: {self.ssh_password}")
+            print(f"[!] Password: [HASHED — see config/ssh_password.json]")
         else:
             print(f"[!] Mode: OPEN (accepts any password)")
             print(f"[!] Password: ANY (accepts any password)")
         print(f"[!] Connection: ssh -p 2222 admin@YOUR_IP")
-        print("="*50 + "\n")
+        print("=" * 50 + "\n")
 
     def load_config(self, config_file):
         default_config = {
@@ -323,7 +333,7 @@ class UnifiedHoneypotServer:
                 'http_server': 'Apache/2.4.41 (Ubuntu)'
             }
         }
-        
+
         os.makedirs('config', exist_ok=True)
         try:
             with open(config_file, 'r') as f:
@@ -332,19 +342,38 @@ class UnifiedHoneypotServer:
             self.config = default_config
             with open(config_file, 'w') as f:
                 json.dump(default_config, f, indent=4)
-    
+
     def load_ssh_password(self):
-        """Load SSH password from config file if encrypted mode is enabled"""
+        """Load SSH password hash from config file if encrypted mode is enabled.
+        VULN-005 FIX: Returns (hash, salt) tuple instead of plaintext password."""
         password_file = 'config/ssh_password.json'
         try:
             if os.path.exists(password_file):
                 with open(password_file, 'r') as f:
                     password_data = json.load(f)
                     if password_data.get('encrypted_mode', False):
-                        return password_data.get('password', None)
+                        pw_hash = password_data.get('password_hash')
+                        pw_salt = password_data.get('password_salt')
+                        if pw_hash and pw_salt:
+                            return pw_hash, bytes.fromhex(pw_salt)
+                        # Legacy fallback: plaintext password in config — hash it now
+                        plaintext = password_data.get('password')
+                        if plaintext:
+                            salt = os.urandom(16)
+                            pw_hash = hashlib.pbkdf2_hmac(
+                                'sha256', plaintext.encode('utf-8'), salt, 100000
+                            ).hex()
+                            # Upgrade the config file to hashed format
+                            password_data['password_hash'] = pw_hash
+                            password_data['password_salt'] = salt.hex()
+                            password_data.pop('password', None)  # Remove plaintext
+                            with open(password_file, 'w') as fw:
+                                json.dump(password_data, fw, indent=2)
+                            self.logger.info("Upgraded SSH password from plaintext to hashed format")
+                            return pw_hash, salt
         except Exception as e:
             self.logger.warning(f"Error loading SSH password: {e}")
-        return None
+        return None, None
 
     def setup_logging(self):
         os.makedirs(self.config['log_dir'], exist_ok=True)
@@ -358,9 +387,9 @@ class UnifiedHoneypotServer:
     def load_host_key(self):
         # Ensure SSH key directory exists
         os.makedirs(self.config['ssh_key_dir'], exist_ok=True)
-        
+
         key_path = os.path.join(self.config['ssh_key_dir'], 'server.key')
-        
+
         # Generate SSH host key if missing (persist across restarts)
         if not os.path.exists(key_path):
             self.logger.info(f"Generating new SSH host key at {key_path}")
@@ -372,7 +401,7 @@ class UnifiedHoneypotServer:
             except Exception as e:
                 self.logger.error(f"Error generating SSH host key: {str(e)}")
                 raise
-        
+
         # Load the existing or newly generated key
         try:
             self.host_key = paramiko.RSAKey(filename=key_path)
@@ -385,10 +414,10 @@ class UnifiedHoneypotServer:
         os.makedirs(self.config['cert_dir'], exist_ok=True)
         cert_path = f"{self.config['cert_dir']}/server.crt"
         key_path = f"{self.config['cert_dir']}/server.key"
-        
+
         if not os.path.exists(cert_path) or not os.path.exists(key_path):
             self.generate_self_signed_cert()
-        
+
         self.ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         self.ssl_context.load_cert_chain(cert_path, key_path)
 
@@ -396,7 +425,7 @@ class UnifiedHoneypotServer:
         """Generate self-signed SSL certificate using OpenSSL or cryptography module"""
         cert_path = f"{self.config['cert_dir']}/server.crt"
         key_path = f"{self.config['cert_dir']}/server.key"
-        
+
         try:
             # Try using OpenSSL command-line tool first
             import subprocess
@@ -406,13 +435,13 @@ class UnifiedHoneypotServer:
                 '-days', '365', '-nodes',
                 '-subj', '/CN=localhost'
             ], capture_output=True, text=True, timeout=10)
-            
+
             if result.returncode == 0:
                 self.logger.info("Generated SSL certificate using OpenSSL")
                 return
         except (FileNotFoundError, subprocess.TimeoutExpired) as e:
             self.logger.warning(f"OpenSSL not available: {e}")
-        
+
         # Fallback: Use cryptography module if OpenSSL not available
         try:
             from cryptography import x509
@@ -421,13 +450,13 @@ class UnifiedHoneypotServer:
             from cryptography.hazmat.primitives.asymmetric import rsa
             from cryptography.hazmat.primitives import serialization
             import datetime
-            
+
             # Generate private key
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=2048
             )
-            
+
             # Create certificate
             subject = issuer = x509.Name([
                 x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
@@ -436,7 +465,7 @@ class UnifiedHoneypotServer:
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Honeypot"),
                 x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
             ])
-            
+
             cert = x509.CertificateBuilder().subject_name(
                 subject
             ).issuer_name(
@@ -446,14 +475,14 @@ class UnifiedHoneypotServer:
             ).serial_number(
                 x509.random_serial_number()
             ).not_valid_before(
-                datetime.datetime.utcnow()
+                datetime.datetime.now(datetime.timezone.utc)
             ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+                datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
             ).add_extension(
                 x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
                 critical=False,
             ).sign(private_key, hashes.SHA256())
-            
+
             # Write private key
             with open(key_path, "wb") as f:
                 f.write(private_key.private_bytes(
@@ -461,11 +490,11 @@ class UnifiedHoneypotServer:
                     format=serialization.PrivateFormat.TraditionalOpenSSL,
                     encryption_algorithm=serialization.NoEncryption()
                 ))
-            
+
             # Write certificate
             with open(cert_path, "wb") as f:
                 f.write(cert.public_bytes(serialization.Encoding.PEM))
-            
+
             self.logger.info("Generated SSL certificate using cryptography module")
         except ImportError:
             self.logger.error("Neither OpenSSL nor cryptography module available. HTTPS will not work.")
@@ -501,33 +530,40 @@ class UnifiedHoneypotServer:
     def detect_tools(self, data):
         detected = []
         data_str = str(data).lower()
-        
+
         for tool, signatures in self.tool_signatures.items():
             if any(sig.lower() in data_str for sig in signatures):
                 detected.append(tool)
-        
+
         return list(set(detected))
-    
+
     def check_rate_limit(self, ip):
         """Check if IP has exceeded rate limit"""
         current_time = time.time()
-        
+
         # Clean up old entries
         if ip in self.connection_tracker:
             self.connection_tracker[ip] = [
-                ts for ts in self.connection_tracker[ip] 
+                ts for ts in self.connection_tracker[ip]
                 if current_time - ts < self.rate_limit_window
             ]
         else:
             self.connection_tracker[ip] = []
-        
+
         # Check if over limit
         if len(self.connection_tracker[ip]) >= self.max_connections_per_ip:
             self.logger.warning(f"Rate limit exceeded for {ip}")
             return False
-        
+
         # Add current connection
         self.connection_tracker[ip].append(current_time)
+
+        # VULN-008 FIX: Prune IPs with empty timestamp lists to prevent memory DoS
+        if len(self.connection_tracker) > 10000:
+            stale = [k for k, v in self.connection_tracker.items() if not v]
+            for k in stale:
+                del self.connection_tracker[k]
+
         return True
 
     def _utc_now_iso(self):
@@ -567,13 +603,17 @@ class UnifiedHoneypotServer:
         except Exception as e:
             self.logger.warning(f"pcap capture not started (tcpdump missing or permission issue): {str(e)}")
 
+    # VULN-010 FIX: Thread lock for concurrent log file writes
+    _log_lock = threading.Lock()
+
     def log_attack(self, attack_details):
         attack_log_path = f"{self.config['log_dir']}/attacks.json"
-        
-        with open(attack_log_path, 'a') as f:
-            json.dump(attack_details, f)
-            f.write('\n')
-        
+
+        with self._log_lock:
+            with open(attack_log_path, 'a') as f:
+                json.dump(attack_details, f)
+                f.write('\n')
+
         self.logger.warning(
             f"Attack detected - IP: {attack_details['ip']}, "
             f"Service: {attack_details['service']}, "
@@ -587,7 +627,7 @@ class UnifiedHoneypotServer:
                 client.settimeout(self.connection_timeout)
             else:
                 client.settimeout(None)  # No timeout for persistent connections
-            
+
             # Set socket options for keepalive
             client.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
             if hasattr(socket, 'TCP_KEEPIDLE'):
@@ -596,31 +636,35 @@ class UnifiedHoneypotServer:
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 30)
             if hasattr(socket, 'TCP_KEEPCNT'):
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
-            
+
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
                 client.close()
                 return
-            
+
             transport = paramiko.Transport(client)
             transport.add_server_key(self.host_key)
-            
+
             # Configure transport for persistent connections
             transport.set_keepalive(self.keepalive_interval)
-            
+
             # Set a consistent SSH banner/version
             try:
                 transport.local_version = self.config.get('banners', {}).get('ssh_version', 'SSH-2.0-OpenSSH_7.4')
             except Exception:
                 pass
-            
-            honeypot = UnifiedHoneypot(self.config.get('allowed_key'), self.ssh_password)
+
+            honeypot = UnifiedHoneypot(
+                self.config.get('allowed_key'),
+                self.ssh_password_hash,
+                self.ssh_password_salt
+            )
             honeypot.attack_details['ip'] = addr[0]
             honeypot.attack_details['device_name'] = self.get_device_name(addr[0])
             honeypot.attack_details['timestamp'] = self._utc_now_iso()
-            
+
             transport.start_server(server=honeypot)
-            
+
             # Wait for authentication
             channel = transport.accept(20)
             if channel is None:
@@ -637,13 +681,13 @@ class UnifiedHoneypotServer:
 
             # Log successful login
             print(f"\n[+] Successful SSH login from {addr[0]}\n")
-            
+
             # Setup terminal
             channel.send('Welcome to Ubuntu 20.04.3 LTS\n\n')
-            
+
             # Initialize filesystem for this session
             fs = FakeFileSystem()
-            
+
             # Interactive shell loop with persistent connection handling
             last_activity = time.time()
             while True:
@@ -652,14 +696,15 @@ class UnifiedHoneypotServer:
                     if time.time() - last_activity > self.max_idle_time:
                         channel.send('\n\nSession idle timeout. Connection closed.\n')
                         break
-                    
+
                     channel.send('$ ')
                     command = ''
                     char_received = False
-                    
+
                     # Set channel timeout for receiving input (5 minutes for persistence)
                     channel.settimeout(300)
-                    
+                    MAX_CMD_LENGTH = 4096  # VULN-016 FIX: Prevent memory exhaustion
+
                     try:
                         while True:
                             char = channel.recv(1)
@@ -668,10 +713,10 @@ class UnifiedHoneypotServer:
                                 if time.time() - last_activity > 300:  # 5 minutes of no input
                                     break
                                 continue
-                            
+
                             char_received = True
                             last_activity = time.time()  # Update last activity time
-                            
+
                             if char == b'\r' or char == b'\n':
                                 channel.send(b'\n')
                                 break
@@ -684,8 +729,11 @@ class UnifiedHoneypotServer:
                                     command = command[:-1]
                                     channel.send(b'\b \b')
                             else:
-                                command += char.decode('utf-8', errors='ignore')
-                                channel.send(char)
+                                # VULN-016 FIX: Cap command length
+                                if len(command) < MAX_CMD_LENGTH:
+                                    command += char.decode('utf-8', errors='ignore')
+                                    channel.send(char)
+                                # Silently discard chars beyond limit
                     except (socket.timeout, TimeoutError) as e:
                         # Timeout is OK for persistent connections - just continue
                         if not char_received:
@@ -704,11 +752,11 @@ class UnifiedHoneypotServer:
                             continue
                         print(f"Error reading command: {str(e)}")
                         break
-                    
+
                     if not char_received and time.time() - last_activity > 300:
                         # No input for 5 minutes, but keep connection alive
                         continue
-                    
+
                     if not char:  # Connection closed
                         break
                 except Exception as e:
@@ -716,18 +764,18 @@ class UnifiedHoneypotServer:
                     if 'timeout' not in str(e).lower():
                         print(f"Error in SSH session: {str(e)}")
                     break
-                
+
                 command = command.strip()
                 if not command:
                     continue
-                
+
                 if command == 'exit':
                     channel.send('logout\n')
                     break
 
                 # Log commands for analysis
                 print(f"[*] Command executed: {command}")
-                
+
                 # Parse command
                 try:
                     parts = shlex.split(command)
@@ -736,15 +784,16 @@ class UnifiedHoneypotServer:
                 except Exception:
                     cmd = command.split()[0] if command.split() else ''
                     args = command.split()[1:] if len(command.split()) > 1 else []
-                
+
                 # Handle commands
                 handled = False
-                
+
                 if cmd == 'whoami':
                     channel.send('admin\n')
                     handled = True
                 elif cmd == 'id':
-                    channel.send('uid=1000(admin) gid=1000(admin) groups=1000(admin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),116(lpadmin),126(sambashare)\n')
+                    channel.send(
+                        'uid=1000(admin) gid=1000(admin) groups=1000(admin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),116(lpadmin),126(sambashare)\n')
                     handled = True
                 elif cmd == 'pwd':
                     channel.send(f"{fs.current_dir}\n")
@@ -792,7 +841,8 @@ class UnifiedHoneypotServer:
                     handled = True
                 elif cmd == 'uname':
                     if '-a' in args:
-                        channel.send('Linux ubuntu-server 5.4.0-91-generic #102-Ubuntu SMP Fri Nov 5 16:31:28 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux\n')
+                        channel.send(
+                            'Linux ubuntu-server 5.4.0-91-generic #102-Ubuntu SMP Fri Nov 5 16:31:28 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux\n')
                     else:
                         channel.send('Linux\n')
                     handled = True
@@ -809,7 +859,7 @@ class UnifiedHoneypotServer:
                     # Try to execute script
                     channel.send(f"bash: {cmd}: Permission denied\n")
                     handled = True
-                
+
                 if not handled:
                     channel.send(f"bash: {cmd}: command not found\n")
 
@@ -832,40 +882,40 @@ class UnifiedHoneypotServer:
         try:
             # BUG-003 FIX: Use service_timeout instead of None
             client_socket.settimeout(self.service_timeout)
-            
+
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
                 client_socket.close()
                 return
-            
+
             # Send FTP welcome banner
             client_socket.send(b"220 Welcome to FTP Server\r\n")
-            
+
             username = None
             password = None
-            
+
             # BUG-006 FIX: Read FTP commands in a loop (multi-step exchange)
             for _ in range(10):  # Max 10 commands per session
                 try:
                     data = client_socket.recv(4096)
                     if not data:
                         break
-                    
+
                     # Save initial payload on first recv
                     if username is None and password is None:
                         meta = f"{self._utc_now_iso()}_{addr[0]}_ftp"
                         safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
                         self._write_initial_payload(data, safe_meta)
-                    
+
                     line = data.decode('utf-8', errors='ignore').strip()
-                    
+
                     if line.upper().startswith('USER '):
                         username = line[5:].strip()
                         client_socket.send(b"331 Password required\r\n")
                     elif line.upper().startswith('PASS '):
                         password = line[5:].strip()
                         client_socket.send(b"530 Login incorrect\r\n")
-                        
+
                         # Log the attack with device detection
                         device = DeviceDetector.detect_device(data, 'ftp')
                         attack_details = {
@@ -899,29 +949,29 @@ class UnifiedHoneypotServer:
         try:
             # BUG-003 FIX: Use service_timeout instead of None
             client_socket.settimeout(self.service_timeout)
-            
+
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
                 client_socket.close()
                 return
-            
+
             # MySQL handshake packet (simplified version)
             # Protocol version 10, server version 5.7.0
             handshake = b'\x4a\x00\x00\x00\x0a' \
-                       b'5.7.0\x00' \
-                       b'\x01\x00\x00\x00' \
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
-                       b'\x00\x00\x00\x00'
-            
+                b'5.7.0\x00' \
+                b'\x01\x00\x00\x00' \
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                b'\x00\x00\x00\x00'
+
             client_socket.send(handshake)
-            
+
             data = client_socket.recv(4096)
             if data:
                 # Save initial payload
                 meta = f"{self._utc_now_iso()}_{addr[0]}_mysql"
                 safe_meta = meta.replace(':', '').replace('/', '').replace('\\', '')
                 self._write_initial_payload(data, safe_meta)
-                
+
                 # Log the connection attempt with device detection
                 device = DeviceDetector.detect_device(data, 'mysql')
                 attack_details = {
@@ -934,7 +984,7 @@ class UnifiedHoneypotServer:
                     'attack_type': 'mysql_connection_attempt'
                 }
                 self.log_attack(attack_details)
-                
+
                 # Send access denied
                 error_packet = b'\x17\x00\x00\x02\xff\x15\x04#28000Access denied'
                 client_socket.send(error_packet)
@@ -947,12 +997,12 @@ class UnifiedHoneypotServer:
         try:
             # BUG-003 FIX: Use service_timeout instead of None
             client_socket.settimeout(self.service_timeout)
-            
+
             # Check rate limit
             if not self.check_rate_limit(addr[0]):
                 client_socket.close()
                 return
-            
+
             if is_https:
                 client_socket = self.ssl_context.wrap_socket(client_socket, server_side=True)
 
@@ -971,7 +1021,7 @@ class UnifiedHoneypotServer:
                 # Parse POST data if present
                 post_data = {}
                 response_body = None
-                
+
                 if method == 'POST' and '/login' in path:
                     body = request.split('\r\n\r\n')[1] if '\r\n\r\n' in request else ''
                     post_data = {}
@@ -979,7 +1029,7 @@ class UnifiedHoneypotServer:
                         if '=' in pair:
                             key, value = pair.split('=', 1)
                             post_data[key] = value
-                    
+
                     # Log login attempts with device detection
                     if 'username' in post_data and 'password' in post_data:
                         device = DeviceDetector.detect_device(data, 'https' if is_https else 'http')
@@ -994,7 +1044,7 @@ class UnifiedHoneypotServer:
                             'attack_type': 'brute_force_web'
                         }
                         self.log_attack(attack_details)
-                        
+
                         # Get template and insert error message
                         try:
                             with open('templates/login.html', 'r') as f:
@@ -1002,7 +1052,7 @@ class UnifiedHoneypotServer:
                         except FileNotFoundError:
                             # Fallback if template doesn't exist
                             template = '<html><body><h1>Login</h1><form method="POST"><input name="username" placeholder="Username"><input name="password" type="password" placeholder="Password"><button type="submit">Login</button></form></body></html>'
-                        
+
                         # Different error messages to make it look more realistic
                         error_messages = [
                             "Invalid username or password",
@@ -1012,11 +1062,11 @@ class UnifiedHoneypotServer:
                             "Access denied. Please try again"
                         ]
                         error_msg = secrets.choice(error_messages)
-                        
+
                         # Replace template variables
-                        response_body = template.replace('{% if error %}{% endif %}', 
-                            f'<div class="error">{error_msg}</div>')
-                
+                        response_body = template.replace('{% if error %}{% endif %}',
+                                                         f'<div class="error">{error_msg}</div>')
+
                 # For GET requests, non-login POST, or if response_body not set
                 if response_body is None:
                     try:
@@ -1025,7 +1075,7 @@ class UnifiedHoneypotServer:
                     except FileNotFoundError:
                         # Fallback if template doesn't exist
                         response_body = '<html><body><h1>Login</h1><form method="POST" action="/login"><input name="username" placeholder="Username"><input name="password" type="password" placeholder="Password"><button type="submit">Login</button></form></body></html>'
-                    
+
                     if method != 'POST':
                         device = DeviceDetector.detect_device(data, 'https' if is_https else 'http')
                         attack_details = {
@@ -1064,11 +1114,11 @@ class UnifiedHoneypotServer:
         server_socket.bind(('0.0.0.0', port))
         server_socket.listen(5)
         self.logger.info(f"Started {service_type} honeypot listening on 0.0.0.0:{port}")
-        
+
         while True:
             client, addr = server_socket.accept()
             self.logger.info(f"Connection from {addr[0]}:{addr[1]} on {service_type}")
-            
+
             # Route to appropriate handler based on service type
             if service_type == 'ssh':
                 handler = self.handle_ssh_connection
@@ -1082,7 +1132,7 @@ class UnifiedHoneypotServer:
             else:  # http or https
                 handler = self.handle_web_connection
                 args = (client, addr, service_type == 'https')
-            
+
             thread = threading.Thread(target=handler, args=args)
             thread.daemon = True
             thread.start()
@@ -1102,6 +1152,7 @@ class UnifiedHoneypotServer:
                 time.sleep(1)
         except KeyboardInterrupt:
             self.logger.info("Shutting down unified honeypot...")
+
 
 def main():
     """Main entry point for honeypot server"""

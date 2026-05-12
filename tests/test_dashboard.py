@@ -24,5 +24,3 @@ def test_process_attack_data_sanitizes_fields():
     processed = process_attack_data(attacks)
     assert processed[0]['device_name'] == '&lt;b&gt;dev&lt;/b&gt;'
     assert 'nmap' in processed[0]['tools_detected']
-
-

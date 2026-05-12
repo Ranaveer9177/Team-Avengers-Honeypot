@@ -57,7 +57,7 @@ class DeviceDetector:
     def _parse_user_agent(ua):
         """Parse User-Agent string to extract device information"""
         device_name = "Unknown Browser"
-        
+
         # Browser detection with bounds checking
         if 'Firefox/' in ua:
             parts = ua.split('Firefox/')
@@ -107,7 +107,7 @@ class DeviceDetector:
             if len(parts) > 1 and parts[1]:
                 version = parts[1].split()[0] if parts[1].split() else 'Unknown'
                 device_name = f"wget {version}"
-        
+
         # OS detection
         os_name = None
         if 'Windows' in ua:
@@ -120,9 +120,9 @@ class DeviceDetector:
             os_name = "Android"
         elif 'iOS' in ua:
             os_name = "iOS"
-        
+
         # Combine browser and OS info
         if os_name and device_name != "Unknown Browser":
             device_name = f"{device_name} ({os_name})"
-            
+
         return device_name

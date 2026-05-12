@@ -321,7 +321,8 @@ if [ ! -f certs/server.key ] || [ ! -f certs/server.crt ]; then
     if command -v openssl >/dev/null 2>&1; then
         print_status "Generating SSL certificates..."
         openssl req -x509 -newkey rsa:2048 -keyout certs/server.key -out certs/server.crt -days 365 -nodes -subj "/CN=localhost" 2>/dev/null
-        sudo chmod 666 certs/server.key certs/server.crt
+        sudo chmod 600 certs/server.key  # VULN-011 FIX: Owner-only access for private key
+        sudo chmod 644 certs/server.crt
     else
         print_error "openssl not found. SSL certificates cannot be generated."
         print_warning "HTTPS service may not work without certificates."

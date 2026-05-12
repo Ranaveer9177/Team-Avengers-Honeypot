@@ -15,5 +15,3 @@ def test_default_config_contains_new_fields(tmp_path):
     assert 'pcap_enabled' in server.config
     assert 'initial_payload_max_bytes' in server.config
     assert 'banners' in server.config
-
-

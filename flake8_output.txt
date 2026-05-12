@@ -1,0 +1,56 @@
+﻿.\app.py:3:1: F401 'sys' imported but unused
+.\app.py:9:1: F401 'datetime.timedelta' imported but unused
+.\app.py:15:1: F401 'flask.session' imported but unused
+.\app.py:146:5: F824 `global _geocache` is unused: name is never assigned in scope
+.\app.py:202:121: E501 line too long (132 > 120 characters)
+.\app.py:478:121: E501 line too long (196 > 120 characters)
+.\app.py:480:121: E501 line too long (138 > 120 characters)
+.\app.py:606:121: E501 line too long (122 > 120 characters)
+.\app.py:611:5: F824 `global _recent_attacks` is unused: name is never assigned in scope
+.\app.py:611:5: F824 `global _attack_counts` is unused: name is never assigned in scope
+.\app.py:611:5: F824 `global _known_countries` is unused: name is never assigned in scope
+.\app.py:795:13: E722 do not use bare 'except'
+.\app.py:868:9: F841 local variable 'start_date' is assigned to but never used
+.\app.py:869:9: F841 local variable 'end_date' is assigned to but never used
+.\app.py:893:121: E501 line too long (127 > 120 characters)
+.\app.py:946:21: F541 f-string is missing placeholders
+.\app.py:958:25: F541 f-string is missing placeholders
+.\app.py:961:25: F541 f-string is missing placeholders
+.\app.py:964:25: F541 f-string is missing placeholders
+.\app.py:1007:33: E722 do not use bare 'except'
+.\app.py:1013:33: F541 f-string is missing placeholders
+.\app.py:1084:20: F541 f-string is missing placeholders
+.\boot_menu.py:92:9: E722 do not use bare 'except'
+.\boot_menu.py:100:13: E722 do not use bare 'except'
+.\boot_menu.py:104:5: E722 do not use bare 'except'
+.\boot_menu.py:125:21: E722 do not use bare 'except'
+.\boot_menu.py:127:13: E722 do not use bare 'except'
+.\boot_menu.py:160:5: E722 do not use bare 'except'
+.\boot_menu.py:182:11: F541 f-string is missing placeholders
+.\boot_menu.py:204:5: F401 'sys' imported but unused
+.\boot_menu.py:242:5: F401 'sys' imported but unused
+.\tests\test_app.py:6:1: F401 'tempfile' imported but unused
+.\tests\test_app.py:7:1: F401 'json' imported but unused
+.\tests\test_config.py:1:1: F401 'json' imported but unused
+.\unified_honeypot.py:11:1: F401 'string' imported but unused
+.\unified_honeypot.py:34:121: E501 line too long (124 > 120 characters)
+.\unified_honeypot.py:46:121: E501 line too long (211 > 120 characters)
+.\unified_honeypot.py:47:121: E501 line too long (122 > 120 characters)
+.\unified_honeypot.py:49:121: E501 line too long (139 > 120 characters)
+.\unified_honeypot.py:58:121: E501 line too long (204 > 120 characters)
+.\unified_honeypot.py:61:121: E501 line too long (136 > 120 characters)
+.\unified_honeypot.py:219:23: F541 f-string is missing placeholders
+.\unified_honeypot.py:222:23: F541 f-string is missing placeholders
+.\unified_honeypot.py:228:23: F541 f-string is missing placeholders
+.\unified_honeypot.py:300:15: F541 f-string is missing placeholders
+.\unified_honeypot.py:301:15: F541 f-string is missing placeholders
+.\unified_honeypot.py:303:19: F541 f-string is missing placeholders
+.\unified_honeypot.py:306:19: F541 f-string is missing placeholders
+.\unified_honeypot.py:307:19: F541 f-string is missing placeholders
+.\unified_honeypot.py:308:15: F541 f-string is missing placeholders
+.\unified_honeypot.py:374:34: F541 f-string is missing placeholders
+.\unified_honeypot.py:692:21: F841 local variable 'e' is assigned to but never used
+.\unified_honeypot.py:751:121: E501 line too long (154 > 120 characters)
+.\unified_honeypot.py:800:121: E501 line too long (144 > 120 characters)
+.\unified_honeypot.py:1009:121: E501 line too long (252 > 120 characters)
+.\unified_honeypot.py:1032:121: E501 line too long (269 > 120 characters)

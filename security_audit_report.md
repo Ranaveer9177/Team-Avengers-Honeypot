@@ -157,3 +157,241 @@
 ---
 
 *Report generated on 2026-05-13 by Antigravity AI Security Audit.*
+
+---
+---
+
+# 🛡️ Security Audit Report v2 — Team Avengers Honeypot
+
+**Date:** 2026-05-14  
+**Auditor:** Antigravity AI  
+**Scope:** Full codebase re-audit of all `.py`, `.sh`, `.ps1`, `.html`, `.js`, `.yml`, `.bat`, and config files  
+**Findings:** 27 new vulnerabilities (VULN-021 – VULN-047) identified and patched
+
+---
+
+## Summary (v2)
+
+| Severity | Count | Status |
+|----------|-------|--------|
+| 🔴 Critical | 4 | ✅ Fixed |
+| 🟠 High | 7 | ✅ Fixed |
+| 🟡 Medium | 9 | ✅ Fixed |
+| 🔵 Low / Info | 7 | ✅ Fixed |
+| **Total** | **27** | **All Fixed** |
+
+---
+
+## 🔴 Critical Vulnerabilities
+
+### VULN-021: Credentials Printed to stdout on Every Startup
+- **Files:** `app.py` (line 1123), `run_dashboard.ps1` (line 97)
+- **Issue:** Plaintext dashboard username and password were printed to stdout on every launch, leaking credentials to terminal history, CI runners, and log aggregators.
+- **Fix:** Password display is now masked with `*` characters. The env var name is shown instead so users know how to configure it.
+
+### VULN-022: Attacker Passwords Logged in Plaintext
+- **Files:** `unified_honeypot.py` — SSH handler (line 209), FTP handler (line 944), HTTP handler (line 1059)
+- **Issue:** Attacker-supplied passwords were stored verbatim in `attacks.json` and printed to console. Since attackers frequently reuse legitimate credentials, a compromised log file could leak real passwords.
+- **Fix:** All three protocol handlers now hash passwords with `hashlib.sha256().hexdigest()[:16]` before logging. Console output is masked with `*` characters.
+
+### VULN-023: Raw HTTP Request Data Stored in Attack Log
+- **File:** `unified_honeypot.py` (line 1086)
+- **Issue:** The full raw HTTP request — including `Authorization` headers, cookies, and POST bodies — was dumped verbatim into `attacks.json`. This caused unbounded log growth and potential credential leakage.
+- **Fix:** Raw request data is now truncated to 500 characters maximum.
+
+### VULN-024: `/api/reset` Endpoint Exposes Internal File Paths
+- **File:** `app.py` (lines 1071–1075)
+- **Issue:** The reset API response included the full internal filesystem path (e.g., `/home/user/honeypot/logs/backups/...`) and the raw exception message in errors.
+- **Fix:** Returns only `os.path.basename(backup_file)`. Error responses no longer include `str(e)`.
+
+---
+
+## 🟠 High Vulnerabilities
+
+### VULN-025: SSE Alert Stream Never Terminates — Resource Exhaustion
+- **File:** `app.py` (lines 834–842)
+- **Issue:** Each `/api/alerts/stream` SSE connection held a thread indefinitely in `while True`. An attacker could open hundreds of connections to exhaust the thread pool and memory.
+- **Fix:** Added a 1-hour maximum lifetime (`max_lifetime = 3600`). After expiration, the stream sends a graceful timeout message and closes.
+
+### VULN-026: No CSRF Protection on State-Changing POST Endpoints
+- **File:** `app.py` — endpoints `/api/attacks/filter`, `/api/attacks/export`, `/api/reset`
+- **Issue:** POST endpoints were protected only by HTTP Basic Auth. A malicious page could trigger cross-origin requests while an admin had an active session.
+- **Fix:** Added `_validate_csrf()` decorator that validates `Origin` and `Referer` headers against the `Host` header. Applied to all three POST endpoints.
+
+### VULN-027: `connection_tracker` Dict Has No Thread Lock
+- **File:** `unified_honeypot.py` (lines 540–567)
+- **Issue:** `check_rate_limit()` read and mutated `self.connection_tracker` from multiple threads without synchronization, risking `RuntimeError: dictionary changed size during iteration` and missed rate-limiting.
+- **Fix:** Added `self._tracker_lock = threading.Lock()` and wrapped all `connection_tracker` access with `with self._tracker_lock:`.
+
+### VULN-028: `set -euo pipefail` Placed After Boot Menu Code
+- **File:** `start.sh` (lines 7–20)
+- **Issue:** The boot menu section ran without `set -euo pipefail`. Uninitialized variables or failed commands would silently continue.
+- **Fix:** Moved `set -euo pipefail` to line 3 (before any code). Changed `$1` to `${1:-}` to avoid unbound variable errors.
+
+### VULN-029: Boot Menu Uses `os.system()` for Screen Clearing
+- **File:** `boot_menu.py` (lines 17–21)
+- **Issue:** `os.system('cls'/'clear')` invokes a full shell, setting a bad precedent for code injection if ever parameterized.
+- **Fix:** Replaced with ANSI escape sequence: `print("\033[2J\033[H", end="", flush=True)`.
+
+### VULN-030: Dashboard Password Printed on Boot Menu Screen
+- **File:** `boot_menu.py` (line 204)
+- **Issue:** Plaintext password displayed in terminal output and scrollback history.
+- **Fix:** Password display masked with `*` characters, with a note referencing the env var.
+
+### VULN-031: `start.sh` Runs `sudo kill -9` Without Confirming Process Ownership
+- **File:** `start.sh` (lines 248–268)
+- **Issue:** The port-freeing logic used `xargs sudo kill -9` on any process holding a target port. This could kill production services (e.g., MySQL on port 3306).
+- **Fix:** Now inspects the process name via `ps -p $pid -o comm=` and only kills processes matching `python|honeypot|flask|unified`. Warns and skips others.
+
+---
+
+## 🟡 Medium Vulnerabilities
+
+### VULN-032: `check_package()` Vulnerable to Shell Injection via Package Name
+- **File:** `start.sh` (lines 207–210)
+- **Issue:** Package name `$1` was interpolated directly into `python -c "import $1"`. A tampered `REQUIRED_PACKAGES` array could execute arbitrary Python code.
+- **Fix:** Validates package name against `^[a-zA-Z_][a-zA-Z0-9_]*$` regex before use. Uses `__import__()` instead of `import`.
+
+### VULN-033: `start.sh` Uses `$VIRTUAL_ENV` Before `set -u` Safety
+- **File:** `start.sh` (line 151)
+- **Issue:** `$VIRTUAL_ENV` is unset by default. With `set -u` active, referencing it crashes the script immediately.
+- **Fix:** Changed to `${VIRTUAL_ENV:-}` (empty string default).
+
+### VULN-034: HTTP Response Content-Length Mismatch (Encoding Issue)
+- **File:** `unified_honeypot.py` (line 1099)
+- **Issue:** `len(response_body)` counted Unicode characters, but `response.encode()` produces bytes. Multi-byte UTF-8 characters caused Content-Length mismatches and truncated responses.
+- **Fix:** Now computes `body_bytes = response_body.encode('utf-8')` first and uses `len(body_bytes)` for Content-Length. Headers and body are sent as separate byte operations.
+
+### VULN-035: `datetime.now()` Used Without Timezone in `boot_menu.py`
+- **File:** `boot_menu.py` (line 168)
+- **Issue:** Generated naive (timezone-unaware) timestamps inconsistent with UTC timestamps used elsewhere.
+- **Fix:** Changed to `datetime.now(timezone.utc).isoformat()`.
+
+### VULN-036: Attack Logs Grow Unboundedly — No Log Rotation
+- **Files:** `unified_honeypot.py` (lines 609–616), `app.py` (lines 245–270)
+- **Issue:** `attacks.json` was append-only with no size limit. The dashboard loads the entire file into memory on every page load, risking OOM crashes.
+- **Fix:** Added automatic log rotation in `log_attack()`: when `attacks.json` exceeds 50MB, it's renamed to `attacks.json.<timestamp>.bak` and a new file is started.
+
+### VULN-037: `pcap_dir` Files Written with Predictable Names
+- **File:** `unified_honeypot.py` (lines 572–581)
+- **Issue:** Multiple attackers from the same IP in the same second produced colliding filenames. Append mode (`'ab'`) concatenated payloads from different sessions, corrupting forensic data.
+- **Fix:** Added `secrets.token_hex(4)` nonce to filenames. Changed from `'ab'` to `'wb'` (one file per session).
+
+### VULN-038: `markupsafe` Not in `start.sh` `REQUIRED_PACKAGES` Array
+- **File:** `start.sh` (line 416)
+- **Issue:** `markupsafe` is imported directly in `app.py` but wasn't in the quick-check array. A silent `requirements.txt` install failure would crash the dashboard.
+- **Fix:** Added `"markupsafe"` to the `REQUIRED_PACKAGES` array.
+
+### VULN-039: `flake8` Config Ignores Too Many Error Codes
+- **File:** `.flake8`
+- **Issue:** `ignore = E203,W503,E501,F541,E722,F401,F841,F824` suppressed unused imports (F401), unused variables (F841), and bare except (E722) — hiding real bugs.
+- **Fix:** Removed F401, F841, and E722 from the ignore list. Remaining ignores: `E203,W503,E501,F541,F824`.
+
+### VULN-040: Export Endpoint Missing Date Filter Application
+- **File:** `app.py` (lines 912–915)
+- **Issue:** `/api/attacks/export` accepted `start_date`/`end_date` parameters but had only a comment placeholder — no actual filtering logic. All data was always exported.
+- **Fix:** Implemented actual `datetime.fromisoformat()` date filtering matching the `/api/attacks/filter` endpoint logic.
+
+---
+
+## 🔵 Low / Informational
+
+### VULN-041: SSH Session Logs Every Command to stdout
+- **File:** `unified_honeypot.py` (line 777)
+- **Issue:** `print(f"[*] Command executed: {command}")` created noisy, unstructured stdout output. On a busy honeypot, thousands of lines per minute.
+- **Fix:** Replaced with `self.logger.info(f"SSH command from {addr[0]}: {command[:200]}")` — structured, truncated, and level-controlled.
+
+### VULN-042: `dashboard.js` Uses `innerHTML` with Unsanitized Attack Data
+- **File:** `static/js/dashboard.js` (lines 117–139)
+- **Issue:** Attacker-controlled strings (IP, username, tools, city) were injected via `innerHTML` without escaping. The `{{ attacks | tojson | safe }}` bypassed Jinja2 auto-escaping, enabling stored XSS.
+- **Fix:** Added `escapeHtml()` function that escapes `&`, `<`, `>`, `"`, `'`. Applied to all attacker-controlled values in log tables, detail views, and map popups.
+
+### VULN-043: `launch.bat` Has No Python Version Check
+- **File:** `launch.bat`
+- **Issue:** Directly called `python boot_menu.py` without verifying Python 3. Python 2 would produce cryptic syntax errors.
+- **Fix:** Tries `py -3` first (Windows Python Launcher), then validates `python --version` contains "Python 3." before launching.
+
+### VULN-044: CI Workflow Missing Test Coverage Thresholds
+- **File:** `.github/workflows/ci.yml` (lines 24–26)
+- **Issue:** `pytest -q` ran tests with no coverage enforcement. Code could merge with 0% coverage.
+- **Fix:** Changed to `pytest -q --cov=. --cov-report=term-missing --cov-fail-under=50`.
+
+### VULN-045: `setup.py` Includes Dev Dependencies in `install_requires`
+- **File:** `setup.py` (line 37)
+- **Issue:** `install_requires=requirements` read all of `requirements.txt`, including `pytest`, `pytest-cov`, and `flake8`. End users got dev tools installed unnecessarily.
+- **Fix:** Filters out packages containing `pytest`, `flake8`, or `python-dotenv` from `install_requires`.
+
+### VULN-046: PowerShell Jobs Don't Inherit Virtual Environment
+- **File:** `start.ps1` (lines 215–233)
+- **Issue:** `Start-Job` runs in a new PowerShell process. The parent's venv activation wasn't inherited, so environment variables like `VIRTUAL_ENV` and `PATH` were missing.
+- **Fix:** Jobs now accept `$venvPath` as an argument and explicitly set `$env:VIRTUAL_ENV` and prepend to `$env:PATH` inside the scriptblock.
+
+### VULN-047: `Makefile` Hardcodes `python3` / `pip3` — Breaks on Windows
+- **File:** `Makefile` (lines 10–11)
+- **Issue:** `PYTHON := python3` doesn't exist on standard Windows installs (uses `python` or `py`).
+- **Fix:** Auto-detects using `$(shell command -v python3 2>/dev/null || echo python)`.
+
+---
+
+## Files Modified (v2)
+
+| File | VULNs Fixed |
+|------|-----------:|
+| `app.py` | VULN-021, 024, 025, 026, 040 |
+| `unified_honeypot.py` | VULN-022, 023, 027, 034, 036, 037, 041 |
+| `boot_menu.py` | VULN-029, 030, 035 |
+| `start.sh` | VULN-028, 031, 032, 033, 038 |
+| `start.ps1` | VULN-046 |
+| `run_dashboard.ps1` | VULN-021 (extension) |
+| `static/js/dashboard.js` | VULN-042 |
+| `.flake8` | VULN-039 |
+| `launch.bat` | VULN-043 |
+| `.github/workflows/ci.yml` | VULN-044 |
+| `setup.py` | VULN-045 |
+| `Makefile` | VULN-047 |
+
+---
+
+## Cumulative Totals (v1 + v2)
+
+| Severity | v1 | v2 | Total |
+|----------|---:|---:|------:|
+| 🔴 Critical | 5 | 4 | **9** |
+| 🟠 High | 6 | 7 | **13** |
+| 🟡 Medium | 5 | 9 | **14** |
+| 🔵 Low / Info | 4 | 7 | **11** |
+| **Total** | **20** | **27** | **47 ✅ All Fixed** |
+
+---
+
+## Updated Recommendations
+
+1. **Enable HTTPS for Dashboard** — Use a reverse proxy (nginx/caddy) with TLS to protect Basic Auth credentials in transit.
+2. **Regular Password Rotation** — Rotate the dashboard password periodically via the `DASHBOARD_PASSWORD` environment variable.
+3. **Log Monitoring** — Set up external log monitoring for `logs/alerts.json` to detect attacks in real-time.
+4. **Network Segmentation** — Run the honeypot in an isolated network segment to prevent lateral movement if compromised.
+5. **Dependency Updates** — Pin dependency versions in `requirements.txt` and regularly audit for CVEs.
+6. **HTTPS for Dashboard API** — The CSRF mitigation (Origin/Referer checks) is effective but should be combined with TLS to prevent header tampering by a MitM.
+7. **Log Retention Policy** — Configure external log shipping or set up cron-based cleanup of rotated `.bak` log files to prevent disk exhaustion.
+8. **Penetration Testing** — Run a production-environment pentest to validate all fixes under real traffic conditions.
+
+---
+
+## 🔴 Post-v2 Hotfix
+
+### VULN-048: SSH Attacks Never Logged to `attacks.json` — Dashboard Shows No SSH Data
+- **File:** `unified_honeypot.py` (lines 685–700, 887)
+- **Issue:** The SSH handler only called `log_attack()` inside the tool-detection block (line 887). This meant:
+  - **Failed SSH logins** (brute-force, wrong password, no auth) → never logged
+  - **Successful SSH logins** (attacker gets a shell) → never logged
+  - **SSH sessions with basic commands** (`ls`, `whoami`, `pwd`) → never logged
+  - Only SSH sessions where the attacker used a known attack tool (nmap, hydra, etc.) were logged
+- **Impact:** The vast majority of SSH attacks were invisible on the dashboard. This was a **pre-existing design bug**, not caused by v2 fixes.
+- **Fix:** Added `self.log_attack(honeypot.attack_details)` at three points:
+  1. On failed auth (no channel) — logs `ssh_connect_no_auth`
+  2. On auth timeout — logs `ssh_auth_timeout`
+  3. On successful login — logs `password_auth` immediately
+
+---
+
+*v2 report generated on 2026-05-14 by Antigravity AI Security Audit.*

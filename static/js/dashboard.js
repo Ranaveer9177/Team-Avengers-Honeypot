@@ -6,6 +6,12 @@ const allAttacks = typeof _allAttacks !== 'undefined' ? _allAttacks : [];
 const topCountries = typeof _topCountries !== 'undefined' ? _topCountries : [];
 const topISPs = typeof _topISPs !== 'undefined' ? _topISPs : [];
 
+// VULN-042 FIX: Escape HTML entities to prevent XSS from attacker-controlled data
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 const chartColors = ['#6366f1','#8b5cf6','#ec4899','#06b6d4','#10b981','#f59e0b','#ef4444','#14b8a6','#f472b6','#a78bfa'];
 
 // Tab switching
@@ -65,8 +71,8 @@ function initMap() {
     const lat = parseFloat(a.lat), lon = parseFloat(a.lon);
     if (!isNaN(lat) && !isNaN(lon)) {
       markers.push(L.marker([lat, lon], { icon }).addTo(map).bindPopup(
-        `<div style="font-family:Inter,sans-serif"><strong style="color:#6366f1">${a.city||'?'}, ${a.country||'?'}</strong><br>` +
-        `<span style="font-family:JetBrains Mono,monospace;font-size:0.85rem">IP: ${a.ip}</span><br>Service: ${a.service||'?'}<br>Type: ${a.attack_type||'?'}</div>`
+        `<div style="font-family:Inter,sans-serif"><strong style="color:#6366f1">${escapeHtml(a.city||'?')}, ${escapeHtml(a.country||'?')}</strong><br>` +
+        `<span style="font-family:JetBrains Mono,monospace;font-size:0.85rem">IP: ${escapeHtml(a.ip)}</span><br>Service: ${escapeHtml(a.service||'?')}<br>Type: ${escapeHtml(a.attack_type||'?')}</div>`
       ));
     }
   });
@@ -115,21 +121,21 @@ function renderLogTable() {
   const start = (logsPage - 1) * logsPerPage, page = filteredLogs.slice(start, start + logsPerPage);
   if (!page.length) { body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">No logs found</td></tr>'; return; }
   body.innerHTML = page.map((a, i) => `<tr onclick="toggleDetail(${start+i})" style="cursor:pointer">
-    <td style="font-family:JetBrains Mono,monospace;font-size:0.82rem;color:var(--text-muted)">${a.timestamp||'N/A'}</td>
-    <td style="font-family:JetBrains Mono,monospace;color:var(--primary-light);font-weight:600">${a.ip||'N/A'}</td>
-    <td>${a.city||'?'}, ${a.country||'?'}</td>
-    <td><span class="badge badge-service">${a.service||'N/A'}</span></td>
-    <td><span class="badge badge-attack">${a.attack_type||'N/A'}</span></td>
-    <td>${a.username||'N/A'}</td>
-    <td>${a.tools_detected&&a.tools_detected!=='N/A'?'<span class="badge badge-warning">'+a.tools_detected+'</span>':'<span style="color:var(--text-muted)">—</span>'}</td>
+    <td style="font-family:JetBrains Mono,monospace;font-size:0.82rem;color:var(--text-muted)">${escapeHtml(a.timestamp||'N/A')}</td>
+    <td style="font-family:JetBrains Mono,monospace;color:var(--primary-light);font-weight:600">${escapeHtml(a.ip||'N/A')}</td>
+    <td>${escapeHtml(a.city||'?')}, ${escapeHtml(a.country||'?')}</td>
+    <td><span class="badge badge-service">${escapeHtml(a.service||'N/A')}</span></td>
+    <td><span class="badge badge-attack">${escapeHtml(a.attack_type||'N/A')}</span></td>
+    <td>${escapeHtml(a.username||'N/A')}</td>
+    <td>${a.tools_detected&&a.tools_detected!=='N/A'?'<span class="badge badge-warning">'+escapeHtml(a.tools_detected)+'</span>':'<span style="color:var(--text-muted)">—</span>'}</td>
     <td><span class="badge badge-info" style="cursor:pointer">⤢</span></td>
   </tr><tr><td colspan="8" style="padding:0"><div class="log-entry-detail" id="detail-${start+i}"><div class="detail-grid">
-    <div class="detail-item"><label>IP Address</label><p>${a.ip||'N/A'}</p></div>
-    <div class="detail-item"><label>Location</label><p>${a.city||'?'}, ${a.region||'?'}, ${a.country||'?'}</p></div>
-    <div class="detail-item"><label>ISP</label><p>${a.isp||'Unknown'}</p></div>
-    <div class="detail-item"><label>Organization</label><p>${a.org||'Unknown'}</p></div>
-    <div class="detail-item"><label>Auth Method</label><p>${a.auth_method||'N/A'}</p></div>
-    <div class="detail-item"><label>Device</label><p>${a.device_name||'Unknown'}</p></div>
+    <div class="detail-item"><label>IP Address</label><p>${escapeHtml(a.ip||'N/A')}</p></div>
+    <div class="detail-item"><label>Location</label><p>${escapeHtml(a.city||'?')}, ${escapeHtml(a.region||'?')}, ${escapeHtml(a.country||'?')}</p></div>
+    <div class="detail-item"><label>ISP</label><p>${escapeHtml(a.isp||'Unknown')}</p></div>
+    <div class="detail-item"><label>Organization</label><p>${escapeHtml(a.org||'Unknown')}</p></div>
+    <div class="detail-item"><label>Auth Method</label><p>${escapeHtml(a.auth_method||'N/A')}</p></div>
+    <div class="detail-item"><label>Device</label><p>${escapeHtml(a.device_name||'Unknown')}</p></div>
   </div></div></td></tr>`).join('');
 }
 

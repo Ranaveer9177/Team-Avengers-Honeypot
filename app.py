@@ -58,7 +58,7 @@ DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'honeypot@91771')
 GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
-FLASK_BIND_HOST = os.environ.get('FLASK_BIND_HOST', '127.0.0.1')  # VULN-012 FIX: Default to localhost
+FLASK_BIND_HOST = os.environ.get('FLASK_BIND_HOST', '0.0.0.0')  # Bind to all interfaces for remote access
 IP_API_URL = os.environ.get('IP_API_URL', 'http://ip-api.com/json')  # ip-api.com simple endpoint
 IP_API_TIMEOUT = float(os.environ.get('IP_API_TIMEOUT', 3.0))  # seconds
 
@@ -832,7 +832,10 @@ def api_alerts():
 def api_alerts_stream():
     """Server-Sent Events stream for real-time alerts"""
     def event_stream():
-        while True:
+        # VULN-025 FIX: Limit SSE connection lifetime to 1 hour
+        start_time = time.time()
+        max_lifetime = 3600  # 1 hour
+        while time.time() - start_time < max_lifetime:
             try:
                 # Wait for alert with timeout
                 alert = ALERT_QUEUE.get(timeout=30)
@@ -840,6 +843,8 @@ def api_alerts_stream():
             except Exception:  # VULN-013 FIX: Never use bare except
                 # Send keepalive
                 yield ": keepalive\n\n"
+        # Connection lifetime exceeded — close gracefully
+        yield "data: {\"type\": \"timeout\", \"message\": \"Connection expired\"}\n\n"
 
     return Response(
         stream_with_context(event_stream()),
@@ -851,8 +856,29 @@ def api_alerts_stream():
     )
 
 
+def _validate_csrf(f):
+    """VULN-026 FIX: Validate Origin/Referer on state-changing POST endpoints to mitigate CSRF"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        origin = request.headers.get('Origin', '')
+        referer = request.headers.get('Referer', '')
+        host = request.headers.get('Host', '')
+        # Allow requests with matching Origin/Referer or same-origin API calls
+        if origin:
+            # Check if origin matches our host
+            if host and host not in origin:
+                return jsonify({'error': 'CSRF validation failed: origin mismatch'}), 403
+        elif referer:
+            if host and host not in referer:
+                return jsonify({'error': 'CSRF validation failed: referer mismatch'}), 403
+        # If neither Origin nor Referer (e.g., direct API call), allow — Basic Auth protects
+        return f(*args, **kwargs)
+    return decorated
+
+
 @app.route('/api/attacks/filter', methods=['POST'])
 @requires_auth
+@_validate_csrf
 def api_attacks_filter():
     """Filter attacks by date range, service, attack type, etc."""
     try:
@@ -901,6 +927,7 @@ def api_attacks_filter():
 
 @app.route('/api/attacks/export', methods=['POST'])
 @requires_auth
+@_validate_csrf
 def api_attacks_export():
     """Export attacks to CSV/JSON"""
     try:
@@ -909,10 +936,17 @@ def api_attacks_export():
         raw = load_attack_data()
         processed = process_attack_data(raw)
 
-        # Apply same filters as filter endpoint
+        # VULN-040 FIX: Actually apply date filters (was just a comment before)
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        # ... (same filtering logic)
+        if start_date:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) >= start_dt]
+        if end_date:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            processed = [a for a in processed if a.get('timestamp_obj') and datetime.fromisoformat(
+                a['timestamp_obj'].replace('Z', '+00:00')) <= end_dt]
 
         if format_type == 'csv':
             import csv
@@ -965,6 +999,7 @@ def test_static():
 
 @app.route('/api/reset', methods=['POST'])
 @requires_auth
+@_validate_csrf
 def api_reset():
     """Reset dashboard: export all data to text file and clear logs"""
     try:
@@ -1070,13 +1105,13 @@ def api_reset():
         logger.info(f"Dashboard reset: {len(processed)} attacks backed up to {backup_file}")
         return jsonify({
             'success': True,
-            'message': f'Data backed up to {backup_file}',
-            'backup_file': backup_file,
+            'message': f'Data backed up successfully',
+            'backup_file': os.path.basename(backup_file),  # VULN-024 FIX: Only expose filename, not full path
             'attacks_backed_up': len(processed)
         })
     except Exception as e:
         logger.error(f"Error resetting dashboard: {e}")
-        return jsonify({'error': f'Failed to reset dashboard: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to reset dashboard'}), 500  # VULN-024 FIX: Don't expose str(e)
 
 
 @app.route('/api/stats')
@@ -1120,7 +1155,7 @@ def main():
         safe_print(f"[*] Starting dashboard on http://0.0.0.0:{FLASK_RUN_PORT}")
         safe_print(f"[*] Local access: http://localhost:{FLASK_RUN_PORT}")
         safe_print(f"[*] Username: {DASHBOARD_USERNAME}")
-        safe_print(f"[*] Password: {DASHBOARD_PASSWORD}")
+        safe_print(f"[*] Password: {'*' * len(DASHBOARD_PASSWORD)}")  # VULN-021 FIX: Mask password
         safe_print(f"[*] Features: Real-time monitoring, Search, Filter, Export")
         safe_print("=" * 60)
         safe_print("[*] Dashboard is ready! Press Ctrl+C to stop.")

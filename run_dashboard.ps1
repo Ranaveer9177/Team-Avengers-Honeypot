@@ -94,7 +94,7 @@ Write-Host ""
 Write-Host "[*] Starting dashboard..." -ForegroundColor Blue
 Write-Host "[*] Access at: http://localhost:$env:FLASK_RUN_PORT" -ForegroundColor Yellow
 Write-Host "[*] Username: $env:DASHBOARD_USERNAME" -ForegroundColor Yellow
-Write-Host "[*] Password: $env:DASHBOARD_PASSWORD" -ForegroundColor Yellow
+Write-Host "[*] Password: $('*' * $env:DASHBOARD_PASSWORD.Length)  (set via DASHBOARD_PASSWORD env var)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "[*] Features:" -ForegroundColor Cyan
 Write-Host "    - Real-time attack monitoring" -ForegroundColor White

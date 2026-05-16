@@ -6,9 +6,9 @@
 # Default target
 .DEFAULT_GOAL := help
 
-# Python command
-PYTHON := python3
-PIP := pip3
+# Python command (auto-detect with fallback for Windows)
+PYTHON := $(shell command -v python3 2>/dev/null || echo python)
+PIP := $(shell command -v pip3 2>/dev/null || echo pip)
 
 help:  ## Show this help message
 	@echo "Multi-Service Honeypot System - Available Commands:"

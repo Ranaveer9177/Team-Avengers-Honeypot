@@ -14,11 +14,8 @@ import hashlib
 
 
 def clear_screen():
-    """Clear the terminal screen"""
-    if platform.system() == 'Windows':
-        os.system('cls')
-    else:
-        os.system('clear')
+    """Clear the terminal screen using ANSI escape sequences (VULN-029 FIX)"""
+    print("\033[2J\033[H", end="", flush=True)
 
 
 def print_banner():
@@ -164,8 +161,8 @@ def start_encrypted_honeypot():
     }
 
     try:
-        from datetime import datetime
-        password_data['generated_at'] = datetime.now().isoformat()
+        from datetime import datetime, timezone
+        password_data['generated_at'] = datetime.now(timezone.utc).isoformat()  # VULN-035 FIX: UTC
     except Exception:  # VULN-013 FIX: No bare except
         pass
 
@@ -201,7 +198,7 @@ def start_encrypted_honeypot():
     dashboard_password = os.environ.get('DASHBOARD_PASSWORD', 'honeypot@91771')
     print(f"     URL:      http://{ip_address}:5001")
     print(f"     Username: {dashboard_username}")
-    print(f"     Password: {dashboard_password}")
+    print(f"     Password: {'*' * len(dashboard_password)}  (set via DASHBOARD_PASSWORD env var)")  # VULN-030 FIX
 
     print("\n" + "=" * 60)
     print("  STARTING ENCRYPTED HONEYPOT SERVICES...")

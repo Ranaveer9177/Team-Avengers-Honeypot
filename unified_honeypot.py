@@ -207,11 +207,12 @@ class UnifiedHoneypot(paramiko.ServerInterface):
 
     def check_auth_password(self, username, password):
         self.attack_details['username'] = username
-        self.attack_details['password'] = password
+        # VULN-022 FIX: Hash password before storing — never log plaintext credentials
+        self.attack_details['password'] = hashlib.sha256(password.encode()).hexdigest()[:16]
         self.attack_details['attack_type'] = 'password_auth'
 
-        # Log the attempt
-        print(f"Login attempt - Username: {username}, Password: {password}")
+        # Log the attempt (VULN-022 FIX: mask password)
+        print(f"Login attempt - Username: {username}, Password: {'*' * min(len(password), 8)}")
 
         # Check if encrypted mode is enabled (password hash file exists)
         if self.ssh_password_hash:
@@ -289,6 +290,7 @@ class UnifiedHoneypotServer:
 
         # Rate limiting: Track connection attempts per IP
         self.connection_tracker = {}  # {ip: [timestamp1, timestamp2, ...]}
+        self._tracker_lock = threading.Lock()  # VULN-027 FIX: Thread-safe rate limiting
         self.max_connections_per_ip = 10  # Max connections per minute
         self.rate_limit_window = 60  # seconds
 
@@ -541,28 +543,30 @@ class UnifiedHoneypotServer:
         """Check if IP has exceeded rate limit"""
         current_time = time.time()
 
-        # Clean up old entries
-        if ip in self.connection_tracker:
-            self.connection_tracker[ip] = [
-                ts for ts in self.connection_tracker[ip]
-                if current_time - ts < self.rate_limit_window
-            ]
-        else:
-            self.connection_tracker[ip] = []
+        # VULN-027 FIX: Thread-safe access to connection_tracker
+        with self._tracker_lock:
+            # Clean up old entries
+            if ip in self.connection_tracker:
+                self.connection_tracker[ip] = [
+                    ts for ts in self.connection_tracker[ip]
+                    if current_time - ts < self.rate_limit_window
+                ]
+            else:
+                self.connection_tracker[ip] = []
 
-        # Check if over limit
-        if len(self.connection_tracker[ip]) >= self.max_connections_per_ip:
-            self.logger.warning(f"Rate limit exceeded for {ip}")
-            return False
+            # Check if over limit
+            if len(self.connection_tracker[ip]) >= self.max_connections_per_ip:
+                self.logger.warning(f"Rate limit exceeded for {ip}")
+                return False
 
-        # Add current connection
-        self.connection_tracker[ip].append(current_time)
+            # Add current connection
+            self.connection_tracker[ip].append(current_time)
 
-        # VULN-008 FIX: Prune IPs with empty timestamp lists to prevent memory DoS
-        if len(self.connection_tracker) > 10000:
-            stale = [k for k, v in self.connection_tracker.items() if not v]
-            for k in stale:
-                del self.connection_tracker[k]
+            # VULN-008 FIX: Prune IPs with empty timestamp lists to prevent memory DoS
+            if len(self.connection_tracker) > 10000:
+                stale = [k for k, v in self.connection_tracker.items() if not v]
+                for k in stale:
+                    del self.connection_tracker[k]
 
         return True
 
@@ -572,10 +576,12 @@ class UnifiedHoneypotServer:
     def _write_initial_payload(self, data_bytes, meta_prefix):
         try:
             os.makedirs(self.config['pcap_dir'], exist_ok=True)
+            # VULN-037 FIX: Add random nonce to prevent filename collisions
+            nonce = secrets.token_hex(4)
             file_path = os.path.join(
-                self.config['pcap_dir'], f"{meta_prefix}_initial.bin"
+                self.config['pcap_dir'], f"{meta_prefix}_{nonce}_initial.bin"
             )
-            with open(file_path, 'ab') as f:
+            with open(file_path, 'wb') as f:  # VULN-037 FIX: Use 'wb' not 'ab' — one file per session
                 f.write(data_bytes[: int(self.config.get('initial_payload_max_bytes', 512))])
         except Exception as e:
             self.logger.error(f"Error writing initial payload: {str(e)}")
@@ -608,6 +614,17 @@ class UnifiedHoneypotServer:
 
     def log_attack(self, attack_details):
         attack_log_path = f"{self.config['log_dir']}/attacks.json"
+
+        # VULN-036 FIX: Rotate log file if it exceeds 50MB
+        try:
+            if os.path.exists(attack_log_path):
+                file_size = os.path.getsize(attack_log_path)
+                if file_size > 50 * 1024 * 1024:  # 50MB
+                    rotated_path = f"{attack_log_path}.{int(time.time())}.bak"
+                    os.rename(attack_log_path, rotated_path)
+                    self.logger.info(f"Log rotated: {attack_log_path} -> {rotated_path}")
+        except Exception as e:
+            self.logger.warning(f"Log rotation error: {e}")
 
         with self._log_lock:
             with open(attack_log_path, 'a') as f:
@@ -668,19 +685,26 @@ class UnifiedHoneypotServer:
             # Wait for authentication
             channel = transport.accept(20)
             if channel is None:
-                print("No channel")
+                self.logger.info(f"SSH connection from {addr[0]}: no channel (auth failed)")
+                honeypot.attack_details['attack_type'] = honeypot.attack_details.get('attack_type') or 'ssh_connect_no_auth'
+                self.log_attack(honeypot.attack_details)
                 transport.close()
                 return
 
             # Wait for authentication to complete
             honeypot.event.wait(10)
             if not honeypot.event.is_set():
-                print("Auth timeout")
+                self.logger.info(f"SSH auth timeout from {addr[0]}")
+                honeypot.attack_details['attack_type'] = honeypot.attack_details.get('attack_type') or 'ssh_auth_timeout'
+                self.log_attack(honeypot.attack_details)
                 transport.close()
                 return
 
             # Log successful login
-            print(f"\n[+] Successful SSH login from {addr[0]}\n")
+            self.logger.info(f"Successful SSH login from {addr[0]}")
+
+            # Log the SSH attack immediately so it appears on the dashboard
+            self.log_attack(honeypot.attack_details)
 
             # Setup terminal
             channel.send('Welcome to Ubuntu 20.04.3 LTS\n\n')
@@ -773,8 +797,8 @@ class UnifiedHoneypotServer:
                     channel.send('logout\n')
                     break
 
-                # Log commands for analysis
-                print(f"[*] Command executed: {command}")
+                # Log commands for analysis (VULN-041 FIX: use logger, not print)
+                self.logger.info(f"SSH command from {addr[0]}: {command[:200]}")
 
                 # Parse command
                 try:
@@ -924,7 +948,7 @@ class UnifiedHoneypotServer:
                             'timestamp': self._utc_now_iso(),
                             'service': 'ftp',
                             'username': username or 'anonymous',
-                            'password': password or '',
+                            'password': hashlib.sha256((password or '').encode()).hexdigest()[:16],  # VULN-022 FIX
                             'tools_detected': self.detect_tools(data),
                             'attack_type': 'ftp_brute_force'
                         }
@@ -1039,7 +1063,7 @@ class UnifiedHoneypotServer:
                             'timestamp': self._utc_now_iso(),
                             'service': 'https' if is_https else 'http',
                             'username': post_data['username'],
-                            'password': post_data['password'],
+                            'password': hashlib.sha256(post_data['password'].encode()).hexdigest()[:16],  # VULN-022 FIX
                             'tools_detected': self.detect_tools(data),
                             'attack_type': 'brute_force_web'
                         }
@@ -1083,7 +1107,7 @@ class UnifiedHoneypotServer:
                             'device_name': device,
                             'timestamp': self._utc_now_iso(),
                             'service': 'https' if is_https else 'http',
-                            'data': request,
+                            'data': request[:500],  # VULN-023 FIX: Truncate raw request to limit log size
                             'tools_detected': self.detect_tools(data),
                             'attack_type': 'web_request'
                         }
@@ -1095,12 +1119,13 @@ class UnifiedHoneypotServer:
 
                 response = "HTTP/1.1 200 OK\r\n"
                 response += f"Server: {self.config.get('banners', {}).get('http_server', 'Apache/2.4.41 (Ubuntu)')}\r\n"
-                response += "Content-Type: text/html\r\n"
-                response += f"Content-Length: {len(response_body)}\r\n"
+                response += "Content-Type: text/html; charset=utf-8\r\n"
+                # VULN-034 FIX: Compute Content-Length from encoded bytes, not unicode chars
+                body_bytes = response_body.encode('utf-8')
+                response += f"Content-Length: {len(body_bytes)}\r\n"
                 response += "\r\n"
-                response += response_body
 
-                client_socket.send(response.encode())
+                client_socket.send(response.encode('utf-8') + body_bytes)
 
         except Exception as e:
             self.logger.error(f"Web Error from {addr[0]}: {str(e)}")

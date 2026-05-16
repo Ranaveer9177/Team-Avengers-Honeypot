@@ -1,10 +1,12 @@
 #!/bin/bash
 
+set -euo pipefail  # VULN-028 FIX: Fail-fast before any code runs
+
 # Cross-platform Linux compatibility script for Honeypot System
 # Supports: Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, SUSE, Kali, and others
 
-# Check if boot menu should be shown
-if [ "$1" != "--skip-menu" ] 2>/dev/null; then
+# Check if boot menu should be shown (VULN-028 FIX: use ${1:-} for set -u safety)
+if [ "${1:-}" != "--skip-menu" ]; then
     # Show boot menu
     if command -v python3 >/dev/null 2>&1; then
         python3 boot_menu.py
@@ -16,8 +18,6 @@ if [ "$1" != "--skip-menu" ] 2>/dev/null; then
     # Exit after menu (menu will handle starting services if needed)
     exit 0
 fi
-
-set -euo pipefail
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -74,15 +74,39 @@ detect_python() {
     fi
 }
 
-# Detect pip
+# Detect pip — prioritize virtualenv pip over system pip (PEP 668 / Ubuntu 24+)
 detect_pip() {
+    local PYTHON_CMD
     PYTHON_CMD=$(detect_python)
+
+    # 1. If a virtualenv is active, use its pip directly
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        if [ -x "$VIRTUAL_ENV/bin/pip" ]; then
+            echo "$VIRTUAL_ENV/bin/pip"
+            return
+        elif [ -x "$VIRTUAL_ENV/bin/pip3" ]; then
+            echo "$VIRTUAL_ENV/bin/pip3"
+            return
+        fi
+    fi
+
+    # 2. Check for a local .venv pip (not yet activated but present)
+    if [ -x ".venv/bin/pip" ]; then
+        echo ".venv/bin/pip"
+        return
+    fi
+
+    # 3. Use python -m pip (always matches the active interpreter)
+    if $PYTHON_CMD -m pip --version >/dev/null 2>&1; then
+        echo "$PYTHON_CMD -m pip"
+        return
+    fi
+
+    # 4. Fall back to system pip (may fail on PEP 668 distros)
     if command -v pip3 >/dev/null 2>&1; then
         echo "pip3"
     elif command -v pip >/dev/null 2>&1; then
         echo "pip"
-    elif $PYTHON_CMD -m pip --version >/dev/null 2>&1; then
-        echo "$PYTHON_CMD -m pip"
     else
         print_error "pip is required but not found"
         exit 1
@@ -118,14 +142,78 @@ get_ip_address() {
     fi
 }
 
+# Setup and activate virtual environment
+setup_venv() {
+    local PYTHON_CMD=$(detect_python)
+    local VENV_DIR=".venv"
+
+    # Skip if already inside a virtual environment
+    # VULN-033 FIX: Use ${VIRTUAL_ENV:-} to avoid crash under set -u
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        print_success "Already inside virtual environment: $VIRTUAL_ENV"
+        return 0
+    fi
+
+    # Create venv if it doesn't exist
+    if [ ! -d "$VENV_DIR" ]; then
+        print_status "Creating virtual environment (.venv)..."
+        if $PYTHON_CMD -m venv "$VENV_DIR" 2>/dev/null; then
+            print_success "Virtual environment created"
+        else
+            # Try installing python3-venv package first (Debian/Ubuntu)
+            print_warning "venv module missing, attempting to install python3-venv..."
+            if command -v apt-get >/dev/null 2>&1; then
+                sudo apt-get install -y python3-venv 2>/dev/null
+            fi
+            if $PYTHON_CMD -m venv "$VENV_DIR" 2>/dev/null; then
+                print_success "Virtual environment created (after installing python3-venv)"
+            else
+                print_warning "Could not create virtual environment — will try global pip with --break-system-packages"
+                return 1
+            fi
+        fi
+    else
+        print_success "Using existing virtual environment (.venv)"
+    fi
+
+    # Activate the virtual environment
+    if [ -f "$VENV_DIR/bin/activate" ]; then
+        # shellcheck disable=SC1091
+        source "$VENV_DIR/bin/activate"
+        print_success "Virtual environment activated"
+        return 0
+    else
+        print_warning "Virtual environment activation script not found"
+        return 1
+    fi
+}
+
 # Initialize detected commands
 PYTHON_CMD=$(detect_python)
 PIP_CMD=$(detect_pip)
 PORT_CHECKER=$(detect_port_checker)
 
+# Setup venv (must come after detect_python so we have a Python to create it with)
+USE_VENV=true
+if setup_venv; then
+    # Re-detect commands inside the venv
+    PYTHON_CMD=$(detect_python)
+    PIP_CMD=$(detect_pip)
+    print_status "Using venv Python: $(which $PYTHON_CMD)"
+else
+    USE_VENV=false
+    print_warning "Running without virtual environment"
+fi
+
 # Function to check if a Python package is installed
+# VULN-032 FIX: Validate package name to prevent code injection
 check_package() {
-    $PYTHON_CMD -c "import $1" 2>/dev/null
+    local pkg_name="$1"
+    if ! echo "$pkg_name" | grep -qE '^[a-zA-Z_][a-zA-Z0-9_]*$'; then
+        print_error "Invalid package name: $pkg_name"
+        return 1
+    fi
+    $PYTHON_CMD -c "__import__('$pkg_name')" 2>/dev/null
     return $?
 }
 
@@ -166,22 +254,34 @@ free_ports() {
         if check_port "$port"; then
             print_warning "Found process using port $port. Attempting to free it..."
             
+            # VULN-031 FIX: Only kill Python/honeypot processes, not unrelated services
             case "$PORT_CHECKER" in
                 lsof)
                     local pids=$(lsof -ti:"$port" 2>/dev/null || true)
                     if [ -n "$pids" ]; then
-                        echo "$pids" | xargs sudo kill -9 2>/dev/null || true
+                        for pid in $pids; do
+                            local proc_name=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                            if echo "$proc_name" | grep -qiE 'python|honeypot|flask|unified'; then
+                                sudo kill -9 "$pid" 2>/dev/null || true
+                            else
+                                print_warning "Port $port: skipping non-honeypot process $proc_name (PID $pid)"
+                            fi
+                        done
                     fi
                     ;;
                 ss|netstat)
                     # For ss/netstat, we need to find the PID differently
                     if command -v fuser >/dev/null 2>&1; then
-                        sudo fuser -k "$port/tcp" 2>/dev/null || true
-                    elif command -v lsof >/dev/null 2>&1; then
-                        local pids=$(lsof -ti:"$port" 2>/dev/null || true)
-                        if [ -n "$pids" ]; then
-                            echo "$pids" | xargs sudo kill -9 2>/dev/null || true
-                        fi
+                        # Get PIDs from fuser, filter for honeypot processes only
+                        local fuser_pids=$(fuser "$port/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -E '^[0-9]+$' || true)
+                        for pid in $fuser_pids; do
+                            local proc_name=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                            if echo "$proc_name" | grep -qiE 'python|honeypot|flask|unified'; then
+                                sudo kill -9 "$pid" 2>/dev/null || true
+                            else
+                                print_warning "Port $port: skipping non-honeypot process $proc_name (PID $pid)"
+                            fi
+                        done
                     fi
                     ;;
             esac
@@ -332,16 +432,38 @@ else
 fi
 
 # Install required packages
-REQUIRED_PACKAGES=("paramiko" "flask" "requests")
+REQUIRED_PACKAGES=("paramiko" "flask" "requests" "cryptography" "markupsafe")  # VULN-038 FIX: markupsafe needed by app.py
 print_status "Checking and installing required packages..."
 for package in "${REQUIRED_PACKAGES[@]}"; do
     if ! check_package "$package"; then
         print_status "Installing $package..."
-        $PIP_CMD install "$package"
+        if [ "$USE_VENV" = true ]; then
+            # Inside venv — normal pip install works fine
+            $PIP_CMD install "$package"
+        else
+            # No venv — use --break-system-packages as last resort (Ubuntu 24+)
+            $PIP_CMD install "$package" --break-system-packages 2>/dev/null || \
+            $PIP_CMD install "$package" 2>/dev/null || \
+            { print_error "Failed to install $package. Please create a venv manually:"; \
+              print_error "  python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"; \
+              exit 1; }
+        fi
     else
         print_success "$package already installed"
     fi
 done
+
+# Also install from requirements.txt if it exists (catches all deps)
+if [ -f "requirements.txt" ]; then
+    print_status "Installing all dependencies from requirements.txt..."
+    if [ "$USE_VENV" = true ]; then
+        $PIP_CMD install -r requirements.txt 2>/dev/null || true
+    else
+        $PIP_CMD install -r requirements.txt --break-system-packages 2>/dev/null || \
+        $PIP_CMD install -r requirements.txt 2>/dev/null || true
+    fi
+    print_success "Dependencies installed"
+fi
 
 # Start services
 print_status "Starting Unified Honeypot..."

@@ -213,24 +213,34 @@ Write-Host ""
 
 Write-Status "Starting Unified Honeypot..."
 $honeypotJob = Start-Job -ScriptBlock {
-    param($pythonPath)
+    param($pythonPath, $venvDir)
     Set-Location $using:PWD
+    # VULN-046 FIX: Inherit virtual environment in child job
+    if ($venvDir -and (Test-Path $venvDir)) {
+        $env:VIRTUAL_ENV = (Resolve-Path $venvDir).Path
+        $env:PATH = "$env:VIRTUAL_ENV\Scripts;$env:PATH"
+    }
     & $pythonPath unified_honeypot.py
-} -ArgumentList $python
+} -ArgumentList $python, $venvPath
 
 Start-Sleep -Seconds 3
 
 Write-Status "Starting Dashboard..."
 $dashboardJob = Start-Job -ScriptBlock {
-    param($pythonPath)
+    param($pythonPath, $venvDir)
     Set-Location $using:PWD
+    # VULN-046 FIX: Inherit virtual environment in child job
+    if ($venvDir -and (Test-Path $venvDir)) {
+        $env:VIRTUAL_ENV = (Resolve-Path $venvDir).Path
+        $env:PATH = "$env:VIRTUAL_ENV\Scripts;$env:PATH"
+    }
     $env:FLASK_RUN_PORT = $using:env:FLASK_RUN_PORT
     $env:DASHBOARD_USERNAME = $using:env:DASHBOARD_USERNAME
     $env:DASHBOARD_PASSWORD = $using:env:DASHBOARD_PASSWORD
     $env:ATTACKS_LOG = $using:env:ATTACKS_LOG
     $env:GEOCACHE_FILE = $using:env:GEOCACHE_FILE
     & $pythonPath app.py
-} -ArgumentList $python
+} -ArgumentList $python, $venvPath
 
 Start-Sleep -Seconds 3
 

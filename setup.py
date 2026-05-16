@@ -34,7 +34,9 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
-    install_requires=requirements,
+    install_requires=[r for r in requirements if not any(
+        d in r.lower() for d in ['pytest', 'flake8', 'python-dotenv']
+    )],
     extras_require={
         "dev": [
             "pytest>=7.4.0",

@@ -22,6 +22,8 @@ jobs:
         run: |
           flake8
       - name: Test
+        env:
+          PYTHONPATH: .
         run: |
           pytest -q --override-ini="addopts=-v --strict-markers --tb=short"
 

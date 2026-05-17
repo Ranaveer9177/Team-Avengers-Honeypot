@@ -208,7 +208,6 @@ def start_encrypted_honeypot():
 
     # Import and run the startup logic
     import subprocess
-    import sys
 
     # Determine which startup script to use with --skip-menu flag
     if platform.system() == 'Windows':
@@ -246,7 +245,6 @@ def start_honeypot():
 
     # Import and run the startup logic
     import subprocess
-    import sys
 
     # Determine which startup script to use with --skip-menu flag
     if platform.system() == 'Windows':

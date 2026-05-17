@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 from app import sanitize_string, process_attack_data, get_statistics
 import sys
 import os
-import tempfile
-import json
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 

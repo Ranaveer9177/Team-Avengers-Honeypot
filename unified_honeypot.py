@@ -9,7 +9,7 @@ import hashlib
 from datetime import datetime, timezone
 import os
 import secrets
-import string
+
 from socket import gethostbyaddr, herror
 import shlex
 from device_detector import DeviceDetector
@@ -758,7 +758,7 @@ class UnifiedHoneypotServer:
                                     command += char.decode('utf-8', errors='ignore')
                                     channel.send(char)
                                 # Silently discard chars beyond limit
-                    except (socket.timeout, TimeoutError) as e:
+                    except (socket.timeout, TimeoutError):
                         # Timeout is OK for persistent connections - just continue
                         if not char_received:
                             # Send keepalive to maintain connection

@@ -6,7 +6,6 @@ import traceback
 import logging
 import threading
 import ipaddress
-import string
 
 import hmac
 import secrets as _secrets
@@ -54,15 +53,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def _generate_random_password():
-    """Generate a password in format HoneyPot@XXXX where XXXX is 4 random digits."""
-    suffix = ''.join(_secrets.choice(string.digits) for _ in range(4))
-    return f"HoneyPot@{suffix}"
-
-
 # Config (override with env vars)
 DASHBOARD_USERNAME = os.environ.get('DASHBOARD_USERNAME', 'admin')
-DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', _generate_random_password())
+DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'Honeypot@9177')
 GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
@@ -1198,7 +1191,7 @@ def main():
         safe_print(f"[*] Starting dashboard on http://0.0.0.0:{FLASK_RUN_PORT}")
         safe_print(f"[*] Local access: http://localhost:{FLASK_RUN_PORT}")
         safe_print(f"[*] Username: {DASHBOARD_USERNAME}")
-        safe_print(f"[*] Password: {DASHBOARD_PASSWORD}  (new each restart)")
+        safe_print(f"[*] Password: {'*' * len(DASHBOARD_PASSWORD)}")
         safe_print(f"[*] Features: Real-time monitoring, Search, Filter, Export")
         safe_print("=" * 60)
         safe_print("[*] Dashboard is ready! Press Ctrl+C to stop.")

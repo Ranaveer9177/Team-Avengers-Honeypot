@@ -1,10 +1,10 @@
 """Tests for Flask dashboard application"""
-from datetime import datetime, timezone
-from app import sanitize_string, process_attack_data, get_statistics
 import sys
 import os
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from datetime import datetime, timezone
+from app import sanitize_string, process_attack_data, get_statistics
 
 
 def test_sanitize_string():

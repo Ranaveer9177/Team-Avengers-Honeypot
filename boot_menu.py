@@ -195,7 +195,7 @@ def start_encrypted_honeypot():
 
     print("\n  📊 Dashboard Access:")
     dashboard_username = os.environ.get('DASHBOARD_USERNAME', 'admin')
-    dashboard_password = os.environ.get('DASHBOARD_PASSWORD', 'honeypot@91771')
+    dashboard_password = os.environ.get('DASHBOARD_PASSWORD', 'Honeypot@9177')
     print(f"     URL:      http://{ip_address}:5001")
     print(f"     Username: {dashboard_username}")
     print(f"     Password: {'*' * len(dashboard_password)}  (set via DASHBOARD_PASSWORD env var)")  # VULN-030 FIX

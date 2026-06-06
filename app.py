@@ -7,7 +7,6 @@ import logging
 import threading
 import ipaddress
 import string
-import random
 
 import hmac
 import secrets as _secrets
@@ -55,31 +54,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def _generate_random_password(length=8):
-    """Generate a random password with letters, digits, and at least one special character."""
-    letters = string.ascii_letters
-    digits = string.digits
-    special = '!@#$%&*?'
-
-    # Guarantee at least: 1 uppercase, 1 lowercase, 1 digit, 1 special
-    password = [
-        _secrets.choice(string.ascii_uppercase),
-        _secrets.choice(string.ascii_lowercase),
-        _secrets.choice(digits),
-        _secrets.choice(special),
-    ]
-    # Fill the rest randomly from all allowed characters
-    all_chars = letters + digits + special
-    for _ in range(length - 4):
-        password.append(_secrets.choice(all_chars))
-    # Shuffle so the guaranteed chars aren't always at the start
-    random.shuffle(password)
-    return ''.join(password)
+def _generate_random_password():
+    """Generate a password in format HoneyPot@XXXX where XXXX is 4 random digits."""
+    suffix = ''.join(_secrets.choice(string.digits) for _ in range(4))
+    return f"HoneyPot@{suffix}"
 
 
 # Config (override with env vars)
 DASHBOARD_USERNAME = os.environ.get('DASHBOARD_USERNAME', 'admin')
-DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', _generate_random_password(8))
+DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', _generate_random_password())
 GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))

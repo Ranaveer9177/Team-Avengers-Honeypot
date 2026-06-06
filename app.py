@@ -60,6 +60,7 @@ GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
 FLASK_BIND_HOST = os.environ.get('FLASK_BIND_HOST', '0.0.0.0')  # Bind to all interfaces for remote access
+SESSIONS_FILE = os.environ.get('SESSIONS_FILE', 'logs/sessions.json')
 IP_API_URL = os.environ.get('IP_API_URL', 'http://ip-api.com/json')  # ip-api.com simple endpoint
 IP_API_TIMEOUT = float(os.environ.get('IP_API_TIMEOUT', 3.0))  # seconds
 
@@ -861,6 +862,41 @@ def api_alerts():
     except Exception as e:
         logger.error(f"Error loading alerts: {e}")
         return jsonify({'error': 'Failed to load alerts'}), 500
+
+
+@app.route('/api/sessions')
+@requires_auth
+def api_sessions():
+    """Get live sessions from the honeypot server."""
+    try:
+        sessions = []
+        if os.path.exists(SESSIONS_FILE):
+            with open(SESSIONS_FILE, 'r') as f:
+                raw = json.load(f)
+            for s in raw:
+                ip = s.get('ip', 'Unknown')
+                geo = get_geo_details(ip)
+                # Enrich with geolocation
+                lat, lon = enrich_with_geo(ip)
+                sessions.append({
+                    'id': s.get('id', ''),
+                    'ip': ip,
+                    'service': s.get('service', 'unknown'),
+                    'username': s.get('username', 'N/A'),
+                    'client_version': s.get('client_version', ''),
+                    'connected_at': s.get('connected_at', ''),
+                    'device_name': s.get('device_name', 'Unknown'),
+                    'city': geo.get('city', 'Unknown'),
+                    'country': geo.get('country', 'Unknown'),
+                    'region': geo.get('region', 'Unknown'),
+                    'isp': geo.get('isp', 'Unknown'),
+                    'lat': lat,
+                    'lon': lon
+                })
+        return jsonify({'count': len(sessions), 'sessions': sessions})
+    except Exception as e:
+        logger.error(f"Error loading sessions: {e}")
+        return jsonify({'count': 0, 'sessions': []})
 
 
 @app.route('/api/alerts/stream')

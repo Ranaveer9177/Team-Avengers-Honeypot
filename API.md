@@ -8,10 +8,9 @@ The dashboard uses **session-based form login** for browser access and **HTTP Ba
 
 **Default Username:** `admin`
 
-**Password:** Auto-generated fresh on every startup (8 characters: letters, digits, at least 1 special character).
-- Always printed in console when the server starts
-- Changes on every restart
-- To use a fixed password, set the `DASHBOARD_PASSWORD` env var
+**Default Password:** `Honeypot@9177`
+- Printed (masked) in console when the server starts
+- To use a custom password, set the `DASHBOARD_PASSWORD` env var
 ```bash
 export DASHBOARD_USERNAME="your_username"
 export DASHBOARD_PASSWORD="your_password"
@@ -146,6 +145,43 @@ source.onmessage = (event) => {
   const alert = JSON.parse(event.data);
   console.log('New alert:', alert);
 };
+```
+
+---
+
+### GET /api/sessions
+
+**Description:** Get currently connected (live) sessions from the honeypot. Sessions are tracked in real-time as attackers connect via SSH and other services.
+
+**Authentication:** Required
+
+**Response:**
+```json
+{
+  "count": 2,
+  "sessions": [
+    {
+      "id": "a1b2c3d4e5f6g7h8",
+      "ip": "45.33.32.156",
+      "service": "ssh",
+      "username": "admin",
+      "client_version": "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5",
+      "connected_at": "2026-06-06T11:30:00+00:00",
+      "device_name": "Ubuntu Server",
+      "city": "Fremont",
+      "country": "United States",
+      "region": "California",
+      "isp": "Linode LLC",
+      "lat": 37.548,
+      "lon": -121.988
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl -u admin:'Honeypot@9177' http://localhost:5001/api/sessions
 ```
 
 ---

@@ -7,9 +7,10 @@ A professional-grade honeypot system with multi-service attack detection, real-t
 ### Core Capabilities
 - **Multi-Service Simulation**: SSH, HTTP, HTTPS, FTP, MySQL honeypots
 - **Advanced Attack Detection**: Pattern recognition, tool detection, device fingerprinting
-- **Real-Time Dashboard**: Secure web interface with tabbed navigation (Dashboard, Logs, Connections)
+- **Real-Time Dashboard**: Secure web interface with tabbed navigation (Dashboard, Logs, Connections, Live Sessions)
 - **Premium Login Page**: Split-panel login UI with particle animations, password toggle, and auto-generated credentials
-- **Auto-Generated Credentials**: Random 8-character password (letters, digits, special chars) regenerated on every startup
+- **Live Session Tracking**: Real-time view of connected attackers — their IP, OS, location, ISP, and session duration
+- **Auto-Generated Credentials**: Fixed default password `Honeypot@9177` (override via `DASHBOARD_PASSWORD` env var)
 - **Real-Time Alerting**: Server-Sent Events (SSE) for instant threat notifications
 - **Automated Incident Response**: Webhook notifications, email alerts, IP blocking
 - **IP Geolocation**: Dual API fallback (ip-api.com + ipinfo.io) with LRU cache
@@ -30,7 +31,7 @@ A professional-grade honeypot system with multi-service attack detection, real-t
 - Separate connection timeouts (SSH persistent, others 30s)
 - IP validation on filter API using `ipaddress` module
 - Session-based form login with Flask sessions (no Basic Auth popups)
-- Auto-generated random password on every startup (shown in console)
+- Fixed default password `Honeypot@9177` (customizable via env var)
 - Restrictive file permissions for SSH keys and SSL certificates
 
 ## 📋 Requirements
@@ -126,7 +127,7 @@ sudo bash start.sh
 # 4. Access dashboard
 # URL:      http://localhost:5001
 # Username: admin
-# Password: (random — shown in console on each startup)
+# Password: Honeypot@9177 (or set DASHBOARD_PASSWORD env var)
 ```
 
 ### Manual Start (Any OS)
@@ -158,8 +159,8 @@ python app.py                # Terminal 2
 ### Access the Dashboard
 - **URL**: `http://localhost:5001` → redirects to login page
 - **Username**: `admin`
-- **Password**: Random — generated fresh on each startup (printed in console)
-- To use a **fixed password**: set `DASHBOARD_PASSWORD` environment variable
+- **Password**: `Honeypot@9177` (default, fixed)
+- To use a **custom password**: set `DASHBOARD_PASSWORD` environment variable
 
 ## 🔬 Testing the Honeypot
 
@@ -174,7 +175,7 @@ curl http://localhost:8080
 ftp -P 2121 localhost
 
 # Test Dashboard API
-curl -u admin:'YOUR_PASSWORD' http://localhost:5001/api/attacks
+curl -u admin:'Honeypot@9177' http://localhost:5001/api/attacks
 ```
 
 ## ⚙️ Configuration
@@ -182,7 +183,7 @@ curl -u admin:'YOUR_PASSWORD' http://localhost:5001/api/attacks
 ### Environment Variables
 
 ```bash
-# Dashboard credentials (override auto-generated password)
+# Dashboard credentials (override default password)
 export DASHBOARD_USERNAME="admin"
 export DASHBOARD_PASSWORD="your_custom_password"
 export FLASK_RUN_PORT=5001
@@ -240,13 +241,15 @@ Browser routes use session-based login (form at `/login`). API endpoints also ac
 | `POST` | `/api/attacks/export` | Export attacks (CSV/JSON) |
 | `POST` | `/api/reset` | Reset dashboard (backup + clear) |
 | `GET` | `/api/stats` | Statistics with optional date range |
+| `GET` | `/api/sessions` | Live sessions (connected attackers) |
 
 See [API.md](API.md) for full documentation.
 
 ## 🔒 Security Features
 
 - **Form-Based Login**: Premium login page with session-based authentication
-- **Auto-Generated Passwords**: Fresh random 8-char password on every startup (uppercase, lowercase, digit, special char)
+- **Fixed Default Password**: `Honeypot@9177` — strong, memorable, customizable via env var
+- **Live Session Tracking**: Monitor who is connected to the honeypot in real-time
 - **XSS Hardening**: Input sanitization and HTML escaping
 - **Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options
 - **Rate Limiting**: 45 req/min for geolocation API (thread-safe)
@@ -304,7 +307,7 @@ taskkill /PID <PID> /F
 ## 🛡️ Security Best Practices
 
 - ⚠️ **Never expose the dashboard to the internet** — use VPN or firewall
-- ⚠️ **Password changes on every restart** — check console output each time
+- ⚠️ **Default password**: `Honeypot@9177` — change via `DASHBOARD_PASSWORD` env var for production
 - ⚠️ **This is a honeypot** — do not use on production systems
 - ⚠️ **Restrict dashboard access** with iptables rules
 - ⚠️ **Monitor disk space** — PCAP files can grow large

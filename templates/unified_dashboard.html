@@ -32,6 +32,7 @@
 <div class="nav-item active" onclick="switchTab('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
 <div class="nav-item" onclick="switchTab('logs',this)"><span class="nav-icon">📋</span>Attack Logs</div>
 <div class="nav-item" onclick="switchTab('connections',this)"><span class="nav-icon">🌐</span>Connections</div>
+<div class="nav-item" onclick="switchTab('sessions',this)"><span class="nav-icon">👥</span>Live Sessions <span class="session-count-badge" id="sidebarSessionCount">0</span></div>
 </nav>
 <div class="sidebar-footer">
 <div class="status-badge"><span class="status-dot"></span><span>System Live</span></div>
@@ -155,7 +156,31 @@
 <div class="chart-card"><canvas id="timelineChart"></canvas></div>
 </div>
 
-<footer><p><strong>🛡️ HoneyGuard Dashboard v4.0</strong></p><p style="margin-top:6px">Real-Time Cyber Defense Intelligence | Team Avengers © 2025</p></footer>
+<!-- SESSIONS TAB -->
+<div class="tab-view" id="tab-sessions">
+<div class="top-bar">
+<div class="top-bar-left"><h2>Live Sessions</h2><p>Currently connected attackers in real-time</p></div>
+<div class="top-bar-right">
+<span class="live-indicator"><span class="live-dot"></span> LIVE</span>
+<button class="btn btn-primary" onclick="loadSessions()">🔄 Refresh</button>
+</div>
+</div>
+<div class="stats-grid">
+<div class="stat-card stat-1"><div class="stat-icon">👥</div><div class="stat-title">Active Sessions</div><div class="stat-value" id="sessionCount">0</div></div>
+<div class="stat-card stat-2"><div class="stat-icon">🌍</div><div class="stat-title">Countries</div><div class="stat-value" id="sessionCountries">0</div></div>
+<div class="stat-card stat-3"><div class="stat-icon">🔌</div><div class="stat-title">Services</div><div class="stat-value" id="sessionServices">0</div></div>
+<div class="stat-card stat-4"><div class="stat-icon">⏱️</div><div class="stat-title">Longest Session</div><div class="stat-value" id="sessionLongest">--</div></div>
+</div>
+<div class="section-header"><h2>Connected Attackers</h2></div>
+<div class="sessions-grid" id="sessionsGrid">
+<div style="padding:60px;text-align:center;color:var(--text-muted);grid-column:1/-1">
+<div style="font-size:3rem;margin-bottom:12px">👥</div>
+<p>No active sessions. Waiting for connections...</p>
+</div>
+</div>
+</div>
+
+<footer><p><strong>🛡️ HoneyGuard Dashboard v4.2</strong></p><p style="margin-top:6px">Real-Time Cyber Defense Intelligence | Team Avengers © 2025</p></footer>
 </main>
 </div>
 

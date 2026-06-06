@@ -23,7 +23,7 @@ class FakeFileSystem:
         self.filesystem = {
             '/': {
                 'type': 'directory',
-                'contents': {
+                'contents': { 
                     'home': {
                         'type': 'directory',
                         'contents': {

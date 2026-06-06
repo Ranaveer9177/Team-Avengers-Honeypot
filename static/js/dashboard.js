@@ -23,6 +23,7 @@ function switchTab(tab, el) {
   document.querySelector('.sidebar').classList.remove('open');
   if (tab === 'logs') renderLogs();
   if (tab === 'connections') renderConnections();
+  if (tab === 'sessions') loadSessions();
   if (tab === 'dashboard' && !window._mapInit) initMap();
 }
 
@@ -307,6 +308,129 @@ async function performReset() {
   } catch(e){showToast({severity:'critical',message:'Reset failed: '+e.message,timestamp:new Date().toISOString()});if(btn){btn.disabled=false;btn.textContent='🗑️ Confirm';}}
 }
 
+// Live Sessions
+function formatDuration(isoString) {
+  if (!isoString) return '--';
+  const start = new Date(isoString);
+  const now = new Date();
+  const diff = Math.floor((now - start) / 1000);
+  if (diff < 0) return '--';
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function getOSFromClient(clientVersion) {
+  if (!clientVersion) return 'Unknown';
+  const cv = clientVersion.toLowerCase();
+  if (cv.includes('ubuntu') || cv.includes('debian')) return 'Ubuntu/Debian';
+  if (cv.includes('windows') || cv.includes('putty') || cv.includes('bitvise')) return 'Windows';
+  if (cv.includes('darwin') || cv.includes('mac')) return 'macOS';
+  if (cv.includes('openssh')) return 'Linux (OpenSSH)';
+  if (cv.includes('libssh')) return 'Linux (libssh)';
+  if (cv.includes('paramiko')) return 'Python (Paramiko)';
+  if (cv.includes('dropbear')) return 'Embedded Linux';
+  if (cv.includes('android')) return 'Android';
+  if (cv.includes('nmap') || cv.includes('ncrack')) return 'Scanner Tool';
+  return clientVersion.substring(0, 30) || 'Unknown';
+}
+
+async function loadSessions() {
+  try {
+    const r = await fetch('/api/sessions');
+    const d = await r.json();
+    const sessions = d.sessions || [];
+
+    // Update stats
+    const countEl = document.getElementById('sessionCount');
+    const countriesEl = document.getElementById('sessionCountries');
+    const servicesEl = document.getElementById('sessionServices');
+    const longestEl = document.getElementById('sessionLongest');
+    const sidebarBadge = document.getElementById('sidebarSessionCount');
+
+    if (countEl) countEl.textContent = sessions.length;
+    if (sidebarBadge) {
+      sidebarBadge.textContent = sessions.length;
+      sidebarBadge.style.background = sessions.length > 0 ? 'var(--danger)' : 'var(--primary)';
+    }
+
+    const countries = new Set(sessions.map(s => s.country).filter(c => c && c !== 'Unknown'));
+    const services = new Set(sessions.map(s => s.service));
+    if (countriesEl) countriesEl.textContent = countries.size;
+    if (servicesEl) servicesEl.textContent = services.size;
+
+    if (sessions.length > 0 && longestEl) {
+      const durations = sessions.map(s => {
+        const start = new Date(s.connected_at);
+        return (new Date() - start) / 1000;
+      }).filter(d => d > 0);
+      const longest = Math.max(...durations);
+      const h = Math.floor(longest / 3600);
+      const m = Math.floor((longest % 3600) / 60);
+      longestEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+    } else if (longestEl) {
+      longestEl.textContent = '--';
+    }
+
+    // Render cards
+    const grid = document.getElementById('sessionsGrid');
+    if (!grid) return;
+
+    if (!sessions.length) {
+      grid.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);grid-column:1/-1">
+        <div style="font-size:3rem;margin-bottom:12px">👥</div>
+        <p>No active sessions. Waiting for connections...</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = sessions.map(s => `
+      <div class="session-card">
+        <div class="session-card-header">
+          <span class="session-card-ip">${escapeHtml(s.ip)}</span>
+          <span class="session-card-service">${escapeHtml(s.service)}</span>
+        </div>
+        <div class="session-card-body">
+          <div class="session-detail">
+            <span class="session-detail-label">Location</span>
+            <span class="session-detail-value">${escapeHtml(s.city || '?')}, ${escapeHtml(s.country || '?')}</span>
+          </div>
+          <div class="session-detail">
+            <span class="session-detail-label">Region</span>
+            <span class="session-detail-value">${escapeHtml(s.region || 'Unknown')}</span>
+          </div>
+          <div class="session-detail">
+            <span class="session-detail-label">OS / Client</span>
+            <span class="session-detail-value">${escapeHtml(getOSFromClient(s.client_version))}</span>
+          </div>
+          <div class="session-detail">
+            <span class="session-detail-label">Username</span>
+            <span class="session-detail-value mono">${escapeHtml(s.username || 'N/A')}</span>
+          </div>
+          <div class="session-detail">
+            <span class="session-detail-label">ISP</span>
+            <span class="session-detail-value">${escapeHtml(s.isp || 'Unknown')}</span>
+          </div>
+          <div class="session-detail">
+            <span class="session-detail-label">Device</span>
+            <span class="session-detail-value">${escapeHtml(s.device_name || 'Unknown')}</span>
+          </div>
+        </div>
+        <div class="session-card-footer">
+          <span><span class="session-live-dot"></span>Connected</span>
+          <span class="session-duration">${formatDuration(s.connected_at)}</span>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (e) {
+    console.error('Error loading sessions:', e);
+  }
+}
+
 // Log search events
 document.addEventListener('DOMContentLoaded', function() {
   const saved = localStorage.getItem('theme') || 'dark';
@@ -319,6 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
   makeChart('countriesChart', 'Top Countries', countriesData);
   initMap();
   loadAlerts();
+  loadSessions();  // Load sessions on startup
 
   ['logSearch','logServiceFilter','logSeverity'].forEach(id => {
     const el = document.getElementById(id);
@@ -340,6 +465,9 @@ window.toggleDetail = toggleDetail; window.goPage = goPage; window.toggleAlertPa
 window.openExportModal = openExportModal; window.closeExportModal = closeExportModal;
 window.performExport = performExport; window.exportTable = exportTable;
 window.openResetModal = openResetModal; window.closeResetModal = closeResetModal;
-window.performReset = performReset;
+window.performReset = performReset; window.loadSessions = loadSessions;
 
+// Auto-refresh: alerts every 60s, sessions every 10s
 setInterval(() => { if (document.visibilityState === 'visible') loadAlerts(); }, 60000);
+setInterval(() => { if (document.visibilityState === 'visible') loadSessions(); }, 10000);
+

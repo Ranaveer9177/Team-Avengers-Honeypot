@@ -5,6 +5,17 @@ All notable changes to the Multi-Service Honeypot System will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-06-06
+
+### Added
+- **Live Sessions Tab**: New dashboard tab showing currently connected attackers in real-time
+- **Session Tracking**: Honeypot server writes active sessions to `logs/sessions.json`
+- **Session Cards**: Each attacker card shows IP, location, OS/client, ISP, device, username, and live duration
+- **OS Detection**: Client SSH version string is parsed to identify OS (Ubuntu, Windows, macOS, Android, etc.)
+- **Auto-Refresh**: Sessions panel refreshes every 10 seconds with animated live indicator
+- **Sidebar Badge**: Live session count badge with red highlight when sessions are active
+- **`GET /api/sessions`**: New API endpoint returning live sessions enriched with geolocation
+
 ## [4.1.0] - 2026-06-06
 
 ### Added

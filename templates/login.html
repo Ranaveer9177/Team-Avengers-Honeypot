@@ -1,144 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Secure Login</title>
-  <style>
-    /* General Layout */
-    body {
-      font-family: "Poppins", sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #2c3e50, #4ca1af);
-    }
-
-    /* Container */
-    .login-container {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-      padding: 40px 30px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-      color: #fff;
-    }
-
-    h2 {
-      margin-bottom: 25px;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-
-    /* Error Message */
-    .error {
-      background: rgba(255, 0, 0, 0.1);
-      color: #ff6b6b;
-      border: 1px solid #ff6b6b;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    /* Form Styling */
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #f1f1f1;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      outline: none;
-      font-size: 15px;
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      transition: background 0.3s ease;
-    }
-
-    input:focus {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    /* Button */
-    button {
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
-      color: white;
-      padding: 12px 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 16px;
-      font-weight: 600;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);
-    }
-
-    /* Small footer or note */
-    .footer-note {
-      margin-top: 15px;
-      font-size: 13px;
-      color: #dcdcdc;
-    }
-
-    @media (max-width: 480px) {
-      .login-container {
-        padding: 30px 20px;
-      }
-    }
-  </style>
+  <title>HoneyGuard — Secure Login</title>
+  <meta name="description" content="Login to HoneyGuard Threat Intelligence Dashboard" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
-  <div class="login-container">
-    <h2>🔒 Secure Login</h2>
-    {% if error %}{% endif %}
-    <form method="POST" action="/login">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          placeholder="Enter your username"
-          required
-        />
+  <!-- Animated background particles -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Floating threat indicators -->
+  <div class="threat-indicators">
+    <div class="threat-dot" style="--delay: 0s; --x: 15%; --y: 20%;"></div>
+    <div class="threat-dot" style="--delay: 1.5s; --x: 80%; --y: 15%;"></div>
+    <div class="threat-dot" style="--delay: 3s; --x: 60%; --y: 75%;"></div>
+    <div class="threat-dot" style="--delay: 4.5s; --x: 25%; --y: 80%;"></div>
+    <div class="threat-dot" style="--delay: 6s; --x: 90%; --y: 50%;"></div>
+    <div class="threat-dot" style="--delay: 2s; --x: 45%; --y: 10%;"></div>
+  </div>
+
+  <div class="login-wrapper">
+    <!-- Left panel - Branding -->
+    <div class="brand-panel">
+      <div class="brand-content">
+        <div class="shield-icon">
+          <div class="shield-glow"></div>
+          <span>🛡️</span>
+        </div>
+        <h1 class="brand-title">HoneyGuard</h1>
+        <p class="brand-subtitle">Threat Intelligence Platform</p>
+        <div class="brand-divider"></div>
+        <div class="brand-features">
+          <div class="feature-item">
+            <span class="feature-icon">📊</span>
+            <div>
+              <h3>Real-Time Monitoring</h3>
+              <p>Track attacks as they happen with live dashboards</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🌍</span>
+            <div>
+              <h3>Geographic Intelligence</h3>
+              <p>Map attack origins across the globe</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🔔</span>
+            <div>
+              <h3>Smart Alerts</h3>
+              <p>Automated threat detection and response</p>
+            </div>
+          </div>
+        </div>
+        <div class="brand-stats">
+          <div class="brand-stat">
+            <span class="stat-number">24/7</span>
+            <span class="stat-label">Monitoring</span>
+          </div>
+          <div class="brand-stat">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Coverage</span>
+          </div>
+          <div class="brand-stat">
+            <span class="stat-number">&lt;1s</span>
+            <span class="stat-label">Response</span>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Enter your password"
-          required
-        />
+      <!-- Animated grid background for brand panel -->
+      <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Right panel - Login Form -->
+    <div class="login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="lock-icon" id="lockIcon">
+            <span>🔒</span>
+          </div>
+          <h2>Welcome Back</h2>
+          <p>Sign in to access the security dashboard</p>
+        </div>
+
+        {% if error %}
+        <div class="error-message" id="errorMessage">
+          <span class="error-icon">⚠️</span>
+          <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/login" id="loginForm" autocomplete="off">
+          <div class="form-group">
+            <label for="username">
+              <span class="label-icon">👤</span>
+              Username
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                required
+                autocomplete="username"
+                spellcheck="false"
+              />
+              <div class="input-focus-line"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              <span class="label-icon">🔑</span>
+              Password
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+              />
+              <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                <span id="eyeIcon">👁️</span>
+              </button>
+              <div class="input-focus-line"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader" id="btnLoader"></span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <div class="security-badge">
+            <span>🔐</span>
+            <span>256-bit SSL Encrypted Connection</span>
+          </div>
+          <p class="copyright">© 2025 HoneyGuard — Team Avengers. All rights reserved.</p>
+        </div>
       </div>
-      <button type="submit">Login</button>
-    </form>
-    <div class="footer-note">
-      © 2025 Secure Portal. All Rights Reserved.
+
+      <!-- Live status indicator -->
+      <div class="system-status">
+        <span class="status-pulse"></span>
+        <span>System Online</span>
+      </div>
     </div>
   </div>
+
+  <script>
+    // ===== Particle Background Animation =====
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 2 + 0.5;
+        this.opacity = Math.random() * 0.5 + 0.1;
+        this.color = Math.random() > 0.5 ? '99, 102, 241' : '139, 92, 246';
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${this.color}, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 80; i++) {
+      particles.push(new Particle());
+    }
+
+    function connectParticles() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(99, 102, 241, ${0.08 * (1 - dist / 150)})`;
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      connectParticles();
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ===== Password Toggle =====
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeIcon.textContent = isPassword ? '🙈' : '👁️';
+      toggleBtn.classList.toggle('active');
+    });
+
+    // ===== Form Submit Animation =====
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const lockIcon = document.getElementById('lockIcon');
+
+    form.addEventListener('submit', (e) => {
+      loginBtn.classList.add('loading');
+      lockIcon.classList.add('unlocking');
+    });
+
+    // ===== Input Focus Animations =====
+    document.querySelectorAll('.input-wrapper input').forEach(input => {
+      input.addEventListener('focus', () => {
+        input.closest('.form-group').classList.add('focused');
+      });
+      input.addEventListener('blur', () => {
+        input.closest('.form-group').classList.remove('focused');
+      });
+    });
+
+    // ===== Auto-dismiss error message =====
+    const errorMsg = document.getElementById('errorMessage');
+    if (errorMsg) {
+      setTimeout(() => {
+        errorMsg.style.opacity = '0';
+        errorMsg.style.transform = 'translateY(-10px)';
+        setTimeout(() => errorMsg.remove(), 300);
+      }, 5000);
+    }
+  </script>
 </body>
 </html>

@@ -4,19 +4,20 @@ This document describes the API endpoints available in the honeypot dashboard.
 
 ## Authentication
 
-All API endpoints require HTTP Basic Authentication.
+The dashboard uses **session-based form login** for browser access and **HTTP Basic Auth** as a fallback for API clients (curl, scripts).
 
-**Default Credentials:**
-- Username: `admin`
-- Password: `honeypot@91771`
+**Default Username:** `admin`
 
-**Environment Variables:**
+**Password:** Auto-generated fresh on every startup (8 characters: letters, digits, at least 1 special character).
+- Always printed in console when the server starts
+- Changes on every restart
+- To use a fixed password, set the `DASHBOARD_PASSWORD` env var
 ```bash
 export DASHBOARD_USERNAME="your_username"
 export DASHBOARD_PASSWORD="your_password"
 ```
 
-> **Note (v4.0):** The dashboard frontend now uses session-based cookies for API calls. Credentials are no longer embedded in the page source JavaScript.
+> **Note (v4.1):** Browser access is now handled via a login form at `/login`. API endpoints still accept HTTP Basic Auth for scripts and automation.
 
 ## Base URL
 
@@ -26,11 +27,38 @@ http://localhost:5001
 
 ## Endpoints
 
+### GET/POST /login
+
+**Description:** Login page. Renders the login form on GET, authenticates on POST.
+
+**Authentication:** None required (this IS the authentication endpoint)
+
+**POST Parameters (form data):**
+- `username` — Dashboard username
+- `password` — Dashboard password
+
+**Status Codes:**
+- `200 OK` — Login form rendered (GET) or invalid credentials (POST)
+- `302 Found` — Successful login, redirects to `/`
+
+---
+
+### GET /logout
+
+**Description:** Clears the session and redirects to the login page.
+
+**Authentication:** None required
+
+**Status Codes:**
+- `302 Found` — Redirects to `/login`
+
+---
+
 ### GET /
 
 **Description:** Main dashboard HTML page with tabbed navigation (Dashboard, Attack Logs, Connections).
 
-**Authentication:** Required (HTTP Basic Auth)
+**Authentication:** Required (session or HTTP Basic Auth)
 
 **Response:** HTML page with:
 - Dashboard tab: Stat cards, doughnut charts, interactive world map
@@ -39,7 +67,7 @@ http://localhost:5001
 
 **Status Codes:**
 - `200 OK` — Success
-- `401 Unauthorized` — Invalid credentials
+- `302 Found` — Not authenticated, redirects to `/login`
 
 ---
 
@@ -76,7 +104,7 @@ http://localhost:5001
 
 **Example:**
 ```bash
-curl -u admin:'honeypot@91771' http://localhost:5001/api/attacks
+curl -u admin:'YOUR_PASSWORD' http://localhost:5001/api/attacks
 ```
 
 ---
@@ -254,4 +282,4 @@ source.onmessage = (event) => {
 
 ---
 
-**Version:** 4.0 | **Last Updated:** May 2026
+**Version:** 4.1 | **Last Updated:** June 2026

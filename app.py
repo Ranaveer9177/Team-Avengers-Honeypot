@@ -6,16 +6,18 @@ import traceback
 import logging
 import threading
 import ipaddress
+import string
+import random
 
 import hmac
 import secrets as _secrets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 from collections import OrderedDict, deque
 from queue import Queue
 
 import requests
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context
+from flask import Flask, render_template, request, Response, jsonify, stream_with_context, session, redirect, url_for
 from markupsafe import escape
 
 # Flask app
@@ -44,6 +46,7 @@ def _load_or_create_secret_key():
 
 
 app.secret_key = _load_or_create_secret_key()
+app.permanent_session_lifetime = timedelta(hours=24)  # Sessions expire after 24 hours
 
 # Setup logging
 logging.basicConfig(
@@ -52,9 +55,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def _generate_random_password(length=8):
+    """Generate a random password with letters, digits, and at least one special character."""
+    letters = string.ascii_letters
+    digits = string.digits
+    special = '!@#$%&*?'
+
+    # Guarantee at least: 1 uppercase, 1 lowercase, 1 digit, 1 special
+    password = [
+        _secrets.choice(string.ascii_uppercase),
+        _secrets.choice(string.ascii_lowercase),
+        _secrets.choice(digits),
+        _secrets.choice(special),
+    ]
+    # Fill the rest randomly from all allowed characters
+    all_chars = letters + digits + special
+    for _ in range(length - 4):
+        password.append(_secrets.choice(all_chars))
+    # Shuffle so the guaranteed chars aren't always at the start
+    random.shuffle(password)
+    return ''.join(password)
+
+
 # Config (override with env vars)
 DASHBOARD_USERNAME = os.environ.get('DASHBOARD_USERNAME', 'admin')
-DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'honeypot@91771')
+DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', _generate_random_password(8))
 GEOCACHE_FILE = os.environ.get('GEOCACHE_FILE', 'logs/geocache.json')
 ATTACKS_LOG = os.environ.get('ATTACKS_LOG', 'logs/attacks.json')
 FLASK_RUN_PORT = int(os.environ.get('FLASK_RUN_PORT', 5001))
@@ -202,24 +227,59 @@ def check_auth(username, password):
     return user_ok and pass_ok
 
 
-def authenticate():
-    """Return 401 response with authentication challenge"""
-    return Response(
-        'Login required to access Honeypot Dashboard',
-        401,
-        {'WWW-Authenticate': 'Basic realm="Honeypot Dashboard"'}
-    )
-
-
 def requires_auth(f):
-    """Decorator to require HTTP Basic Authentication"""
+    """Decorator to require session-based authentication.
+    For browser routes, redirects to login page.
+    For API routes, also accepts HTTP Basic Auth as fallback."""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Check session-based authentication first
+        if session.get('authenticated'):
+            return f(*args, **kwargs)
+        # Fallback: HTTP Basic Auth for API clients (curl, scripts, etc.)
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
+        if auth and check_auth(auth.username, auth.password):
+            return f(*args, **kwargs)
+        # For API endpoints, return 401; for browser routes, redirect to login
+        if request.path.startswith('/api/'):
+            return Response(
+                'Authentication required',
+                401,
+                {'WWW-Authenticate': 'Basic realm="Honeypot Dashboard"'}
+            )
+        return redirect(url_for('login'))
     return decorated
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page — renders form on GET, authenticates on POST."""
+    # If already authenticated, redirect to dashboard
+    if session.get('authenticated'):
+        return redirect(url_for('dashboard'))
+
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        if check_auth(username, password):
+            session['authenticated'] = True
+            session['username'] = username
+            session.permanent = True  # Session persists across browser restarts
+            logger.info(f"Successful login from {request.remote_addr}")
+            return redirect(url_for('dashboard'))
+        else:
+            logger.warning(f"Failed login attempt from {request.remote_addr} (user: {username[:20]})")
+            error = 'Invalid username or password. Please try again.'
+
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    """Logout — clears session and redirects to login page."""
+    session.clear()
+    return redirect(url_for('login'))
 
 
 @app.after_request
@@ -1155,7 +1215,7 @@ def main():
         safe_print(f"[*] Starting dashboard on http://0.0.0.0:{FLASK_RUN_PORT}")
         safe_print(f"[*] Local access: http://localhost:{FLASK_RUN_PORT}")
         safe_print(f"[*] Username: {DASHBOARD_USERNAME}")
-        safe_print(f"[*] Password: {'*' * len(DASHBOARD_PASSWORD)}")  # VULN-021 FIX: Mask password
+        safe_print(f"[*] Password: {DASHBOARD_PASSWORD}  (new each restart)")
         safe_print(f"[*] Features: Real-time monitoring, Search, Filter, Export")
         safe_print("=" * 60)
         safe_print("[*] Dashboard is ready! Press Ctrl+C to stop.")

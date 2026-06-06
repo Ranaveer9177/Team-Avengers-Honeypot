@@ -44,6 +44,7 @@ Thumbs.db
 # VULN-020 FIX: Sensitive config files (passwords, secrets)
 config/ssh_password.json
 config/.flask_secret.key
+config/.dashboard_password
 config/*.secret
 
 # Test coverage

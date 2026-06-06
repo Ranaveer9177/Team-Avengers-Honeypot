@@ -1,6 +1,6 @@
-# 🛡️ Team Avengers — Multi-Service Honeypot System v4.0
+# 🛡️ Team Avengers — Multi-Service Honeypot System v4.1
 
-A professional-grade honeypot system with multi-service attack detection, real-time alerting, automated incident response, and a modern dark-themed security dashboard.
+A professional-grade honeypot system with multi-service attack detection, real-time alerting, automated incident response, and a modern dark-themed security dashboard with a premium login interface.
 
 ## 🚀 Features
 
@@ -8,6 +8,8 @@ A professional-grade honeypot system with multi-service attack detection, real-t
 - **Multi-Service Simulation**: SSH, HTTP, HTTPS, FTP, MySQL honeypots
 - **Advanced Attack Detection**: Pattern recognition, tool detection, device fingerprinting
 - **Real-Time Dashboard**: Secure web interface with tabbed navigation (Dashboard, Logs, Connections)
+- **Premium Login Page**: Split-panel login UI with particle animations, password toggle, and auto-generated credentials
+- **Auto-Generated Credentials**: Random 8-character password (letters, digits, special chars) regenerated on every startup
 - **Real-Time Alerting**: Server-Sent Events (SSE) for instant threat notifications
 - **Automated Incident Response**: Webhook notifications, email alerts, IP blocking
 - **IP Geolocation**: Dual API fallback (ip-api.com + ipinfo.io) with LRU cache
@@ -27,7 +29,8 @@ A professional-grade honeypot system with multi-service attack detection, real-t
 - Batch geocache writes (every 10 lookups instead of every request)
 - Separate connection timeouts (SSH persistent, others 30s)
 - IP validation on filter API using `ipaddress` module
-- Session-based auth (no credentials exposed in page source)
+- Session-based form login with Flask sessions (no Basic Auth popups)
+- Auto-generated random password on every startup (shown in console)
 - Restrictive file permissions for SSH keys and SSL certificates
 
 ## 📋 Requirements
@@ -77,12 +80,14 @@ Team-Avengers-Honeypot/
 ├── requirements.txt         # Python dependencies
 ├── pytest.ini               # Test configuration
 ├── config/
-│   └── unified_honeypot.json    # Honeypot configuration
+│   ├── unified_honeypot.json    # Honeypot configuration
+│   └── .flask_secret.key        # Flask session secret (auto-generated)
 ├── templates/
 │   ├── unified_dashboard.html   # Main dashboard (tabbed UI)
-│   └── login.html               # Web honeypot login template
+│   └── login.html               # Premium login page
 ├── static/
 │   ├── css/style.css            # Dark-themed dashboard styles
+│   ├── css/login.css            # Login page styles
 │   └── js/dashboard.js          # Dashboard logic (charts, export, reset)
 ├── tests/
 │   ├── test_app.py              # Dashboard tests
@@ -121,7 +126,7 @@ sudo bash start.sh
 # 4. Access dashboard
 # URL:      http://localhost:5001
 # Username: admin
-# Password: honeypot@91771
+# Password: (random — shown in console on each startup)
 ```
 
 ### Manual Start (Any OS)
@@ -151,9 +156,10 @@ python app.py                # Terminal 2
 ```
 
 ### Access the Dashboard
-- **URL**: `http://localhost:5001`
+- **URL**: `http://localhost:5001` → redirects to login page
 - **Username**: `admin`
-- **Password**: `honeypot@91771`
+- **Password**: Random — generated fresh on each startup (printed in console)
+- To use a **fixed password**: set `DASHBOARD_PASSWORD` environment variable
 
 ## 🔬 Testing the Honeypot
 
@@ -168,7 +174,7 @@ curl http://localhost:8080
 ftp -P 2121 localhost
 
 # Test Dashboard API
-curl -u admin:'honeypot@91771' http://localhost:5001/api/attacks
+curl -u admin:'YOUR_PASSWORD' http://localhost:5001/api/attacks
 ```
 
 ## ⚙️ Configuration
@@ -176,9 +182,9 @@ curl -u admin:'honeypot@91771' http://localhost:5001/api/attacks
 ### Environment Variables
 
 ```bash
-# Dashboard credentials
+# Dashboard credentials (override auto-generated password)
 export DASHBOARD_USERNAME="admin"
-export DASHBOARD_PASSWORD="honeypot@91771"
+export DASHBOARD_PASSWORD="your_custom_password"
 export FLASK_RUN_PORT=5001
 
 # Log file paths
@@ -220,11 +226,13 @@ export WEBHOOK_URL="https://your-webhook.com/alerts"
 
 ## 📡 API Endpoints
 
-All endpoints require HTTP Basic Authentication.
+Browser routes use session-based login (form at `/login`). API endpoints also accept HTTP Basic Auth for scripts/curl.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/` | Dashboard HTML |
+| `GET/POST` | `/login` | Login page (form-based authentication) |
+| `GET` | `/logout` | Logout and clear session |
+| `GET` | `/` | Dashboard HTML (requires auth) |
 | `GET` | `/api/attacks` | Get attack data (JSON) |
 | `GET` | `/api/alerts` | Get recent alerts |
 | `GET` | `/api/alerts/stream` | SSE real-time alert stream |
@@ -237,7 +245,8 @@ See [API.md](API.md) for full documentation.
 
 ## 🔒 Security Features
 
-- **HTTP Basic Auth** with session cookie support
+- **Form-Based Login**: Premium login page with session-based authentication
+- **Auto-Generated Passwords**: Fresh random 8-char password on every startup (uppercase, lowercase, digit, special char)
 - **XSS Hardening**: Input sanitization and HTML escaping
 - **Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options
 - **Rate Limiting**: 45 req/min for geolocation API (thread-safe)
@@ -295,7 +304,7 @@ taskkill /PID <PID> /F
 ## 🛡️ Security Best Practices
 
 - ⚠️ **Never expose the dashboard to the internet** — use VPN or firewall
-- ⚠️ **Change default dashboard password** before production use
+- ⚠️ **Password changes on every restart** — check console output each time
 - ⚠️ **This is a honeypot** — do not use on production systems
 - ⚠️ **Restrict dashboard access** with iptables rules
 - ⚠️ **Monitor disk space** — PCAP files can grow large
@@ -318,6 +327,6 @@ See the [LICENSE](LICENSE) file for details.
 
 **Repository**: https://github.com/Ranaveer9177/Team-Avengers-Honeypot
 
-**Version**: 4.0 — Professional Dashboard, Real-Time Alerting & Bug Hardening
+**Version**: 4.1 — Login Page, Auto-Generated Credentials & Dashboard Enhancements
 
-**Last Updated**: May 2026
+**Last Updated**: June 2026

@@ -5,6 +5,27 @@ All notable changes to the Multi-Service Honeypot System will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-06-06
+
+### Added
+- **Premium Login Page**: Split-panel login UI with particle animation background, password visibility toggle, and micro-animations
+- **Auto-Generated Credentials**: Random 8-character password (letters, digits, at least 1 special char) regenerated on every startup
+- **Ephemeral Password**: Fresh random password on each restart, always shown in console (override with `DASHBOARD_PASSWORD` env var)
+- **Login/Logout Routes**: Form-based `POST /login` and `GET /logout` endpoints replace HTTP Basic Auth for browser access
+- **Sign Out Button**: Dashboard sidebar now includes a logout link
+- **Login CSS**: Separate `static/css/login.css` stylesheet matching the dashboard design system
+
+### Changed
+- Authentication switched from HTTP Basic Auth popup to session-based form login
+- API endpoints still accept HTTP Basic Auth as fallback for scripts/curl
+- `requires_auth` decorator redirects browser requests to `/login` page instead of showing 401
+- Dashboard password is now ephemeral — regenerated on every restart
+- Startup console always displays the current password
+
+### Security
+- Password file `config/.dashboard_password` added to `.gitignore`
+- Uses `secrets` module (cryptographically secure) for password generation
+
 ## [4.0.0] - 2026-05-05
 
 ### Added
